@@ -9,9 +9,14 @@ const provider = createOpenAICompatible({
 });
 
 export function getModel() {
-  // return provider(process.env.AI_MODEL ?? "gpt-4");
-  return wrapLanguageModel({
-    model: provider(process.env.AI_MODEL ?? "gpt-4"),
-    middleware: devToolsMiddleware(),
-  });
+  const model = provider(process.env.AI_MODEL ?? "gpt-4");
+
+  if (import.meta.env.DEV) {
+    return wrapLanguageModel({
+      model,
+      middleware: devToolsMiddleware(),
+    });
+  }
+
+  return model;
 }
