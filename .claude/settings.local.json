@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:ai-sdk.dev)",
+      "WebSearch",
+      "WebFetch(domain:elements.ai-sdk.dev)",
+      "WebFetch(domain:github.com)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(pnpm add:*)",
+      "Bash(grep:*)",
+      "Bash(node:*)",
+      "Bash(pnpm check:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
