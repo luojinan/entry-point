@@ -10,7 +10,7 @@ const provider = createOpenAICompatible({
 });
 
 export function getModel(modelId?: string) {
-  const model = provider(modelId || process.env.AI_MODEL || AI_MODELS[0].id);
+  const model = provider(modelId || AI_MODELS[0].id);
 
   if (import.meta.env.DEV) {
     return wrapLanguageModel({

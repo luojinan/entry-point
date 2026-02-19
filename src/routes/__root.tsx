@@ -9,6 +9,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import { BackToHome } from "@/components/back-to-home";
+import { ChatEntry } from "@/components/chat-entry";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 import type { AuthUser } from "@/lib/auth";
@@ -58,7 +59,8 @@ function RootLayout() {
     <>
       <header className="flex w-full items-center px-4 pt-3 sm:px-6">
         {!isIndex && <BackToHome />}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <ChatEntry />
           <ThemeToggle />
         </div>
       </header>

@@ -26,6 +26,7 @@ function getErrorMessage(error: unknown) {
 function HomePage() {
   const {
     isLoading: loading,
+    isFetching,
     data,
     error: queryError,
     refetch,
@@ -57,6 +58,16 @@ function HomePage() {
             >
               打开 Supabase CRUD 示例
             </Link>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isFetching}
+              onClick={() => {
+                refetch();
+              }}
+            >
+              {isFetching ? "刷新中..." : "刷新数据"}
+            </Button>
           </div>
         </header>
 
