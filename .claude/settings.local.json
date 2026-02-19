@@ -11,7 +11,9 @@
       "Bash(grep:*)",
       "Bash(node:*)",
       "Bash(pnpm check:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:vercel.com)"
     ]
   }
 }

@@ -4,75 +4,91 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TanStack Start + shadcn/ui template using React 19, TypeScript, and Tailwind CSS v4.
+TanStack Start + shadcn/ui full-stack template using React 19, TypeScript, and Tailwind CSS v4. Deployed to Cloudflare Workers.
 
 ## Tech Stack
 
-- **Framework**: TanStack Start (full-stack React framework)
+- **Framework**: TanStack Start (full-stack React framework with SSR)
 - **Router**: TanStack Router (file-based routing with type-safety)
-- **UI Components**: shadcn/ui (Base Nova style with Base UI primitives)
-- **Styling**: Tailwind CSS v4 with CSS variables
-- **Icons**: Hugeicons
-- **Build Tool**: Vite
+- **Data Fetching**: TanStack React Query
+- **UI Components**: shadcn/ui (Base Nova style with Base UI primitives, NOT Radix)
+- **Styling**: Tailwind CSS v4 with native CSS variables (OKLch color space)
+- **Icons**: Hugeicons (`@hugeicons/react` + `@hugeicons/core-free-icons`)
+- **Auth & Database**: Supabase (magic link auth, Postgres)
+- **AI**: Vercel AI SDK with OpenAI-compatible provider
+- **Code Quality**: Biome (linter + formatter, replaces ESLint/Prettier)
+- **Build**: Vite 7
+- **Deploy**: Cloudflare Workers via Wrangler
 
-## Key Architecture Points
-
-### Routing System
-
-- File-based routing in `src/routes/` using TanStack Router
-- Routes are auto-generated into `src/routeTree.gen.ts` (do not edit manually)
-- Root layout defined in `src/routes/__root.tsx` includes:
-  - Global head/meta configuration
-  - CSS imports
-  - TanStack DevTools integration
-  - Shell component for HTML structure
-
-### Router Configuration
-
-- Router instance created via `getRouter()` in `src/router.tsx`
-- Configured with scroll restoration and preload settings
-- Router uses generated route tree from file system
-
-### UI Component System
-
-- shadcn/ui components in `src/components/ui/`
-- Configuration in `components.json` with Base Nova style
-- Uses Base UI primitives (`@base-ui/react`) instead of Radix
-- Path aliases configured: `@/components`, `@/lib`, `@/hooks`, `@/ui`
-- Utility function `cn()` in `src/lib/utils.ts` for merging Tailwind classes
-
-### Vite Configuration
-
-Critical plugins loaded in order:
-
-1. `@tanstack/devtools-vite` - Development tools
-2. `vite-tsconfig-paths` - Path alias support from tsconfig
-3. `@tailwindcss/vite` - Tailwind CSS v4
-4. `@tanstack/react-start/plugin/vite` - TanStack Start
-5. `@vitejs/plugin-react` - React support
-
-### TypeScript Configuration
-
-- Strict mode enabled
-- Path alias: `@/*` maps to `./src/*`
-- Module resolution: bundler mode
-- Target: ES2022
-
-## Development Workflow
-
-### Code Quality
+## Commands
 
 ```bash
-pnpm check         # Format with Prettier and fix ESLint issues
-pnpm format        # Run Prettier
-pnpm lint          # Run ESLint
+pnpm dev            # Dev server on port 3000
+pnpm build          # Production build
+pnpm preview        # Preview production build locally
+pnpm deploy         # Build and deploy to Cloudflare Workers
+pnpm check          # Biome: format + lint with auto-fixes (run before commits)
+pnpm format         # Biome: format only
+pnpm lint           # Biome: lint only
 ```
 
-## Important Notes
+No test runner is configured. Validate with `pnpm lint && pnpm build`.
 
-- TanStack Router generates route types automatically - never manually edit `src/routeTree.gen.ts`
-- When adding new routes, create files in `src/routes/` following TanStack Router conventions
-- shadcn/ui components use Base UI primitives, not Radix (different API from standard shadcn)
-- Tailwind CSS v4 uses native CSS variables instead of JIT compilation
-- DevTools are enabled in development (bottom-right corner) with Router panel
-- 当箭头函数需要忽略返回值（如 Promise）时，使用花括号写法 `() => { fn() }` 而非 `void` 操作符 `() => void fn()`
+## Key Architecture
+
+### Routing
+
+- File-based routes in `src/routes/` → auto-generates `src/routeTree.gen.ts` (never edit manually)
+- Root layout (`src/routes/__root.tsx`):
+  - `beforeLoad` fetches auth state from Supabase, provides it as router context
+  - Includes global head/meta, CSS imports, TanStack DevTools, theme script
+  - `shellComponent` renders the HTML document structure
+- Router instance in `src/router.tsx` integrates TanStack Query via `setupRouterSsrQueryIntegration`
+
+### Authentication Pattern
+
+- `src/lib/auth.ts` exports `getAuthUser()` and `requireAuth()`
+- Root route's `beforeLoad` calls `getAuthUser()` → all routes access `context.auth`
+- Protected routes call `requireAuth()` in their own `beforeLoad` to redirect unauthenticated users
+- Login via Supabase magic link (OTP) at `/login`
+
+### UI Components
+
+- shadcn/ui components live in `src/components/ui/` (Base UI primitives, NOT Radix — different API)
+- Add new components: `pnpm dlx shadcn@latest add <component>`
+- Variants via `class-variance-authority` (CVA)
+- Class merging utility `cn()` in `src/lib/utils.ts` (clsx + tailwind-merge)
+- Path aliases: `@/components`, `@/ui`, `@/lib`, `@/hooks`
+
+### Theming
+
+- CSS variables defined in `src/styles.css` (light/dark modes)
+- Inline script in root layout prevents FOUC by setting `dark` class before paint
+- `ThemeToggle` component reads/writes `localStorage("theme")`, falls back to `prefers-color-scheme`
+
+### AI Chat
+
+- Server handler at `src/routes/api/chat.ts` using Vercel AI SDK `streamText`
+- Client UI at `src/routes/chat.tsx` using `@ai-sdk/react` `useChat` hook
+- Provider configured in `src/lib/ai-provider.ts` (OpenAI-compatible endpoint)
+
+### Vite Plugin Order (critical)
+
+1. `@tanstack/devtools-vite`
+2. `@cloudflare/vite-plugin` (SSR environment)
+3. `vite-tsconfig-paths`
+4. `@tailwindcss/vite`
+5. `@tanstack/react-start/plugin/vite`
+6. `@vitejs/plugin-react`
+
+### Environment Variables
+
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase client
+- `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` — AI provider (server-only)
+
+## Code Conventions
+
+- Biome enforces formatting (spaces) and linting; config excludes `*.gen.ts` and `src/styles.css`
+- Arrow functions ignoring return values use braces: `() => { fn() }` not `() => void fn()`
+- Conventional Commits: `feat:`, `fix:`, `chore:`
+- UI component filenames: lowercase kebab-case (e.g., `alert-dialog.tsx`)

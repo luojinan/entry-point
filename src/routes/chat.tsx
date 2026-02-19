@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type DynamicToolUIPart } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,7 +60,7 @@ function ChatPage() {
       <div className="mb-3">
         <h1 className="text-lg font-semibold">AI Chat</h1>
         <p className="text-muted-foreground text-sm">
-          支持工具调用：天气查询、数学计算
+          支持工具调用：天气查询、数学计算、Supabase 数据库操作
         </p>
       </div>
 
@@ -166,6 +166,12 @@ function MessageBubble({ message }: { message: ChatMessage }) {
                     <CalculateCard part={part} />
                   </div>
                 );
+              case "dynamic-tool":
+                return (
+                  <div key={key} className="mt-2 first:mt-0">
+                    <DynamicToolCard part={part} />
+                  </div>
+                );
               default:
                 return null;
             }
@@ -230,6 +236,48 @@ function CalculateCard({ part }: { part: CalculatePart }) {
             {data.expression} = <span className="font-bold">{data.result}</span>
           </p>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function DynamicToolCard({ part }: { part: DynamicToolUIPart }) {
+  if (
+    part.state === "input-streaming" ||
+    part.state === "input-available" ||
+    part.state === "call-streaming"
+  ) {
+    return <ToolLoadingCard label={`调用 ${part.toolName}...`} />;
+  }
+
+  if (part.state === "output-error") {
+    return (
+      <Card size="sm">
+        <CardHeader>
+          <CardTitle>{part.toolName}</CardTitle>
+          <CardDescription className="text-destructive">
+            工具调用失败
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive text-sm">
+            {String(part.error ?? "未知错误")}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle>{part.toolName}</CardTitle>
+        <CardDescription>工具调用结果</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <pre className="max-h-40 overflow-auto text-xs">
+          {JSON.stringify(part.output, null, 2)}
+        </pre>
       </CardContent>
     </Card>
   );

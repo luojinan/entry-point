@@ -1,3 +1,4 @@
+import { createMCPClient } from "@ai-sdk/mcp";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   convertToModelMessages,
@@ -10,7 +11,7 @@ import {
 import { z } from "zod";
 import { getModel } from "@/lib/ai-provider";
 
-const tools = {
+const localTools = {
   weather: tool({
     description: "查询指定城市的天气信息",
     inputSchema: z.object({
@@ -40,7 +41,7 @@ const tools = {
   }),
 };
 
-export type ChatTools = InferUITools<typeof tools>;
+export type ChatTools = InferUITools<typeof localTools>;
 export type ChatMessage = UIMessage<never, never, ChatTools>;
 
 export const Route = createFileRoute("/api/chat")({
@@ -49,13 +50,38 @@ export const Route = createFileRoute("/api/chat")({
       POST: async ({ request }) => {
         const { messages }: { messages: UIMessage[] } = await request.json();
 
+        let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null =
+          null;
+        let allTools: Record<string, unknown> = { ...localTools };
+
+        try {
+          mcpClient = await createMCPClient({
+            transport: {
+              type: "http",
+              url: `https://mcp.supabase.com/mcp?project_ref=${process.env.SUPABASE_PROJECT_REF}`,
+              headers: {
+                Authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,
+              },
+            },
+          });
+          const mcpTools = await mcpClient.tools();
+          allTools = { ...localTools, ...mcpTools };
+        } catch (e) {
+          console.error("Failed to connect to Supabase MCP:", e);
+        }
+
         const result = streamText({
           model: getModel(),
           system:
-            "你是一个有用的 AI 助手。当用户询问天气时，使用天气工具查询。当需要数学计算时，使用计算工具。",
+            "你是一个有用的 AI 助手。你可以查询天气、执行数学计算，还可以查询和操作 Supabase 数据库（包括查看表结构、执行 SQL 查询、搜索 Supabase 文档等）。请根据用户需求选择合适的工具。",
           messages: await convertToModelMessages(messages),
-          tools,
+          tools: allTools as typeof localTools,
           stopWhen: stepCountIs(5),
+          onFinish: async () => {
+            if (mcpClient) {
+              await mcpClient.close();
+            }
+          },
         });
 
         return result.toUIMessageStreamResponse();
