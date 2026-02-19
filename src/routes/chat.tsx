@@ -1,15 +1,9 @@
 import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { DefaultChatTransport, type DynamicToolUIPart } from "ai";
+import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
+import { MessageBubble } from "@/components/chat/message-bubble";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "./api/chat";
 
@@ -60,7 +54,7 @@ function ChatPage() {
       <div className="mb-3">
         <h1 className="text-lg font-semibold">AI Chat</h1>
         <p className="text-muted-foreground text-sm">
-          支持工具调用：天气查询、数学计算、Supabase 数据库操作
+          支持工具调用：Supabase 数据库操作
         </p>
       </div>
 
@@ -123,172 +117,5 @@ function ChatPage() {
         </Button>
       </div>
     </main>
-  );
-}
-
-function MessageBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === "user";
-
-  return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-      <div
-        className={cn(
-          "max-w-[85%] space-y-2",
-          isUser ? "items-end" : "items-start",
-        )}
-      >
-        <div
-          className={cn(
-            "rounded-lg px-3 py-2 text-sm",
-            isUser
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground",
-          )}
-        >
-          {message.parts.map((part, i) => {
-            const key = `${message.id}-${i}`;
-            switch (part.type) {
-              case "text":
-                return (
-                  <div key={key} className="whitespace-pre-wrap">
-                    {part.text}
-                  </div>
-                );
-              case "tool-weather":
-                return (
-                  <div key={key} className="mt-2 first:mt-0">
-                    <WeatherCard part={part} />
-                  </div>
-                );
-              case "tool-calculate":
-                return (
-                  <div key={key} className="mt-2 first:mt-0">
-                    <CalculateCard part={part} />
-                  </div>
-                );
-              case "dynamic-tool":
-                return (
-                  <div key={key} className="mt-2 first:mt-0">
-                    <DynamicToolCard part={part} />
-                  </div>
-                );
-              default:
-                return null;
-            }
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type WeatherPart = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-weather" }
->;
-
-function WeatherCard({ part }: { part: WeatherPart }) {
-  if (part.state !== "output-available") {
-    return <ToolLoadingCard label="查询天气中..." />;
-  }
-
-  const data = part.output;
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>{data.location} 天气</CardTitle>
-        <CardDescription>天气查询结果</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold">
-            {data.temperature}
-            {data.unit}
-          </span>
-          <span className="text-muted-foreground">{data.conditions}</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-type CalculatePart = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-calculate" }
->;
-
-function CalculateCard({ part }: { part: CalculatePart }) {
-  if (part.state !== "output-available") {
-    return <ToolLoadingCard label="计算中..." />;
-  }
-
-  const data = part.output;
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>计算结果</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {"error" in data ? (
-          <p className="text-destructive text-sm">{data.error}</p>
-        ) : (
-          <p className="font-mono text-sm">
-            {data.expression} = <span className="font-bold">{data.result}</span>
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function DynamicToolCard({ part }: { part: DynamicToolUIPart }) {
-  if (
-    part.state === "input-streaming" ||
-    part.state === "input-available" ||
-    part.state === "call-streaming"
-  ) {
-    return <ToolLoadingCard label={`调用 ${part.toolName}...`} />;
-  }
-
-  if (part.state === "output-error") {
-    return (
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>{part.toolName}</CardTitle>
-          <CardDescription className="text-destructive">
-            工具调用失败
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-destructive text-sm">
-            {String(part.error ?? "未知错误")}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>{part.toolName}</CardTitle>
-        <CardDescription>工具调用结果</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <pre className="max-h-40 overflow-auto text-xs">
-          {JSON.stringify(part.output, null, 2)}
-        </pre>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ToolLoadingCard({ label }: { label: string }) {
-  return (
-    <Card size="sm">
-      <CardContent className="py-3">
-        <p className="text-muted-foreground animate-pulse text-sm">{label}</p>
-      </CardContent>
-    </Card>
   );
 }

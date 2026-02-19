@@ -15,7 +15,8 @@
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:vercel.com)",
       "mcp___upstash_context7-mcp__resolve-library-id",
-      "mcp___upstash_context7-mcp__query-docs"
+      "mcp___upstash_context7-mcp__query-docs",
+      "WebFetch(domain:deepwiki.com)"
     ]
   }
 }
