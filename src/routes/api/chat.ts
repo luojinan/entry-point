@@ -14,7 +14,10 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { messages }: { messages: UIMessage[] } = await request.json();
+        const {
+          messages,
+          model: modelId,
+        }: { messages: UIMessage[]; model?: string } = await request.json();
 
         let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null =
           null;
@@ -40,7 +43,7 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const result = streamText({
-          model: getModel(),
+          model: getModel(modelId),
           system:
             "你是一个有用的 AI 助手。你可以查询和操作 Supabase 数据库（包括查看表结构、执行 SQL 查询、搜索 Supabase 文档等）。请根据用户需求选择合适的工具。",
           messages: await convertToModelMessages(messages),
