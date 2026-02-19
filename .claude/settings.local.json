@@ -17,7 +17,11 @@
       "mcp___upstash_context7-mcp__resolve-library-id",
       "mcp___upstash_context7-mcp__query-docs",
       "WebFetch(domain:deepwiki.com)",
-      "mcp__deepwiki__ask_question"
+      "mcp__deepwiki__ask_question",
+      "Bash(pnpm build:*)",
+      "Skill(agent-browser)",
+      "Bash(agent-browser --cdp 9222 open:*)",
+      "Bash(agent-browser:*)"
     ]
   }
 }

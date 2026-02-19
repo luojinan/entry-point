@@ -20,10 +20,22 @@ TanStack Start + shadcn/ui full-stack template using React 19, TypeScript, and T
 - **Build**: Vite 7
 - **Deploy**: Cloudflare Workers via Wrangler
 
+## Browser Automation
+
+Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
+
+MUST USE CDP 9222
+
+Core workflow:
+1. `agent-browser --cdp 9222 open <url>` - Navigate to page
+2. `agent-browser --cdp 9222 snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser --cdp 9222 click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
+
 ## Commands
 
 ```bash
-pnpm dev            # Dev server on port 3000
+pnpm dev            # Dev server on port 2190
 pnpm build          # Production build
 pnpm preview        # Preview production build locally
 pnpm deploy         # Build and deploy to Cloudflare Workers

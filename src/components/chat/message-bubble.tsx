@@ -3,7 +3,19 @@ import { ReasoningBlock } from "@/components/chat/reasoning-block";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/routes/api/chat";
 
-export function MessageBubble({ message }: { message: ChatMessage }) {
+type ToolApprovalHandler = (opts: {
+  id: string;
+  approved: boolean;
+  reason?: string;
+}) => void | PromiseLike<void>;
+
+export function MessageBubble({
+  message,
+  onToolApproval,
+}: {
+  message: ChatMessage;
+  onToolApproval: ToolApprovalHandler;
+}) {
   const isUser = message.role === "user";
 
   return (
@@ -36,7 +48,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
               case "dynamic-tool":
                 return (
                   <div key={key} className="mt-2 first:mt-0">
-                    <DynamicToolCard part={part} />
+                    <DynamicToolCard part={part} onApproval={onToolApproval} />
                   </div>
                 );
               default:

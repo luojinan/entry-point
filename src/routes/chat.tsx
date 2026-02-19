@@ -1,6 +1,9 @@
 import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { DefaultChatTransport } from "ai";
+import {
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithApprovalResponses,
+} from "ai";
 import { useEffect, useRef, useState } from "react";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { Button } from "@/components/ui/button";
@@ -15,11 +18,14 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status, error } = useChat<ChatMessage>({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-    }),
-  });
+  const { messages, sendMessage, status, error, addToolApprovalResponse } =
+    useChat<ChatMessage>({
+      transport: new DefaultChatTransport({
+        api: "/api/chat",
+      }),
+      sendAutomaticallyWhen:
+        lastAssistantMessageIsCompleteWithApprovalResponses,
+    });
 
   const isStreaming = status === "streaming";
   const isLoading = status === "submitted";
@@ -67,7 +73,11 @@ function ChatPage() {
         )}
 
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble
+            key={message.id}
+            message={message}
+            onToolApproval={addToolApprovalResponse}
+          />
         ))}
 
         {isLoading && (

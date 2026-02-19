@@ -31,6 +31,9 @@ export const Route = createFileRoute("/api/chat")({
             },
           });
           const mcpTools = await mcpClient.tools();
+          for (const toolName of Object.keys(mcpTools)) {
+            mcpTools[toolName].needsApproval = true;
+          }
           allTools = { ...mcpTools };
         } catch (e) {
           console.error("Failed to connect to Supabase MCP:", e);
