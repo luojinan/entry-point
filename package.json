@@ -9,9 +9,11 @@
     "deploy": "pnpm build && wrangler deploy",
     "lint": "biome lint .",
     "format": "biome format --write .",
+    "aidebug": "npx @ai-sdk/devtools",
     "check": "biome check --write ."
   },
   "dependencies": {
+    "@ai-sdk/devtools": "^0.0.14",
     "@ai-sdk/mcp": "^1.0.21",
     "@ai-sdk/openai-compatible": "^2.0.30",
     "@ai-sdk/react": "3.0.92",

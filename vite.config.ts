@@ -9,7 +9,9 @@ import viteTsConfigPaths from "vite-tsconfig-paths";
 const config = defineConfig({
   plugins: [
     devtools(),
-    cloudflare({ viteEnvironment: { name: 'ssr' } }),
+    // cloudflare({ viteEnvironment: { name: 'ssr' } }),
+    // 仅在 build 时启用 cloudflare 插件（devtool使用了nodejs环境fs，而cloudflare dev runtime 不支持使用fs）
+    process.env.NODE_ENV === 'production' && cloudflare({ viteEnvironment: { name: 'ssr' } }),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],

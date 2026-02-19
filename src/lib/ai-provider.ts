@@ -1,4 +1,6 @@
+import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { wrapLanguageModel } from "ai";
 
 const provider = createOpenAICompatible({
   name: "custom-ai",
@@ -7,5 +9,9 @@ const provider = createOpenAICompatible({
 });
 
 export function getModel() {
-  return provider(process.env.AI_MODEL ?? "gpt-4");
+  // return provider(process.env.AI_MODEL ?? "gpt-4");
+  return wrapLanguageModel({
+    model: provider(process.env.AI_MODEL ?? "gpt-4"),
+    middleware: devToolsMiddleware(),
+  });
 }
