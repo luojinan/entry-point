@@ -50,7 +50,7 @@ function ChatPage() {
   };
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-52px)] w-full max-w-3xl flex-col p-4 sm:p-6">
+    <main className="mx-auto flex h-[calc(100vh-52px)] w-full max-w-3xl flex-col p-2 sm:p-6">
       <div className="mb-3">
         <h1 className="text-lg font-semibold">AI Chat</h1>
         <p className="text-muted-foreground text-sm">
@@ -59,10 +59,7 @@ function ChatPage() {
       </div>
 
       {/* Messages area */}
-      <div
-        ref={scrollRef}
-        className="flex-1 space-y-4 overflow-y-auto rounded-lg border p-4"
-      >
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4">
         {messages.length === 0 && (
           <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
             发送消息开始对话
