@@ -22,16 +22,16 @@ export function MessageBubble({
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[85%] space-y-2",
+          "max-w-[90%] space-y-2",
           isUser ? "items-end" : "items-start",
         )}
       >
         <div
           className={cn(
-            "rounded-lg px-3 py-2 text-sm",
+            "rounded-lg py-2 text-sm",
             isUser
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground",
+              ? "bg-primary text-primary-foreground px-3"
+              : "text-foreground pl-2",
           )}
         >
           {message.parts.map((part, i) => {

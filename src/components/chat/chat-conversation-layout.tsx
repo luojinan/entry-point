@@ -36,7 +36,7 @@ export function ChatConversationLayout({
   };
 
   return (
-    <div className="flex h-[calc(100vh-52px)]">
+    <div className="flex min-h-0 flex-1">
       <aside className="bg-sidebar hidden w-64 shrink-0 border-r md:block">
         <ChatSidebar
           conversations={conversations}
@@ -72,7 +72,7 @@ export function ChatConversationLayout({
         </>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-2 border-b px-3 py-2">
           <Button
             variant="ghost"

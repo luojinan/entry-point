@@ -55,6 +55,12 @@ No test runner is configured. Validate with `pnpm lint && pnpm build`.
   - `beforeLoad` fetches auth state from Supabase, provides it as router context
   - Includes global head/meta, CSS imports, TanStack DevTools, theme script
   - `shellComponent` renders the HTML document structure
+- Route layout contract (required for new pages):
+  - App shell is fixed-height (`h-svh`) with `overflow-hidden` at root level
+  - Each route page must own scrolling via a route root container:
+    - `className="flex min-h-0 flex-1 overflow-y-auto"`
+  - Put width/padding wrappers inside that scroll container (`mx-auto max-w-* p-*`)
+  - For sticky bottom UI (like chat composer), keep page scroll at route root and use inner `min-h-0 + overflow-hidden + sticky bottom-0`
 - Router instance in `src/router.tsx` integrates TanStack Query via `setupRouterSsrQueryIntegration`
 
 ### Authentication Pattern

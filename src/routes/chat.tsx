@@ -120,8 +120,11 @@ function ChatSessionInner({
   }, [messages.length, lastMessagePartsLength]);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden p-2 sm:p-6">
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4">
+    <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden p-2 sm:p-6">
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 space-y-4 overflow-y-auto py-4"
+      >
         {messages.length === 0 && (
           <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
             发送消息开始对话
@@ -155,12 +158,14 @@ function ChatSessionInner({
         )}
       </div>
 
-      <ChatComposer
-        modelId={modelId}
-        onModelChange={onModelChange}
-        onSubmit={submitText}
-        disabled={isStreaming || isLoading}
-      />
+      <div className="sticky bottom-0 z-10 -mx-2 border-t bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:-mx-6 sm:px-6">
+        <ChatComposer
+          modelId={modelId}
+          onModelChange={onModelChange}
+          onSubmit={submitText}
+          disabled={isStreaming || isLoading}
+        />
+      </div>
     </div>
   );
 }

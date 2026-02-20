@@ -6,5 +6,9 @@ export const Route = createFileRoute("/components-demo")({
 });
 
 function ComponentsDemoPage() {
-  return <ComponentExample />;
+  return (
+    <main className="flex min-h-0 flex-1 overflow-y-auto">
+      <ComponentExample />
+    </main>
+  );
 }

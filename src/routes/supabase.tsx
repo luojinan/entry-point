@@ -312,201 +312,205 @@ function RouteComponent() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-3xl p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Supabase CRUD Demo</CardTitle>
-          <CardDescription>
-            最简登录（Magic Link）+ CRUD。示例包含 `user_id`
-            字段，但不做用户隔离。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
-            <p className="mb-2 font-medium">登录状态</p>
-            {user ? (
-              <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                <p className="text-xs">
-                  已登录: {user.email ?? "(no-email)"} · uid: {user.id}
-                </p>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={signOut}
-                  disabled={authLoading}
-                >
-                  退出登录
-                </Button>
-              </div>
-            ) : (
-              <form
-                className="flex flex-col gap-2 md:flex-row"
-                onSubmit={sendMagicLink}
-              >
-                <Input
-                  value={authEmail}
-                  onChange={(event) => setAuthEmail(event.target.value)}
-                  placeholder="输入邮箱接收 magic link"
-                  disabled={authLoading}
-                />
-                <Button type="submit" disabled={authLoading}>
-                  发送登录链接
-                </Button>
-              </form>
-            )}
-            {authHint && (
-              <p className="text-muted-foreground mt-2 text-xs">{authHint}</p>
-            )}
-          </div>
-
-          <form className="flex gap-2" onSubmit={createTodo}>
-            <Input
-              value={newTitle}
-              onChange={(event) => setNewTitle(event.target.value)}
-              placeholder="新增一条 todo，例如：Read Supabase docs"
-              disabled={!user || submitting}
-            />
-            <Button type="submit" disabled={!user || submitting}>
-              新增
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={loading || submitting}
-              onClick={() => {
-                refetchTodos();
-              }}
-            >
-              刷新
-            </Button>
-          </form>
-
-          {errorMessage && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-              {errorMessage}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {loading && (
-              <p className="text-muted-foreground text-sm">加载中...</p>
-            )}
-            {!loading && todos.length === 0 && (
-              <p className="text-muted-foreground text-sm">暂无数据</p>
-            )}
-            {todos.map((row) => (
-              <div
-                key={row.id}
-                className="flex flex-col gap-2 rounded-lg border p-3 md:flex-row md:items-center"
-              >
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={row.done}
-                    disabled={submitting}
-                    onChange={() => toggleTodo(row)}
-                  />
-                  <span>完成</span>
-                </label>
-
-                <div className="flex-1">
-                  {editingId === row.id ? (
-                    <Input
-                      value={editingTitle}
-                      onChange={(event) => setEditingTitle(event.target.value)}
-                      disabled={submitting}
-                    />
-                  ) : (
-                    <p
-                      className={
-                        row.done ? "text-muted-foreground line-through" : ""
-                      }
-                    >
-                      {row.title}
-                    </p>
-                  )}
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    id: {row.id} · created:{" "}
-                    {row.inserted_at
-                      ? new Date(row.inserted_at).toLocaleString()
-                      : "-"}{" "}
-                    · user_id: {row.user_id ?? "-"}
+    <main className="flex min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto w-full max-w-3xl p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Supabase CRUD Demo</CardTitle>
+            <CardDescription>
+              最简登录（Magic Link）+ CRUD。示例包含 `user_id`
+              字段，但不做用户隔离。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+              <p className="mb-2 font-medium">登录状态</p>
+              {user ? (
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <p className="text-xs">
+                    已登录: {user.email ?? "(no-email)"} · uid: {user.id}
                   </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Badge variant={row.done ? "secondary" : "outline"}>
-                    {row.done ? "DONE" : "OPEN"}
-                  </Badge>
-
-                  {editingId === row.id ? (
-                    <>
-                      <Button
-                        size="sm"
-                        onClick={() => saveEdit(row.id)}
-                        disabled={submitting}
-                      >
-                        保存
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditingTitle("");
-                        }}
-                        disabled={submitting}
-                      >
-                        取消
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => startEdit(row)}
-                      disabled={submitting}
-                    >
-                      编辑
-                    </Button>
-                  )}
-
                   <Button
+                    type="button"
                     size="sm"
-                    variant="destructive"
-                    onClick={() => deleteTodo(row.id)}
-                    disabled={submitting}
+                    variant="outline"
+                    onClick={signOut}
+                    disabled={authLoading}
                   >
-                    删除
+                    退出登录
                   </Button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ) : (
+                <form
+                  className="flex flex-col gap-2 md:flex-row"
+                  onSubmit={sendMagicLink}
+                >
+                  <Input
+                    value={authEmail}
+                    onChange={(event) => setAuthEmail(event.target.value)}
+                    placeholder="输入邮箱接收 magic link"
+                    disabled={authLoading}
+                  />
+                  <Button type="submit" disabled={authLoading}>
+                    发送登录链接
+                  </Button>
+                </form>
+              )}
+              {authHint && (
+                <p className="text-muted-foreground mt-2 text-xs">{authHint}</p>
+              )}
+            </div>
 
-          <p className="text-muted-foreground text-xs">
-            文档:{" "}
-            <a
-              href="https://supabase.com/docs/reference/javascript"
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
-              Supabase JavaScript Reference
-            </a>
-            {" · "}
-            <a
-              href="https://supabase.com/docs/reference/javascript/auth-signinwithotp"
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
-              signInWithOtp
-            </a>
-          </p>
-        </CardContent>
-      </Card>
+            <form className="flex gap-2" onSubmit={createTodo}>
+              <Input
+                value={newTitle}
+                onChange={(event) => setNewTitle(event.target.value)}
+                placeholder="新增一条 todo，例如：Read Supabase docs"
+                disabled={!user || submitting}
+              />
+              <Button type="submit" disabled={!user || submitting}>
+                新增
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || submitting}
+                onClick={() => {
+                  refetchTodos();
+                }}
+              >
+                刷新
+              </Button>
+            </form>
+
+            {errorMessage && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                {errorMessage}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {loading && (
+                <p className="text-muted-foreground text-sm">加载中...</p>
+              )}
+              {!loading && todos.length === 0 && (
+                <p className="text-muted-foreground text-sm">暂无数据</p>
+              )}
+              {todos.map((row) => (
+                <div
+                  key={row.id}
+                  className="flex flex-col gap-2 rounded-lg border p-3 md:flex-row md:items-center"
+                >
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={row.done}
+                      disabled={submitting}
+                      onChange={() => toggleTodo(row)}
+                    />
+                    <span>完成</span>
+                  </label>
+
+                  <div className="flex-1">
+                    {editingId === row.id ? (
+                      <Input
+                        value={editingTitle}
+                        onChange={(event) =>
+                          setEditingTitle(event.target.value)
+                        }
+                        disabled={submitting}
+                      />
+                    ) : (
+                      <p
+                        className={
+                          row.done ? "text-muted-foreground line-through" : ""
+                        }
+                      >
+                        {row.title}
+                      </p>
+                    )}
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      id: {row.id} · created:{" "}
+                      {row.inserted_at
+                        ? new Date(row.inserted_at).toLocaleString()
+                        : "-"}{" "}
+                      · user_id: {row.user_id ?? "-"}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Badge variant={row.done ? "secondary" : "outline"}>
+                      {row.done ? "DONE" : "OPEN"}
+                    </Badge>
+
+                    {editingId === row.id ? (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => saveEdit(row.id)}
+                          disabled={submitting}
+                        >
+                          保存
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditingTitle("");
+                          }}
+                          disabled={submitting}
+                        >
+                          取消
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEdit(row)}
+                        disabled={submitting}
+                      >
+                        编辑
+                      </Button>
+                    )}
+
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteTodo(row.id)}
+                      disabled={submitting}
+                    >
+                      删除
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-muted-foreground text-xs">
+              文档:{" "}
+              <a
+                href="https://supabase.com/docs/reference/javascript"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                Supabase JavaScript Reference
+              </a>
+              {" · "}
+              <a
+                href="https://supabase.com/docs/reference/javascript/auth-signinwithotp"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                signInWithOtp
+              </a>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }

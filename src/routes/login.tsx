@@ -64,34 +64,36 @@ function LoginPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-sm items-center p-6">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>登录</CardTitle>
-          <CardDescription>输入邮箱接收 Magic Link 完成登录</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              disabled={sendMagicLink.isPending}
-            />
-            <Button type="submit" disabled={sendMagicLink.isPending}>
-              发送登录链接
-            </Button>
-          </form>
+    <main className="flex min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-sm flex-1 items-center p-6">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>登录</CardTitle>
+            <CardDescription>输入邮箱接收 Magic Link 完成登录</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                disabled={sendMagicLink.isPending}
+              />
+              <Button type="submit" disabled={sendMagicLink.isPending}>
+                发送登录链接
+              </Button>
+            </form>
 
-          {hint && <p className="text-muted-foreground text-sm">{hint}</p>}
-          {error && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {hint && <p className="text-muted-foreground text-sm">{hint}</p>}
+            {error && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }

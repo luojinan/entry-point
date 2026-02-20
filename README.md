@@ -244,6 +244,29 @@ export const Route = createFileRoute("/supabase")({
 - **按需保护**：每个路由自行决定是否拦截
 - `throw redirect` 会中断路由加载，触发跳转
 
+## 路由页面布局约定（新增页面必遵守）
+
+项目已采用统一 App Shell：
+
+- `src/routes/__root.tsx` 使用固定视口高度（`h-svh`）并禁用页面级滚动（`overflow-hidden`）
+- 因此每个路由页面必须自行提供滚动容器
+
+新增路由页面时，根节点请使用：
+
+```tsx
+<main className="flex min-h-0 flex-1 overflow-y-auto">
+  <div className="mx-auto w-full max-w-4xl p-6">
+    {/* page content */}
+  </div>
+</main>
+```
+
+补充规则：
+
+- 外层 `main` 负责纵向滚动
+- 内层容器负责宽度与内边距（`max-w-*`、`p-*`）
+- 若页面有固定底部区域（如 Chat 输入框），在页面内部使用 `min-h-0 + overflow-hidden + sticky bottom-0`，不要恢复 `window/body` 滚动
+
 ## 主题切换
 
 这个问题涉及两个方案的对比：在 <body> 开头放同步内联 `<script>` vs 在 React 组件中（如 `useEffect`）处理初始主题。

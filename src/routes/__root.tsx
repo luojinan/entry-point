@@ -56,16 +56,18 @@ function RootLayout() {
   });
 
   return (
-    <>
-      <header className="flex w-full items-center px-4 pt-3 sm:px-6">
+    <div className="flex h-svh min-h-svh flex-col overflow-hidden">
+      <header className="flex shrink-0 w-full items-center px-4 pt-3 sm:px-6">
         {!isIndex && <BackToHome />}
         <div className="ml-auto flex items-center gap-1">
           <ChatEntry />
           <ThemeToggle />
         </div>
       </header>
-      <Outlet />
-    </>
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+        <Outlet />
+      </div>
+    </div>
   );
 }
 
