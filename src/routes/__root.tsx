@@ -7,6 +7,7 @@ import {
   useMatches,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect } from "react";
 
 import { BackToHome } from "@/components/back-to-home";
 import { ChatEntry } from "@/components/chat-entry";
@@ -36,13 +37,33 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Entry Point",
+      },
+      {
+        name: "theme-color",
+        content: "#000000",
+      },
+      {
+        name: "apple-mobile-web-app-capable",
+        content: "yes",
+      },
+      {
+        name: "apple-mobile-web-app-status-bar-style",
+        content: "default",
       },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "manifest",
+        href: "/manifest.webmanifest",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/logo192.png",
       },
     ],
   }),
@@ -54,6 +75,29 @@ function RootLayout() {
   const isIndex = useMatches({
     select: (matches) => matches[matches.length - 1]?.fullPath === "/",
   });
+
+  useEffect(() => {
+    if (import.meta.env.SSR || !("serviceWorker" in navigator)) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void import("virtual:pwa-register")
+      .then(({ registerSW }) => {
+        if (cancelled) {
+          return;
+        }
+        registerSW({ immediate: true });
+      })
+      .catch(() => {
+        // Ignore registration errors to keep app bootstrap resilient.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="flex h-svh min-h-svh flex-col overflow-hidden">
