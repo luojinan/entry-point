@@ -81,7 +81,7 @@ export function ChatComposer({
         {topActions}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex items-end gap-2">
         <textarea
           ref={inputRef}
           value={input}
@@ -93,8 +93,8 @@ export function ChatComposer({
           disabled={disabled}
           rows={1}
           className={cn(
-            "border-input dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-sm transition-colors focus-visible:ring-[3px] placeholder:text-muted-foreground flex-1 resize-none outline-none disabled:cursor-not-allowed disabled:opacity-50",
-            "field-sizing-content min-h-9 max-h-32",
+            "border-input dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base md:text-sm transition-[color,border-color,box-shadow] focus-visible:ring-[3px] placeholder:text-muted-foreground flex-1 resize-none overflow-y-auto outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            "[field-sizing:content] min-h-9 max-h-48",
           )}
         />
         {inputActions}
