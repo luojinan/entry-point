@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ComponentsDemoRouteImport } from './routes/components-demo'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTgSearchRouteImport } from './routes/api/tg-search'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const SupabaseRoute = SupabaseRouteImport.update({
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTgSearchRoute = ApiTgSearchRouteImport.update({
+  id: '/api/tg-search',
+  path: '/api/tg-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/tg-search': typeof ApiTgSearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/tg-search': typeof ApiTgSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/tg-search': typeof ApiTgSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +90,16 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/tg-search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chat' | '/components-demo' | '/login' | '/supabase' | '/api/chat'
+  to:
+    | '/'
+    | '/chat'
+    | '/components-demo'
+    | '/login'
+    | '/supabase'
+    | '/api/chat'
+    | '/api/tg-search'
   id:
     | '__root__'
     | '/'
@@ -91,6 +108,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/tg-search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,6 +118,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SupabaseRoute: typeof SupabaseRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiTgSearchRoute: typeof ApiTgSearchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -139,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tg-search': {
+      id: '/api/tg-search'
+      path: '/api/tg-search'
+      fullPath: '/api/tg-search'
+      preLoaderRoute: typeof ApiTgSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -156,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SupabaseRoute: SupabaseRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiTgSearchRoute: ApiTgSearchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
