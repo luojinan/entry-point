@@ -52,10 +52,19 @@ export function ChatComposer({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
+    if (e.key !== "Enter" || e.shiftKey) {
+      return;
     }
+
+    const nativeEvent = e.nativeEvent;
+    const isImeComposing =
+      nativeEvent.isComposing || nativeEvent.keyCode === 229;
+    if (isImeComposing) {
+      return;
+    }
+
+    e.preventDefault();
+    handleSubmit();
   };
 
   return (

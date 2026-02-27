@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +11,9 @@ import {
 import {
   fetchNavigationLinks,
   NAVIGATION_LINKS_QUERY_KEY,
+  readNavigationLinksCache,
+  type NavigationLinkRow,
+  writeNavigationLinksCache,
 } from "@/lib/navigation";
 import { supabase } from "@/lib/supabase-client";
 
@@ -24,6 +28,11 @@ function getErrorMessage(error: unknown) {
 }
 
 function HomePage() {
+  const [cachedLinks] = useState<NavigationLinkRow[] | undefined>(() =>
+    readNavigationLinksCache(),
+  );
+  const hasCachedLinks = (cachedLinks?.length ?? 0) > 0;
+
   const {
     isLoading: loading,
     isFetching,
@@ -33,7 +42,21 @@ function HomePage() {
   } = useQuery({
     queryKey: NAVIGATION_LINKS_QUERY_KEY,
     queryFn: () => fetchNavigationLinks(supabase),
+    enabled: !hasCachedLinks,
+    initialData: hasCachedLinks ? cachedLinks : undefined,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
+
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
+
+    writeNavigationLinksCache(data);
+  }, [data]);
 
   const links = data ?? [];
   const error = getErrorMessage(queryError);
@@ -97,7 +120,7 @@ function HomePage() {
           </section>
         )}
 
-        {!loading && !error && links.length > 0 && (
+        {!loading && links.length > 0 && (
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {links.map((item) => (
               <a key={item.id} href={item.url} target="_blank" rel="noreferrer">

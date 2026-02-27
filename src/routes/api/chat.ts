@@ -13,6 +13,95 @@ import { searchTG } from "@/lib/tg-search/search";
 
 export type ChatMessage = UIMessage;
 
+const SQL_WRITE_KEYWORDS = [
+  "INSERT",
+  "UPDATE",
+  "DELETE",
+  "UPSERT",
+  "MERGE",
+  "CREATE",
+  "ALTER",
+  "DROP",
+  "TRUNCATE",
+  "GRANT",
+  "REVOKE",
+  "COMMENT",
+  "VACUUM",
+  "REINDEX",
+  "CLUSTER",
+  "REFRESH",
+  "CALL",
+  "DO",
+] as const;
+
+const SQL_READONLY_FIRST_KEYWORDS = new Set([
+  "SELECT",
+  "WITH",
+  "SHOW",
+  "EXPLAIN",
+  "DESCRIBE",
+  "DESC",
+  "VALUES",
+]);
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getReadOnlyHint(annotations: unknown): boolean | undefined {
+  if (!isObjectRecord(annotations)) {
+    return undefined;
+  }
+  const hint = annotations.readOnlyHint;
+  return typeof hint === "boolean" ? hint : undefined;
+}
+
+function extractSqlFromToolInput(input: unknown): string | null {
+  if (!isObjectRecord(input)) {
+    return null;
+  }
+
+  const candidates = [input.query, input.sql, input.statement];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string") {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function isReadOnlySql(sql: string): boolean {
+  const normalized = sql
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/--.*$/gm, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+
+  if (!normalized) {
+    return false;
+  }
+
+  const firstKeyword = normalized.match(/^[A-Z]+/)?.[0];
+  if (!firstKeyword || !SQL_READONLY_FIRST_KEYWORDS.has(firstKeyword)) {
+    return false;
+  }
+
+  const hasWriteKeyword = SQL_WRITE_KEYWORDS.some((keyword) =>
+    new RegExp(`\\b${keyword}\\b`).test(normalized),
+  );
+
+  return !hasWriteKeyword;
+}
+
+function shouldApproveSqlToolCall(input: unknown): boolean {
+  const sql = extractSqlFromToolInput(input);
+  if (sql == null) {
+    return true;
+  }
+  return !isReadOnlySql(sql);
+}
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
@@ -36,9 +125,22 @@ export const Route = createFileRoute("/api/chat")({
               },
             },
           });
-          const mcpTools = await mcpClient.tools();
-          for (const toolName of Object.keys(mcpTools)) {
-            mcpTools[toolName].needsApproval = true;
+          const definitions = await mcpClient.listTools();
+          const mcpTools = mcpClient.toolsFromDefinitions(definitions);
+          const definitionMap = new Map(
+            definitions.tools.map((definition) => [definition.name, definition]),
+          );
+
+          for (const [toolName, mcpTool] of Object.entries(mcpTools)) {
+            if (toolName === "execute_sql" || toolName === "apply_migration") {
+              mcpTool.needsApproval = (input) => shouldApproveSqlToolCall(input);
+              continue;
+            }
+
+            const readOnlyHint = getReadOnlyHint(
+              definitionMap.get(toolName)?.annotations,
+            );
+            mcpTool.needsApproval = readOnlyHint !== true;
           }
           allTools = { ...mcpTools };
         } catch (e) {
