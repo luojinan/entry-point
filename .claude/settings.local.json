@@ -21,7 +21,8 @@
       "Bash(pnpm build:*)",
       "Skill(agent-browser)",
       "Bash(agent-browser --cdp 9222 open:*)",
-      "Bash(agent-browser:*)"
+      "Bash(agent-browser:*)",
+      "Bash(npx biome:*)"
     ]
   }
 }

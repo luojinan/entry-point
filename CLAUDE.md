@@ -76,15 +76,6 @@ Core workflow:
 - Client UI at `src/routes/chat.tsx` using `@ai-sdk/react` `useChat` hook
 - Provider configured in `src/lib/ai-provider.ts` (OpenAI-compatible endpoint)
 
-### Vite Plugin Order (critical)
-
-1. `@tanstack/devtools-vite`
-2. `@cloudflare/vite-plugin` (SSR environment)
-3. `vite-tsconfig-paths`
-4. `@tailwindcss/vite`
-5. `@tanstack/react-start/plugin/vite`
-6. `@vitejs/plugin-react`
-
 ### Environment Variables
 
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase client

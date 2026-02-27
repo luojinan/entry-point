@@ -1,3 +1,4 @@
+import type { DynamicToolUIPart } from "ai";
 import { DynamicToolCard } from "@/components/chat/dynamic-tool-card";
 import { ReasoningBlock } from "@/components/chat/reasoning-block";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,20 @@ type ToolApprovalHandler = (opts: {
   approved: boolean;
   reason?: string;
 }) => void | PromiseLike<void>;
+
+/**
+ * Static tool parts (created by `tool()`) have `type: "tool-${name}"`
+ * instead of `type: "dynamic-tool"`. Normalize them so DynamicToolCard
+ * can handle both uniformly.
+ */
+function asToolPart(part: { type: string }): DynamicToolUIPart | null {
+  if (part.type === "dynamic-tool") return part as DynamicToolUIPart;
+  if (part.type.startsWith("tool-")) {
+    const toolName = part.type.slice("tool-".length);
+    return { ...part, type: "dynamic-tool", toolName } as DynamicToolUIPart;
+  }
+  return null;
+}
 
 export function MessageBubble({
   message,
@@ -36,24 +51,28 @@ export function MessageBubble({
         >
           {message.parts.map((part, i) => {
             const key = `${message.id}-${i}`;
-            switch (part.type) {
-              case "text":
-                return (
-                  <div key={key} className="whitespace-pre-wrap">
-                    {part.text}
-                  </div>
-                );
-              case "reasoning":
-                return <ReasoningBlock key={key} part={part} />;
-              case "dynamic-tool":
-                return (
-                  <div key={key} className="mt-2 first:mt-0">
-                    <DynamicToolCard part={part} onApproval={onToolApproval} />
-                  </div>
-                );
-              default:
-                return null;
+            if (part.type === "text") {
+              return (
+                <div key={key} className="whitespace-pre-wrap">
+                  {part.text}
+                </div>
+              );
             }
+            if (part.type === "reasoning") {
+              return <ReasoningBlock key={key} part={part} />;
+            }
+            const toolPart = asToolPart(part);
+            if (toolPart) {
+              return (
+                <div key={key} className="mt-2 first:mt-0">
+                  <DynamicToolCard
+                    part={toolPart}
+                    onApproval={onToolApproval}
+                  />
+                </div>
+              );
+            }
+            return null;
           })}
         </div>
       </div>
