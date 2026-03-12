@@ -6,7 +6,7 @@
   "main": "@tanstack/react-start/server-entry",
 
   "vars": {
-    "AI_BASE_URL": "https://api.longcat.chat/openai/v1",
+    "AI_BASE_URL": "https://api.xiaomimimo.com/v1",
     "SUPABASE_PROJECT_REF": "knclktpgdzpxdooyprdv",
     "TG_CHANNELS": "Quark_Movies,ucquark,QuarkFree,yunpanquark,kuakedongman,shareAliyun,Aliyun_4K_Movies"
   }
