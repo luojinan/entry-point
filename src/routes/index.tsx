@@ -89,7 +89,7 @@ function HomePage() {
                 refetch();
               }}
             >
-              {isFetching ? "刷新中..." : "刷新数据"}
+              {isFetching ? "刷新中..." : "刷新"}
             </Button>
           </div>
         </header>
