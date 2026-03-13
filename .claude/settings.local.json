@@ -22,7 +22,10 @@
       "Skill(agent-browser)",
       "Bash(agent-browser --cdp 9222 open:*)",
       "Bash(agent-browser:*)",
-      "Bash(npx biome:*)"
+      "Bash(npx biome:*)",
+      "mcp__supabase__get_edge_function",
+      "mcp__supabase__deploy_edge_function",
+      "mcp__supabase__list_edge_functions"
     ]
   }
 }

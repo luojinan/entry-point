@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTgSearchRouteImport } from './routes/api/tg-search'
 import { Route as ApiNotifyRouteImport } from './routes/api/notify'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiExchangeRateRouteImport } from './routes/api/exchange-rate'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const SupabaseRoute = SupabaseRouteImport.update({
@@ -59,6 +60,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiExchangeRateRoute = ApiExchangeRateRouteImport.update({
+  id: '/api/exchange-rate',
+  path: '/api/exchange-rate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SupabaseRoute: typeof SupabaseRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiExchangeRateRoute: typeof ApiExchangeRateRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiNotifyRoute: typeof ApiNotifyRoute
   ApiTgSearchRoute: typeof ApiTgSearchRoute
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/exchange-rate': {
+      id: '/api/exchange-rate'
+      path: '/api/exchange-rate'
+      fullPath: '/api/exchange-rate'
+      preLoaderRoute: typeof ApiExchangeRateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SupabaseRoute: SupabaseRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiExchangeRateRoute: ApiExchangeRateRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiNotifyRoute: ApiNotifyRoute,
   ApiTgSearchRoute: ApiTgSearchRoute,
