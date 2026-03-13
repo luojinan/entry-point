@@ -15,6 +15,8 @@ import { Route as ComponentsDemoRouteImport } from './routes/components-demo'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTgSearchRouteImport } from './routes/api/tg-search'
+import { Route as ApiNotifyRouteImport } from './routes/api/notify'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const SupabaseRoute = SupabaseRouteImport.update({
@@ -47,6 +49,16 @@ const ApiTgSearchRoute = ApiTgSearchRouteImport.update({
   path: '/api/tg-search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNotifyRoute = ApiNotifyRouteImport.update({
+  id: '/api/notify',
+  path: '/api/notify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -60,6 +72,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +83,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
 }
 export interface FileRoutesById {
@@ -79,6 +95,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +108,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/health'
+    | '/api/notify'
     | '/api/tg-search'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +119,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/health'
+    | '/api/notify'
     | '/api/tg-search'
   id:
     | '__root__'
@@ -108,6 +130,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/health'
+    | '/api/notify'
     | '/api/tg-search'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +142,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SupabaseRoute: typeof SupabaseRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiNotifyRoute: typeof ApiNotifyRoute
   ApiTgSearchRoute: typeof ApiTgSearchRoute
 }
 
@@ -165,6 +191,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTgSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/notify': {
+      id: '/api/notify'
+      path: '/api/notify'
+      fullPath: '/api/notify'
+      preLoaderRoute: typeof ApiNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -182,6 +222,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SupabaseRoute: SupabaseRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiNotifyRoute: ApiNotifyRoute,
   ApiTgSearchRoute: ApiTgSearchRoute,
 }
 export const routeTree = rootRouteImport

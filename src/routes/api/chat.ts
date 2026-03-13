@@ -10,6 +10,7 @@ import {
 import { z } from "zod";
 import { getModel } from "@/lib/ai-provider";
 import { searchTG } from "@/lib/tg-search/search";
+import { withCors, handleCorsPreflightRequest } from "@/lib/api-utils";
 
 export type ChatMessage = UIMessage;
 
@@ -105,6 +106,8 @@ function shouldApproveSqlToolCall(input: unknown): boolean {
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
+      OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
+
       POST: async ({ request }) => {
         const {
           messages,
@@ -173,7 +176,7 @@ export const Route = createFileRoute("/api/chat")({
           },
         });
 
-        return result.toUIMessageStreamResponse();
+        return withCors(result.toUIMessageStreamResponse());
       },
     },
   },
