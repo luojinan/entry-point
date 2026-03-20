@@ -19,6 +19,9 @@ import { Route as ApiNotifyRouteImport } from './routes/api/notify'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiExchangeRateRouteImport } from './routes/api/exchange-rate'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiQiemanLongWinPlanRouteImport } from './routes/api/qieman/long-win-plan'
+import { Route as ApiQiemanLongWinAssetsRouteImport } from './routes/api/qieman/long-win-assets'
+import { Route as ApiQiemanLongWinRouteImport } from './routes/api/qieman/long-win'
 
 const SupabaseRoute = SupabaseRouteImport.update({
   id: '/supabase',
@@ -70,6 +73,21 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiQiemanLongWinPlanRoute = ApiQiemanLongWinPlanRouteImport.update({
+  id: '/api/qieman/long-win-plan',
+  path: '/api/qieman/long-win-plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiQiemanLongWinAssetsRoute = ApiQiemanLongWinAssetsRouteImport.update({
+  id: '/api/qieman/long-win-assets',
+  path: '/api/qieman/long-win-assets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiQiemanLongWinRoute = ApiQiemanLongWinRouteImport.update({
+  id: '/api/qieman/long-win',
+  path: '/api/qieman/long-win',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +100,9 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
+  '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
+  '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
+  '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +115,9 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
+  '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
+  '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
+  '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +131,9 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
+  '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
+  '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
+  '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +148,9 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
+    | '/api/qieman/long-win'
+    | '/api/qieman/long-win-assets'
+    | '/api/qieman/long-win-plan'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +163,9 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
+    | '/api/qieman/long-win'
+    | '/api/qieman/long-win-assets'
+    | '/api/qieman/long-win-plan'
   id:
     | '__root__'
     | '/'
@@ -145,6 +178,9 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
+    | '/api/qieman/long-win'
+    | '/api/qieman/long-win-assets'
+    | '/api/qieman/long-win-plan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +194,9 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiNotifyRoute: typeof ApiNotifyRoute
   ApiTgSearchRoute: typeof ApiTgSearchRoute
+  ApiQiemanLongWinRoute: typeof ApiQiemanLongWinRoute
+  ApiQiemanLongWinAssetsRoute: typeof ApiQiemanLongWinAssetsRoute
+  ApiQiemanLongWinPlanRoute: typeof ApiQiemanLongWinPlanRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +271,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/qieman/long-win-plan': {
+      id: '/api/qieman/long-win-plan'
+      path: '/api/qieman/long-win-plan'
+      fullPath: '/api/qieman/long-win-plan'
+      preLoaderRoute: typeof ApiQiemanLongWinPlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/qieman/long-win-assets': {
+      id: '/api/qieman/long-win-assets'
+      path: '/api/qieman/long-win-assets'
+      fullPath: '/api/qieman/long-win-assets'
+      preLoaderRoute: typeof ApiQiemanLongWinAssetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/qieman/long-win': {
+      id: '/api/qieman/long-win'
+      path: '/api/qieman/long-win'
+      fullPath: '/api/qieman/long-win'
+      preLoaderRoute: typeof ApiQiemanLongWinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +306,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiNotifyRoute: ApiNotifyRoute,
   ApiTgSearchRoute: ApiTgSearchRoute,
+  ApiQiemanLongWinRoute: ApiQiemanLongWinRoute,
+  ApiQiemanLongWinAssetsRoute: ApiQiemanLongWinAssetsRoute,
+  ApiQiemanLongWinPlanRoute: ApiQiemanLongWinPlanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
