@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ComponentsDemoRouteImport } from './routes/components-demo'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as QiemanLongWinPlanRouteImport } from './routes/qieman/long-win-plan'
 import { Route as ApiTgSearchRouteImport } from './routes/api/tg-search'
 import { Route as ApiNotifyRouteImport } from './routes/api/notify'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
@@ -47,6 +48,11 @@ const ChatRoute = ChatRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QiemanLongWinPlanRoute = QiemanLongWinPlanRouteImport.update({
+  id: '/qieman/long-win-plan',
+  path: '/qieman/long-win-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTgSearchRoute = ApiTgSearchRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
+  '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
   '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
+  '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
   '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
+  '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
   '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
+    | '/qieman/long-win-plan'
     | '/api/qieman/long-win'
     | '/api/qieman/long-win-assets'
     | '/api/qieman/long-win-plan'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
+    | '/qieman/long-win-plan'
     | '/api/qieman/long-win'
     | '/api/qieman/long-win-assets'
     | '/api/qieman/long-win-plan'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/notify'
     | '/api/tg-search'
+    | '/qieman/long-win-plan'
     | '/api/qieman/long-win'
     | '/api/qieman/long-win-assets'
     | '/api/qieman/long-win-plan'
@@ -207,6 +219,7 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiNotifyRoute: typeof ApiNotifyRoute
   ApiTgSearchRoute: typeof ApiTgSearchRoute
+  QiemanLongWinPlanRoute: typeof QiemanLongWinPlanRoute
   ApiQiemanLongWinRoute: typeof ApiQiemanLongWinRoute
   ApiQiemanLongWinAssetsRoute: typeof ApiQiemanLongWinAssetsRoute
   ApiQiemanLongWinPlanRoute: typeof ApiQiemanLongWinPlanRoute
@@ -248,6 +261,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qieman/long-win-plan': {
+      id: '/qieman/long-win-plan'
+      path: '/qieman/long-win-plan'
+      fullPath: '/qieman/long-win-plan'
+      preLoaderRoute: typeof QiemanLongWinPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tg-search': {
@@ -327,6 +347,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiNotifyRoute: ApiNotifyRoute,
   ApiTgSearchRoute: ApiTgSearchRoute,
+  QiemanLongWinPlanRoute: QiemanLongWinPlanRoute,
   ApiQiemanLongWinRoute: ApiQiemanLongWinRoute,
   ApiQiemanLongWinAssetsRoute: ApiQiemanLongWinAssetsRoute,
   ApiQiemanLongWinPlanRoute: ApiQiemanLongWinPlanRoute,
