@@ -233,10 +233,12 @@ function LongWinPlanPage() {
             </div>
 
             <div className="space-y-3">
-              {data.composition.map((comp, idx) => {
-                const key = comp.classCode ?? `class-${idx}`;
-                return <ClassSection key={key} composition={comp} />;
-              })}
+              {data.composition
+                .filter((comp) => comp.className !== "现金")
+                .map((comp, idx) => {
+                  const key = comp.classCode ?? `class-${idx}`;
+                  return <ClassSection key={key} composition={comp} />;
+                })}
             </div>
           </>
         )}
