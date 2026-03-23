@@ -1,12 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { FundInfo, Composition } from "./type";
 
@@ -44,7 +38,7 @@ function CompItemRow({ item }: { item: FundInfo["composition"][0]["compList"][0]
   const navDateDisplay = fund?.navDate ?? (item.navDate != null ? formatNavDate(item.navDate) : "-");
 
   return (
-    <div className="grid grid-cols-12 items-center gap-2 border-b py-2 text-xs last:border-0 hover:bg-muted/30 px-2 rounded">
+    <div className="grid grid-cols-11 items-center gap-2 border-b py-2 text-xs last:border-0 hover:bg-muted/30 px-2 rounded">
       <div className="col-span-3 min-w-0">
         <div className="truncate font-medium text-foreground">{item.variety}</div>
         {fund && (
@@ -68,17 +62,6 @@ function CompItemRow({ item }: { item: FundInfo["composition"][0]["compList"][0]
         <span className={item.accProfit > 0 ? "text-red-500" : item.accProfit < 0 ? "text-green-500" : ""}>
           {accProfit}
         </span>
-      </div>
-      <div className="col-span-1 flex justify-end gap-1">
-        {item.strategyType === "GRID" && (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">网格</Badge>
-        )}
-        {item.strategyType === "LONG" && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">长赢</Badge>
-        )}
-        {!fund?.canBuy && fund && (
-          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">不可买</Badge>
-        )}
       </div>
     </div>
   );
@@ -107,7 +90,7 @@ function ClassSection({ composition }: { composition: Composition }) {
         </div>
       </div>
       <div className="divide-y">
-        {composition.compList.map((item, idx) => {
+        {composition.compList.filter((item) => item.variety !== "现金").map((item, idx) => {
           const key = item.fund?.fundCode ?? `${item.variety}-${idx}`;
           return <CompItemRow key={key} item={item} />;
         })}
@@ -240,13 +223,12 @@ function LongWinPlanPage() {
             <SummaryCard data={data} />
 
             <div className="border-b border-border pb-1.5">
-              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-2">
+              <div className="grid grid-cols-11 gap-2 text-xs font-medium text-muted-foreground px-2">
                 <div className="col-span-3">品种</div>
                 <div className="col-span-2 text-right">计划份数</div>
                 <div className="col-span-2 text-right">净值</div>
                 <div className="col-span-2 text-right">日涨跌</div>
                 <div className="col-span-2 text-right">累计收益</div>
-                <div className="col-span-1 text-right">状态</div>
               </div>
             </div>
 
