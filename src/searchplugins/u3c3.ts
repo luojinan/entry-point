@@ -1,0 +1,190 @@
+/**
+ * u3c3 插件 - U3C3磁力搜索
+ * 翻译自 Go 插件: plugin/u3c3/u3c3.go
+ */
+
+import * as cheerio from 'cheerio';
+import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
+import type { Link, SearchResult } from "./types";
+
+const BASE_URL = "https://u3c3u3c3.u3c3u3c3u3c3.com";
+const USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+
+export default class U3c3Plugin extends BasePlugin {
+  private _search2: string;
+  private _lastSync: number;
+
+  constructor() {
+    super("u3c3", 5);
+    this._search2 = "";
+    this._lastSync = 0;
+  }
+
+  private _extractSearch2FromHTML(html: string): string {
+    const lines = html.split("\n");
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+
+      if (line.startsWith("//")) continue;
+
+      if (line.includes("nmefafej") && line.includes('"')) {
+        const re = /var\s+nmefafej\s*=\s*"([^"]+)"/;
+        const matches = re.exec(line);
+        if (matches && matches[1].length > 5) {
+          return matches[1];
+        }
+
+        const start = line.indexOf('"');
+        if (start !== -1) {
+          const end = line.indexOf('"', start + 1);
+          if (end !== -1 && end - start - 1 > 5) {
+            return line.slice(start + 1, end);
+          }
+        }
+      }
+    }
+    return "";
+  }
+
+  private async _getSearch2Parameter(): Promise<string> {
+    if (this._search2 && Date.now() - this._lastSync < 3600000) {
+      return this._search2;
+    }
+
+    const resp = await fetchWithRetry(
+      BASE_URL,
+      {
+        headers: {
+          "User-Agent": USER_AGENT,
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        },
+      },
+      { timeout: 30000, retries: 2 },
+    );
+
+    const body = await resp.text();
+
+    const search2 = this._extractSearch2FromHTML(body);
+    if (!search2) {
+      throw new Error("无法从首页提取search2参数");
+    }
+
+    this._search2 = search2;
+    this._lastSync = Date.now();
+
+    return search2;
+  }
+
+  private _cleanTitle(title: string): string {
+    title = title.replace(/<[^>]*>/g, "");
+    title = title.replace(/\s+/g, " ");
+    return title.trim();
+  }
+
+  private _parseDateTime(dateStr: string): string {
+    if (!dateStr) return "";
+    const formats = [dateStr];
+    for (const fmt of formats) {
+      const d = new Date(fmt);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    return "";
+  }
+
+  private _generateUniqueID(title: string, size: string): string {
+    const source = `u3c3-${title}-${size}`;
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) {
+      hash = (hash * 31 + source.charCodeAt(i)) | 0;
+    }
+    if (hash < 0) hash = -hash;
+    return `u3c3-${hash}`;
+  }
+
+  private _parseSearchResults(html: string): SearchResult[] {
+    const $ = cheerio.load(html);
+    const results: SearchResult[] = [];
+
+    $("tbody tr.default").each((i, s) => {
+      const titleCell = $(s).find("td:nth-child(2)");
+      const titleText = titleCell.text();
+      if (titleText.includes("[置顶]")) return;
+
+      const titleLink = titleCell.find("a");
+      let title = titleLink.text().trim();
+      if (!title) return;
+
+      title = this._cleanTitle(title);
+
+      let detailURL = titleLink.attr("href") || "";
+      if (detailURL && !detailURL.startsWith("http")) {
+        detailURL = BASE_URL + detailURL;
+      }
+
+      const linkCell = $(s).find("td:nth-child(3)");
+      const links: Link[] = [];
+      linkCell.find("a[href^='magnet:']").each((j, link) => {
+        const href = $(link).attr("href");
+        if (href) {
+          links.push({ url: href, type: "magnet", password: "" });
+        }
+      });
+
+      const sizeText = $(s).find("td:nth-child(4)").text().trim();
+
+      const dateText = $(s).find("td:nth-child(5)").text().trim();
+
+      const categoryText = $(s).find("td:nth-child(1) a").attr("title") || "";
+
+      const contentParts: string[] = [];
+      if (categoryText) contentParts.push(`分类: ${categoryText}`);
+      if (sizeText) contentParts.push(`大小: ${sizeText}`);
+      if (dateText) contentParts.push(`时间: ${dateText}`);
+      const content = contentParts.join(" | ");
+
+      const uniqueId = this._generateUniqueID(title, sizeText);
+
+      results.push({
+        uniqueId,
+        title,
+        content,
+        datetime: this._parseDateTime(dateText),
+        tags: ["种子", "磁力链接"],
+        links,
+        channel: "",
+      });
+    });
+
+    return results;
+  }
+
+  async search(
+    keyword: string,
+    ext: Record<string, unknown> = {},
+  ): Promise<SearchResult[]> {
+    const search2 = await this._getSearch2Parameter();
+
+    const searchURL = `${BASE_URL}/?search2=${search2}&search=${encodeURIComponent(keyword)}`;
+
+    const resp = await fetchWithRetry(
+      searchURL,
+      {
+        headers: {
+          "User-Agent": USER_AGENT,
+          Referer: BASE_URL + "/",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        },
+      },
+      { timeout: 30000, retries: 2 },
+    );
+
+    const body = await resp.text();
+    const results = this._parseSearchResults(body);
+
+    return filterByKeyword(results, keyword);
+  }
+}

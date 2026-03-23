@@ -1,4 +1,4 @@
-import cheerio from "cheerio";
+import * as cheerio from 'cheerio';
 import { BasePlugin, fetchWithTimeout, filterByKeyword } from "./base";
 import type { Link, SearchResult } from "./types";
 
