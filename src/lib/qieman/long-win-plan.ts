@@ -1,9 +1,9 @@
 import type { LongWinPlanResponse } from "./types";
 
 interface QiemanApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
+  code?: number;
+  message?: string;
+  data?: T | null;
 }
 
 export class QiemanPlanFetchError extends Error {
@@ -30,6 +30,55 @@ async function createSign(): Promise<string> {
   return `${ts}${hash.substring(0, 32)}`;
 }
 
+function isLongWinPlanResponse(value: unknown): value is LongWinPlanResponse {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<LongWinPlanResponse>;
+
+  return (
+    typeof candidate.establishDate === "number" &&
+    !!candidate.tradeLimit &&
+    typeof candidate.tradeLimit === "object" &&
+    typeof candidate.tradeLimit.minUnitAmount === "number" &&
+    typeof candidate.tradeLimit.maxUnitAmount === "number" &&
+    Array.isArray(candidate.composition)
+  );
+}
+
+function extractLongWinPlanData(payload: unknown): LongWinPlanResponse {
+  if (isLongWinPlanResponse(payload)) {
+    return payload;
+  }
+
+  const wrappedData =
+    payload && typeof payload === "object" && "data" in payload
+      ? (payload as QiemanApiResponse<unknown>).data
+      : undefined;
+
+  if (isLongWinPlanResponse(wrappedData)) {
+    return wrappedData;
+  }
+
+  const message =
+    payload &&
+    typeof payload === "object" &&
+    "message" in payload &&
+    typeof (payload as QiemanApiResponse<unknown>).message === "string"
+      ? (payload as QiemanApiResponse<unknown>).message
+      : "Qieman API response is missing long-win plan data";
+  const code =
+    payload &&
+    typeof payload === "object" &&
+    "code" in payload &&
+    typeof (payload as QiemanApiResponse<unknown>).code === "number"
+      ? (payload as QiemanApiResponse<unknown>).code
+      : 502;
+
+  throw new QiemanPlanFetchError(`Qieman API error: ${code} - ${message}`, 502);
+}
+
 export async function loadLongWinPlan(
   prodCode: string,
 ): Promise<LongWinPlanResponse> {
@@ -53,12 +102,9 @@ export async function loadLongWinPlan(
     );
   }
 
-  const payload =
-    (await response.json()) as QiemanApiResponse<LongWinPlanResponse>;
+  const payload = (await response.json()) as
+    | QiemanApiResponse<LongWinPlanResponse>
+    | LongWinPlanResponse;
 
-  if (!payload.data) {
-    throw new QiemanPlanFetchError("Qieman API response is missing data", 502);
-  }
-
-  return payload.data;
+  return extractLongWinPlanData(payload);
 }

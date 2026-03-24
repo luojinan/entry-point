@@ -61,7 +61,7 @@ export interface SearchRequest {
   keyword: string;
   channels?: string[];
   result_type?: "results" | "merged_by_type" | "all";
-  /** 是否开启 plugin 搜索，默认 false */
+  /** 是否开启 plugin 搜索，默认 true */
   include_plugins?: boolean;
   /** 指定使用的插件名称列表，未传则使用 allPlugins */
   plugins?: string[];

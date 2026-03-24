@@ -9,8 +9,8 @@ import {
 } from "ai";
 import { z } from "zod";
 import { getModel } from "@/lib/ai-provider";
-import { searchTG } from "@/lib/tg-search/search";
-import { withCors, handleCorsPreflightRequest } from "@/lib/api-utils";
+import { handleCorsPreflightRequest, withCors } from "@/lib/api-utils";
+import { search } from "@/lib/tg-search/search";
 
 export type ChatMessage = UIMessage;
 
@@ -131,12 +131,16 @@ export const Route = createFileRoute("/api/chat")({
           const definitions = await mcpClient.listTools();
           const mcpTools = mcpClient.toolsFromDefinitions(definitions);
           const definitionMap = new Map(
-            definitions.tools.map((definition) => [definition.name, definition]),
+            definitions.tools.map((definition) => [
+              definition.name,
+              definition,
+            ]),
           );
 
           for (const [toolName, mcpTool] of Object.entries(mcpTools)) {
             if (toolName === "execute_sql" || toolName === "apply_migration") {
-              mcpTool.needsApproval = (input) => shouldApproveSqlToolCall(input);
+              mcpTool.needsApproval = (input) =>
+                shouldApproveSqlToolCall(input);
               continue;
             }
 
@@ -152,12 +156,17 @@ export const Route = createFileRoute("/api/chat")({
 
         allTools.searchTG = tool({
           description:
-            "搜索 Telegram 频道中的网盘资源链接（夸克、阿里云盘、百度网盘等），并可扩展接入 plugin 搜索。当用户想要搜索、查找影视剧、动漫、小说等资源时使用此工具。",
+            "搜索 Telegram 频道和 plugin 来源中的网盘资源链接（夸克、阿里云盘、百度网盘等）。默认同时开启 plugin 搜索。当用户想要搜索、查找影视剧、动漫、小说等资源时使用此工具。",
           inputSchema: z.object({
             keyword: z.string().describe("搜索关键词，例如影视剧名称"),
           }),
           execute: async ({ keyword }) => {
-            const result = await searchTG(keyword);
+            const result = await search(
+              keyword,
+              undefined,
+              "merged_by_type",
+              true,
+            );
             return result;
           },
         });
