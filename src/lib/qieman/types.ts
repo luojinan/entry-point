@@ -2,52 +2,6 @@
  * 且慢 PMDJ API 类型定义
  */
 
-// ============ 长赢计划主信息 ============
-
-export interface LongWinResponse {
-	id: number;
-	userPropertyId: number;
-	userId: number;
-	type: string;
-	investType: string;
-	unitAmount: number;
-	savings: number;
-	monthBalance: number | null;
-	baselineAdviceFirstShowAt: number;
-	extUnitInfoAddAt: number;
-	firstOrderInfo: {
-		txnDay: number;
-		orderId: string;
-	};
-	adjustmentPushEnabled: boolean;
-	dividendMethodArEnabled: boolean;
-	capitalAccountId: string;
-	status: string;
-	followedAdjustments: Array<{
-		orderId: string;
-		adjustmentId: number;
-	}>;
-	coverAdvicePushEnabled: boolean;
-	introRead: boolean;
-	extUnitInfo: Array<{
-		classCode: string;
-		className: string;
-		unit: number;
-		compList: Array<{
-			fundCode: string;
-			unit: number;
-			variety: string;
-		}>;
-	}>;
-	createdAt: number;
-	updatedAt: number;
-	isAREnabled: boolean;
-	umaId: number;
-	modifyUnitsEnabled: boolean;
-	advicePhase: string;
-	prodCode: string;
-}
-
 // ============ 长赢投资方案 ============
 
 export interface LongWinPlanResponse {
@@ -97,18 +51,6 @@ export interface FundInfo {
 	navDate: string;
 	personalHighestBuyAmount: number | null;
 	cannotBuyReason: string | null;
-}
-
-// ============ 长赢资产汇总 ============
-
-export interface LongWinAssetsResponse {
-	totalAssets: number;
-	totalProfit: number;
-	totalProfitRate: number;
-	yesterdayProfit: number;
-	totalInvest: number;
-	holdingAssets: HoldingAsset[];
-	cashAssets: CashAsset[];
 }
 
 export interface HoldingAsset {

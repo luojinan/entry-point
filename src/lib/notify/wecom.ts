@@ -1,5 +1,10 @@
 const MAX_CONTENT_BYTES = 4096;
 
+export interface WecomWebhookResponse {
+  errcode?: number;
+  errmsg?: string;
+}
+
 function splitContentByBytes(content: string, maxBytes: number): string[] {
   const encoder = new TextEncoder();
   if (encoder.encode(content).length <= maxBytes) {
@@ -65,6 +70,14 @@ export async function sendWecomNotification(
   }
 
   return results.length === 1 ? results[0] : results;
+}
+
+export function isWecomNotificationSuccessful(
+  result: WecomWebhookResponse | WecomWebhookResponse[],
+) {
+  const items = Array.isArray(result) ? result : [result];
+
+  return items.every((item) => item?.errcode === 0);
 }
 
 export async function sendWecomImageByBase64(
