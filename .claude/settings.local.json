@@ -26,7 +26,13 @@
       "mcp__supabase__get_edge_function",
       "mcp__supabase__deploy_edge_function",
       "mcp__supabase__list_edge_functions",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "mcp__supabase__list_tables",
+      "Bash(pnpm lint:*)",
+      "Bash(head:*)",
+      "mcp__supabase__execute_sql",
+      "Bash(ls:*)",
+      "Bash(git:*)"
     ]
   }
 }

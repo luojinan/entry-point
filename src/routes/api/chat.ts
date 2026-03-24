@@ -152,7 +152,7 @@ export const Route = createFileRoute("/api/chat")({
 
         allTools.searchTG = tool({
           description:
-            "搜索 Telegram 频道中的网盘资源链接（夸克、阿里云盘、百度网盘等）。当用户想要搜索、查找影视剧、动漫、小说等资源时使用此工具。",
+            "搜索 Telegram 频道中的网盘资源链接（夸克、阿里云盘、百度网盘等），并可扩展接入 plugin 搜索。当用户想要搜索、查找影视剧、动漫、小说等资源时使用此工具。",
           inputSchema: z.object({
             keyword: z.string().describe("搜索关键词，例如影视剧名称"),
           }),

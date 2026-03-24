@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { searchTG } from "@/lib/tg-search/search";
+import { search } from "@/lib/tg-search/search";
 import type { SearchRequest } from "@/lib/tg-search/types";
 import {
 	jsonResponse,
@@ -17,6 +17,8 @@ export const Route = createFileRoute("/api/tg-search")({
 				const keyword = url.searchParams.get("kw");
 				const channelsParam = url.searchParams.get("channels");
 				const resultTypeParam = url.searchParams.get("res");
+				const includePluginsParam = url.searchParams.get("include_plugins");
+				const pluginsParam = url.searchParams.get("plugins");
 
 				if (!keyword) {
 					return errorResponse("Missing required parameter: kw", 400);
@@ -31,8 +33,21 @@ export const Route = createFileRoute("/api/tg-search")({
 						? resultTypeParam
 						: "merged_by_type";
 
+				const includePlugins =
+					includePluginsParam === "1" || includePluginsParam === "true";
+
+				const plugins = pluginsParam
+					? pluginsParam.split(",").map((p) => p.trim())
+					: undefined;
+
 				try {
-					const data = await searchTG(keyword, channels, resultType);
+					const data = await search(
+						keyword,
+						channels,
+						resultType,
+						includePlugins,
+						plugins,
+					);
 					return jsonResponse(data);
 				} catch (error) {
 					console.error("TG search error:", error);
@@ -54,7 +69,13 @@ export const Route = createFileRoute("/api/tg-search")({
 					const channels = body.channels;
 					const resultType = body.result_type || "merged_by_type";
 
-					const data = await searchTG(body.keyword, channels, resultType);
+					const data = await search(
+						body.keyword,
+						channels,
+						resultType,
+						body.include_plugins,
+						body.plugins,
+					);
 					return jsonResponse(data);
 				} catch (error) {
 					console.error("TG search error:", error);

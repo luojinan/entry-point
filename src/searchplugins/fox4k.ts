@@ -4,7 +4,8 @@
  * 排除夸克网盘链接
  */
 
-import cheerio, { type CheerioAPI, type Element } from "cheerio";
+import * as cheerio from "cheerio";
+import type { CheerioAPI } from "cheerio";
 import {
   BasePlugin,
   fetchWithRetry,
@@ -60,6 +61,8 @@ interface DetailInfo {
 interface SearchResultWithId extends SearchResult {
   _id: string;
 }
+
+type CheerioNode = Parameters<CheerioAPI>[0];
 
 class Fox4k extends BasePlugin {
   constructor() {
@@ -174,7 +177,7 @@ class Fox4k extends BasePlugin {
 
   private _parseSearchResultItem(
     $: CheerioAPI,
-    el: Element,
+    el: CheerioNode,
   ): SearchResultWithId | null {
     const $el = $(el);
 

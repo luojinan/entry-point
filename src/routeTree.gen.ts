@@ -22,8 +22,8 @@ import { Route as ApiExchangeRateRouteImport } from './routes/api/exchange-rate'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiQiemanLongWinPlanNotifyRouteImport } from './routes/api/qieman/long-win-plan-notify'
 import { Route as ApiQiemanLongWinPlanRouteImport } from './routes/api/qieman/long-win-plan'
-import { Route as ApiQiemanLongWinAssetsRouteImport } from './routes/api/qieman/long-win-assets'
-import { Route as ApiQiemanLongWinRouteImport } from './routes/api/qieman/long-win'
+import { Route as ApiQiemanLongWinHoldingsDiffNotifyRouteImport } from './routes/api/qieman/long-win-holdings-diff-notify'
+import { Route as ApiQiemanLongWinHoldingsDiffRouteImport } from './routes/api/qieman/long-win-holdings-diff'
 
 const SupabaseRoute = SupabaseRouteImport.update({
   id: '/supabase',
@@ -91,16 +91,18 @@ const ApiQiemanLongWinPlanRoute = ApiQiemanLongWinPlanRouteImport.update({
   path: '/api/qieman/long-win-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiQiemanLongWinAssetsRoute = ApiQiemanLongWinAssetsRouteImport.update({
-  id: '/api/qieman/long-win-assets',
-  path: '/api/qieman/long-win-assets',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiQiemanLongWinRoute = ApiQiemanLongWinRouteImport.update({
-  id: '/api/qieman/long-win',
-  path: '/api/qieman/long-win',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiQiemanLongWinHoldingsDiffNotifyRoute =
+  ApiQiemanLongWinHoldingsDiffNotifyRouteImport.update({
+    id: '/api/qieman/long-win-holdings-diff-notify',
+    path: '/api/qieman/long-win-holdings-diff-notify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiQiemanLongWinHoldingsDiffRoute =
+  ApiQiemanLongWinHoldingsDiffRouteImport.update({
+    id: '/api/qieman/long-win-holdings-diff',
+    path: '/api/qieman/long-win-holdings-diff',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -114,8 +116,8 @@ export interface FileRoutesByFullPath {
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
-  '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
-  '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
+  '/api/qieman/long-win-holdings-diff': typeof ApiQiemanLongWinHoldingsDiffRoute
+  '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
   '/api/qieman/long-win-plan-notify': typeof ApiQiemanLongWinPlanNotifyRoute
 }
@@ -131,8 +133,8 @@ export interface FileRoutesByTo {
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
-  '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
-  '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
+  '/api/qieman/long-win-holdings-diff': typeof ApiQiemanLongWinHoldingsDiffRoute
+  '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
   '/api/qieman/long-win-plan-notify': typeof ApiQiemanLongWinPlanNotifyRoute
 }
@@ -149,8 +151,8 @@ export interface FileRoutesById {
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
-  '/api/qieman/long-win': typeof ApiQiemanLongWinRoute
-  '/api/qieman/long-win-assets': typeof ApiQiemanLongWinAssetsRoute
+  '/api/qieman/long-win-holdings-diff': typeof ApiQiemanLongWinHoldingsDiffRoute
+  '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
   '/api/qieman/long-win-plan-notify': typeof ApiQiemanLongWinPlanNotifyRoute
 }
@@ -168,8 +170,8 @@ export interface FileRouteTypes {
     | '/api/notify'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
-    | '/api/qieman/long-win'
-    | '/api/qieman/long-win-assets'
+    | '/api/qieman/long-win-holdings-diff'
+    | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
     | '/api/qieman/long-win-plan-notify'
   fileRoutesByTo: FileRoutesByTo
@@ -185,8 +187,8 @@ export interface FileRouteTypes {
     | '/api/notify'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
-    | '/api/qieman/long-win'
-    | '/api/qieman/long-win-assets'
+    | '/api/qieman/long-win-holdings-diff'
+    | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
     | '/api/qieman/long-win-plan-notify'
   id:
@@ -202,8 +204,8 @@ export interface FileRouteTypes {
     | '/api/notify'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
-    | '/api/qieman/long-win'
-    | '/api/qieman/long-win-assets'
+    | '/api/qieman/long-win-holdings-diff'
+    | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
     | '/api/qieman/long-win-plan-notify'
   fileRoutesById: FileRoutesById
@@ -220,8 +222,8 @@ export interface RootRouteChildren {
   ApiNotifyRoute: typeof ApiNotifyRoute
   ApiTgSearchRoute: typeof ApiTgSearchRoute
   QiemanLongWinPlanRoute: typeof QiemanLongWinPlanRoute
-  ApiQiemanLongWinRoute: typeof ApiQiemanLongWinRoute
-  ApiQiemanLongWinAssetsRoute: typeof ApiQiemanLongWinAssetsRoute
+  ApiQiemanLongWinHoldingsDiffRoute: typeof ApiQiemanLongWinHoldingsDiffRoute
+  ApiQiemanLongWinHoldingsDiffNotifyRoute: typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   ApiQiemanLongWinPlanRoute: typeof ApiQiemanLongWinPlanRoute
   ApiQiemanLongWinPlanNotifyRoute: typeof ApiQiemanLongWinPlanNotifyRoute
 }
@@ -319,18 +321,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiQiemanLongWinPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/qieman/long-win-assets': {
-      id: '/api/qieman/long-win-assets'
-      path: '/api/qieman/long-win-assets'
-      fullPath: '/api/qieman/long-win-assets'
-      preLoaderRoute: typeof ApiQiemanLongWinAssetsRouteImport
+    '/api/qieman/long-win-holdings-diff-notify': {
+      id: '/api/qieman/long-win-holdings-diff-notify'
+      path: '/api/qieman/long-win-holdings-diff-notify'
+      fullPath: '/api/qieman/long-win-holdings-diff-notify'
+      preLoaderRoute: typeof ApiQiemanLongWinHoldingsDiffNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/qieman/long-win': {
-      id: '/api/qieman/long-win'
-      path: '/api/qieman/long-win'
-      fullPath: '/api/qieman/long-win'
-      preLoaderRoute: typeof ApiQiemanLongWinRouteImport
+    '/api/qieman/long-win-holdings-diff': {
+      id: '/api/qieman/long-win-holdings-diff'
+      path: '/api/qieman/long-win-holdings-diff'
+      fullPath: '/api/qieman/long-win-holdings-diff'
+      preLoaderRoute: typeof ApiQiemanLongWinHoldingsDiffRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -348,8 +350,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiNotifyRoute: ApiNotifyRoute,
   ApiTgSearchRoute: ApiTgSearchRoute,
   QiemanLongWinPlanRoute: QiemanLongWinPlanRoute,
-  ApiQiemanLongWinRoute: ApiQiemanLongWinRoute,
-  ApiQiemanLongWinAssetsRoute: ApiQiemanLongWinAssetsRoute,
+  ApiQiemanLongWinHoldingsDiffRoute: ApiQiemanLongWinHoldingsDiffRoute,
+  ApiQiemanLongWinHoldingsDiffNotifyRoute:
+    ApiQiemanLongWinHoldingsDiffNotifyRoute,
   ApiQiemanLongWinPlanRoute: ApiQiemanLongWinPlanRoute,
   ApiQiemanLongWinPlanNotifyRoute: ApiQiemanLongWinPlanNotifyRoute,
 }
