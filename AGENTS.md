@@ -1,6 +1,10 @@
 **Deploy**: Cloudflare Workers via Wrangler
 
-before edit you should run `pnpm run dev` to open tanstack watch
+Before editing files, check whether the dev server is already running by probing port `2190` first:
+`curl -I --max-time 2 http://127.0.0.1:2190`
+
+If the probe succeeds, treat dev as already started.
+Only if the probe fails should you run `pnpm run dev`.
 
 ## Browser Automation
 

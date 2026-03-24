@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { format, parse, isValid } from "date-fns";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,24 +31,23 @@ function formatNavDate(value: number | string | null | undefined): string {
   if (typeof value === "string") {
     const matched = value.match(/(\d{1,4})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
     if (matched) {
-      const [, , month, day] = matched;
-      return `${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+      const [, year, month, day] = matched;
+      const date = parse(`${year}-${month}-${day}`, "yyyy-M-d", new Date());
+      return isValid(date) ? format(date, "MM-dd") : "-";
     }
 
     const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return formatNavDate(parsed.getTime());
+    if (isValid(parsed)) {
+      return format(parsed, "MM-dd");
     }
 
     return value;
   }
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
+  if (!isValid(date)) return "-";
 
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${month}-${day}`;
+  return format(date, "MM-dd");
 }
 
 function DailyReturnCell({ value }: { value: number }) {
