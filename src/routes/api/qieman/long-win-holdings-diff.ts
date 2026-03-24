@@ -5,15 +5,16 @@ import {
   jsonResponse,
 } from "@/lib/api-utils";
 import {
-  DEFAULT_PLAN_SNAPSHOT_SOURCE,
-  DEFAULT_QIEMAN_PROD_CODE,
-} from "@/lib/qieman/plan-snapshot";
-import {
   ensureQiemanDiffAuthorized,
   getRequestEnv,
   loadLongWinHoldingsDiff,
   syncLongWinPlanSnapshot,
 } from "@/lib/qieman/long-win-holdings-diff";
+import { QiemanPlanFetchError } from "@/lib/qieman/long-win-plan";
+import {
+  DEFAULT_PLAN_SNAPSHOT_SOURCE,
+  DEFAULT_QIEMAN_PROD_CODE,
+} from "@/lib/qieman/plan-snapshot";
 
 interface SyncRequestBody {
   prodCode?: string;
@@ -68,6 +69,9 @@ export const Route = createFileRoute("/api/qieman/long-win-holdings-diff")({
             "Error in /api/qieman/long-win-holdings-diff GET:",
             error,
           );
+          if (error instanceof QiemanPlanFetchError) {
+            return errorResponse(error.message, error.status);
+          }
           return errorResponse(
             error instanceof Error ? error.message : "Internal server error",
             500,
@@ -108,6 +112,9 @@ export const Route = createFileRoute("/api/qieman/long-win-holdings-diff")({
             "Error in /api/qieman/long-win-holdings-diff POST:",
             error,
           );
+          if (error instanceof QiemanPlanFetchError) {
+            return errorResponse(error.message, error.status);
+          }
           return errorResponse(
             error instanceof Error ? error.message : "Internal server error",
             500,

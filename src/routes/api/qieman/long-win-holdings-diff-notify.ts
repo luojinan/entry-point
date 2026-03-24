@@ -16,6 +16,7 @@ import {
   loadLongWinHoldingsDiff,
   syncLongWinPlanSnapshot,
 } from "@/lib/qieman/long-win-holdings-diff";
+import { QiemanPlanFetchError } from "@/lib/qieman/long-win-plan";
 import {
   DEFAULT_QIEMAN_PROD_CODE,
   type PlanDiffResult,
@@ -67,90 +68,33 @@ function buildBaseResponse(params: {
   };
 }
 
-export const Route = createFileRoute("/api/qieman/long-win-holdings-diff-notify")(
-  {
-    server: {
-      handlers: {
-        OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
+export const Route = createFileRoute(
+  "/api/qieman/long-win-holdings-diff-notify",
+)({
+  server: {
+    handlers: {
+      OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-        POST: async ({ request, context }) => {
-          try {
-            const env = getRequestEnv(context);
-            const authError = ensureQiemanDiffAuthorized(request, env);
-            if (authError) {
-              return authError;
-            }
+      POST: async ({ request, context }) => {
+        try {
+          const env = getRequestEnv(context);
+          const authError = ensureQiemanDiffAuthorized(request, env);
+          if (authError) {
+            return authError;
+          }
 
-            const body = (await request.json()) as NotifyRequestBody;
-            if (!body.webhookKey) {
-              return errorResponse("Missing required field: webhookKey", 400);
-            }
+          const body = (await request.json()) as NotifyRequestBody;
+          if (!body.webhookKey) {
+            return errorResponse("Missing required field: webhookKey", 400);
+          }
 
-            const prodCode = body.prodCode ?? DEFAULT_QIEMAN_PROD_CODE;
-            const result = await loadLongWinHoldingsDiff(request, env, {
-              prodCode,
-              includeUnchanged: false,
-            });
+          const prodCode = body.prodCode ?? DEFAULT_QIEMAN_PROD_CODE;
+          const result = await loadLongWinHoldingsDiff(request, env, {
+            prodCode,
+            includeUnchanged: false,
+          });
 
-            if (!result.baselineFound) {
-              const syncSummary = await syncLongWinPlanSnapshot({
-                env,
-                prodCode,
-                planData: result.planData,
-                snapshotSource:
-                  body.snapshotSource ?? DEFAULT_DIFF_NOTIFY_SNAPSHOT_SOURCE,
-                existingRows: result.baselineRows,
-              });
-
-              return jsonResponse({
-                ...buildBaseResponse({
-                  prodCode,
-                  baselineFound: false,
-                  initialized: true,
-                  shouldNotify: false,
-                  notified: false,
-                  diff: result.diff,
-                  baselineUpdatedAt: result.baselineUpdatedAt,
-                  currentFetchedAt: result.currentFetchedAt,
-                  storageMode: result.storageMode,
-                }),
-                syncSummary,
-              });
-            }
-
-            if (!result.diff.hasChanges) {
-              return jsonResponse(
-                buildBaseResponse({
-                  prodCode,
-                  baselineFound: true,
-                  initialized: false,
-                  shouldNotify: false,
-                  notified: false,
-                  diff: result.diff,
-                  baselineUpdatedAt: result.baselineUpdatedAt,
-                  currentFetchedAt: result.currentFetchedAt,
-                  storageMode: result.storageMode,
-                }),
-              );
-            }
-
-            const content = transformLongWinDiffToMarkdown({
-              prodCode,
-              baselineUpdatedAt: result.baselineUpdatedAt,
-              currentFetchedAt: result.currentFetchedAt,
-              diff: result.diff,
-            });
-            const wecomResult = (await sendWecomNotification(
-              body.webhookKey,
-              content,
-            )) as WecomWebhookResponse | WecomWebhookResponse[];
-
-            if (!isWecomNotificationSuccessful(wecomResult)) {
-              throw new Error(
-                `Failed to send WeCom notification: ${formatWecomErrorMessage(wecomResult)}`,
-              );
-            }
-
+          if (!result.baselineFound) {
             const syncSummary = await syncLongWinPlanSnapshot({
               env,
               prodCode,
@@ -163,30 +107,90 @@ export const Route = createFileRoute("/api/qieman/long-win-holdings-diff-notify"
             return jsonResponse({
               ...buildBaseResponse({
                 prodCode,
-                baselineFound: true,
-                initialized: false,
-                shouldNotify: true,
-                notified: true,
+                baselineFound: false,
+                initialized: true,
+                shouldNotify: false,
+                notified: false,
                 diff: result.diff,
                 baselineUpdatedAt: result.baselineUpdatedAt,
                 currentFetchedAt: result.currentFetchedAt,
                 storageMode: result.storageMode,
               }),
               syncSummary,
-              wecomResult,
             });
-          } catch (error) {
-            console.error(
-              "Error in /api/qieman/long-win-holdings-diff-notify POST:",
-              error,
-            );
-            return errorResponse(
-              error instanceof Error ? error.message : "Internal server error",
-              500,
+          }
+
+          if (!result.diff.hasChanges) {
+            return jsonResponse(
+              buildBaseResponse({
+                prodCode,
+                baselineFound: true,
+                initialized: false,
+                shouldNotify: false,
+                notified: false,
+                diff: result.diff,
+                baselineUpdatedAt: result.baselineUpdatedAt,
+                currentFetchedAt: result.currentFetchedAt,
+                storageMode: result.storageMode,
+              }),
             );
           }
-        },
+
+          const content = transformLongWinDiffToMarkdown({
+            prodCode,
+            baselineUpdatedAt: result.baselineUpdatedAt,
+            currentFetchedAt: result.currentFetchedAt,
+            diff: result.diff,
+          });
+          const wecomResult = (await sendWecomNotification(
+            body.webhookKey,
+            content,
+          )) as WecomWebhookResponse | WecomWebhookResponse[];
+
+          if (!isWecomNotificationSuccessful(wecomResult)) {
+            throw new Error(
+              `Failed to send WeCom notification: ${formatWecomErrorMessage(wecomResult)}`,
+            );
+          }
+
+          const syncSummary = await syncLongWinPlanSnapshot({
+            env,
+            prodCode,
+            planData: result.planData,
+            snapshotSource:
+              body.snapshotSource ?? DEFAULT_DIFF_NOTIFY_SNAPSHOT_SOURCE,
+            existingRows: result.baselineRows,
+          });
+
+          return jsonResponse({
+            ...buildBaseResponse({
+              prodCode,
+              baselineFound: true,
+              initialized: false,
+              shouldNotify: true,
+              notified: true,
+              diff: result.diff,
+              baselineUpdatedAt: result.baselineUpdatedAt,
+              currentFetchedAt: result.currentFetchedAt,
+              storageMode: result.storageMode,
+            }),
+            syncSummary,
+            wecomResult,
+          });
+        } catch (error) {
+          console.error(
+            "Error in /api/qieman/long-win-holdings-diff-notify POST:",
+            error,
+          );
+          if (error instanceof QiemanPlanFetchError) {
+            return errorResponse(error.message, error.status);
+          }
+          return errorResponse(
+            error instanceof Error ? error.message : "Internal server error",
+            500,
+          );
+        }
       },
     },
   },
-);
+});

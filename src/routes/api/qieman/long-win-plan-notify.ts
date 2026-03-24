@@ -6,6 +6,10 @@ import {
 } from "@/lib/api-utils";
 import { transform } from "@/lib/notify/long-win-im";
 import { sendWecomNotification } from "@/lib/notify/wecom";
+import {
+  loadLongWinPlan,
+  QiemanPlanFetchError,
+} from "@/lib/qieman/long-win-plan";
 
 export const Route = createFileRoute("/api/qieman/long-win-plan-notify")({
   server: {
@@ -26,26 +30,11 @@ export const Route = createFileRoute("/api/qieman/long-win-plan-notify")({
             return errorResponse("Missing required field: webhookKey", 400);
           }
 
-          // Fetch data from the long-win-plan API
-          const planUrl = new URL(
-            `/api/qieman/long-win-plan?prodCode=${encodeURIComponent(body.prodCode)}`,
-            request.url,
-          );
-          const planRes = await fetch(planUrl.toString());
-
-          if (!planRes.ok) {
-            const errText = await planRes.text();
-            return errorResponse(
-              `Failed to fetch long-win-plan: ${planRes.status} - ${errText}`,
-              planRes.status,
-            );
-          }
-
-          const planData = await planRes.json();
+          const planData = await loadLongWinPlan(body.prodCode);
           console.log(JSON.stringify(planData));
 
           // Transform to IM text
-          const imText = transform(planData);
+          const imText = transform({ data: planData });
           console.log(imText, body.webhookKey);
 
           // Send text via wecom
@@ -54,6 +43,9 @@ export const Route = createFileRoute("/api/qieman/long-win-plan-notify")({
           return jsonResponse(result);
         } catch (error) {
           console.error("Error in /api/qieman/long-win-plan-notify:", error);
+          if (error instanceof QiemanPlanFetchError) {
+            return errorResponse(error.message, error.status);
+          }
           return errorResponse(
             error instanceof Error ? error.message : "Internal server error",
             500,
