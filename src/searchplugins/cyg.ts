@@ -1,5 +1,5 @@
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
-import type { Link, SearchResult } from "./types";
+import type { CloudType, Link, SearchResult } from "./types";
 
 /**
  * cyg 插件 - cyg.app WordPress REST API搜索
@@ -183,16 +183,16 @@ class CygPlugin extends BasePlugin {
     );
   }
 
-  private _determineCloudTypeByURL(url: string): string {
+  private _determineCloudTypeByURL(url: string): CloudType {
     for (const { regex, type } of this.urlPatterns) {
-      if (regex.test(url)) return type;
+      if (regex.test(url)) return type as CloudType;
     }
     return "others";
   }
 
-  private _determineCloudTypeByName(name: string): string {
+  private _determineCloudTypeByName(name: string): CloudType {
     const key = name.toLowerCase().trim();
-    return this.nameMap[key] || "others";
+    return (this.nameMap[key] || "others") as CloudType;
   }
 
   private _cleanHTML(htmlContent: string): string {

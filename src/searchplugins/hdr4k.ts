@@ -13,7 +13,7 @@ import {
   generateUniqueID,
   getRandomUA,
 } from "./base";
-import type { Link, SearchResult } from "./types";
+import type { CloudType, Link, SearchResult } from "./types";
 
 const PLUGIN_NAME = "hdr4k";
 const SEARCH_URL = "https://www.4khdr.cn/search.php?mod=forum";
@@ -67,7 +67,7 @@ class Hdr4kPlugin extends BasePlugin {
         },
         body: formData.toString(),
       },
-      { timeout: 10000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();
@@ -143,7 +143,7 @@ class Hdr4kPlugin extends BasePlugin {
     });
 
     const settled = await Promise.all(tasks);
-    return settled.filter((r): r is SearchResult => r !== null);
+    return (settled.filter((r): r is NonNullable<typeof r> => r !== null) as SearchResult[]);
   }
 
   private isEmptyRequestPost(title: string, links: Link[]): boolean {
@@ -199,7 +199,7 @@ class Hdr4kPlugin extends BasePlugin {
             Referer: "https://www.4khdr.cn/",
           },
         },
-        { timeout: 10000, retries: 2 },
+        { timeout: 30000, retries: 2 },
       );
 
       const html = await resp.text();
@@ -232,7 +232,7 @@ class Hdr4kPlugin extends BasePlugin {
                 // Deduplicate
                 if (!links.some((l) => l.url === href)) {
                   links.push({
-                    type: linkType as any,
+                    type: linkType,
                     url: href,
                     password: "",
                   });
@@ -248,7 +248,7 @@ class Hdr4kPlugin extends BasePlugin {
     }
   }
 
-  private determineLinkType(url: string): string {
+  private determineLinkType(url: string): CloudType {
     const lower = url.toLowerCase();
 
     if (lower.includes("pan.quark.cn")) return "quark";
@@ -268,7 +268,7 @@ class Hdr4kPlugin extends BasePlugin {
     if (lower.startsWith("magnet:")) return "magnet";
     if (lower.startsWith("ed2k:")) return "ed2k";
 
-    return "others";
+    return "others" as CloudType;
   }
 
   private cleanHTMLText(html: string): string {

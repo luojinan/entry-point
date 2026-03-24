@@ -8,7 +8,7 @@ import {
   filterByKeyword,
   getRandomUA,
 } from "./base";
-import type { CloudType, Link, SearchResult } from "./types";
+import type { CloudType, SearchResult } from "./types";
 
 const WEBSITE_URL = "https://www.pansearch.me/search";
 const BASE_URL_TEMPLATE = "https://www.pansearch.me/_next/data/%s/search.json";
@@ -136,7 +136,7 @@ class PansearchPlugin extends BasePlugin {
           "Cache-Control": "max-age=0",
         },
       },
-      { timeout: 8000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();
@@ -168,7 +168,7 @@ class PansearchPlugin extends BasePlugin {
           Pragma: "no-cache",
         },
       },
-      { timeout: 8000, retries: 1 },
+      { timeout: 30000, retries: 1 },
     );
 
     if (resp.status === 404) {

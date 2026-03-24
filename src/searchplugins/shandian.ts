@@ -142,7 +142,7 @@ class ShandianPlugin extends BasePlugin {
         {
           headers: this._getHeaders(),
         },
-        { timeout: 6000, retries: 2 },
+        { timeout: 20000, retries: 2 },
       );
 
       const html = await resp.text();
@@ -209,7 +209,7 @@ class ShandianPlugin extends BasePlugin {
       {
         headers: this._getHeaders(),
       },
-      { timeout: 8000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();
@@ -228,8 +228,9 @@ class ShandianPlugin extends BasePlugin {
     const enhancedPromises = rawResults.map(async (result) => {
       const links = await this._fetchDetailLinks(result._itemID);
       result.links = links;
-      delete result._itemID;
-      return result;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _itemID: _unused, ...cleanResult } = result;
+      return cleanResult;
     });
 
     const enhancedResults = await Promise.all(enhancedPromises);

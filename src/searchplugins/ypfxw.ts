@@ -60,7 +60,7 @@ class Ypfxw extends BasePlugin {
         method: "GET",
         headers: this._commonHeaders("https://ypfxw.com/"),
       },
-      { timeout: 12000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();
@@ -137,7 +137,7 @@ class Ypfxw extends BasePlugin {
         method: "GET",
         headers: this._commonHeaders(item.detailURL),
       },
-      { timeout: 10000, retries: 1 },
+      { timeout: 30000, retries: 1 },
     );
 
     const html = await resp.text();

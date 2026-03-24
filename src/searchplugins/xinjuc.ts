@@ -11,7 +11,7 @@ import {
   generateUniqueID,
   getRandomUA,
 } from "./base";
-import type { CloudType, Link, SearchResult } from "./types";
+import type { Link, SearchResult } from "./types";
 
 const PLUGIN_NAME = "xinjuc";
 const SITE_URL = "https://www.xinjuc.com";
@@ -54,7 +54,7 @@ class XinjucPlugin extends BasePlugin {
       {
         headers: HEADERS,
       },
-      { timeout: 10000, retries: 3 },
+      { timeout: 30000, retries: 3 },
     );
 
     const html = await resp.text();
@@ -198,7 +198,7 @@ class XinjucPlugin extends BasePlugin {
         {
           headers: HEADERS,
         },
-        8000,
+        25000,
       );
 
       if (!resp.ok) return { links: [], content: "" };

@@ -115,7 +115,7 @@ export default class SusuPlugin extends BasePlugin {
             Referer: `https://susuifa.com/download?post_id=${postID}&index=0&i=${index}`,
           },
         },
-        { timeout: 10000, retries: 0 },
+        { timeout: 30000, retries: 0 },
       );
 
       const data: ButtonData = await resp.json();
@@ -161,7 +161,7 @@ export default class SusuPlugin extends BasePlugin {
           Referer: "https://susuifa.com/",
         },
       },
-      { timeout: 10000, retries: 0 },
+      { timeout: 30000, retries: 0 },
     );
 
     const html = await resp.text();

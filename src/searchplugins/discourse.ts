@@ -1,5 +1,5 @@
-import { BasePlugin, cleanHTML, fetchWithRetry, filterByKeyword } from "./base";
-import type { Link, SearchResult } from "./types";
+import { BasePlugin, fetchWithRetry } from "./base";
+import type { CloudType, Link, SearchResult } from "./types";
 
 const SEARCH_URL_TEMPLATE =
   "https://linux.do/search.json?q=%s%%20in%%3Atitle%%20%%23resource&page=%d";
@@ -17,9 +17,28 @@ const UC_REGEX = /https:\/\/drive\.uc\.cn\/s\/[0-9a-zA-Z]+/g;
 const PAN115_REGEX = /https:\/\/115\.com\/s\/[0-9a-zA-Z]+/g;
 const BAIDU_PWD_REGEX = /(?:提取码|密码|pwd)[：:]\s*([0-9a-zA-Z]{4})/;
 
+interface SearchData {
+  posts?: Array<{
+    id: number;
+    topic_id: number;
+    blurb?: string;
+    created_at?: string;
+  }>;
+  topics?: Array<{
+    id: number;
+    title?: string;
+    fancy_title?: string;
+    tags?: string[];
+  }>;
+  grouped_search_result?: { more_full_page_results?: boolean };
+}
+
 /**
  * discourse - Linux.do Discourse 论坛插件
  * 从 linux.do 搜索 API 获取资源帖子，提取网盘链接
+ *
+ * 注意：linux.do 使用 Cloudflare 保护。Cloudflare Workers 无法绕过 Cloudflare，
+ * 因此当检测到 Cloudflare 挑战页面时会静默返回空结果。
  */
 class Discourse extends BasePlugin {
   constructor() {
@@ -52,35 +71,11 @@ class Discourse extends BasePlugin {
       ).replace("%d", String(currentPage));
 
       try {
-        const resp = await fetchWithRetry(
-          searchURL,
-          {
-            method: "GET",
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              Accept: "application/json",
-              "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            },
-          },
-          { timeout: 30000, retries: 2 },
-        );
-
-        const data = (await resp.json()) as {
-          posts?: Array<{
-            id: number;
-            topic_id: number;
-            blurb?: string;
-            created_at?: string;
-          }>;
-          topics?: Array<{
-            id: number;
-            title?: string;
-            fancy_title?: string;
-            tags?: string[];
-          }>;
-          grouped_search_result?: { more_full_page_results?: boolean };
-        };
+        const data = await this._fetchSearchData(searchURL);
+        if (!data) {
+          // Cloudflare challenge or network error - return what we have
+          break;
+        }
 
         if (!data.posts || data.posts.length === 0) break;
 
@@ -117,12 +112,51 @@ class Discourse extends BasePlugin {
           break;
         }
       } catch (err) {
-        if (allResults.length > 0) break;
-        throw err;
+        // On any error, return what we have so far (graceful degradation)
+        break;
       }
     }
 
     return allResults;
+  }
+
+  /**
+   * 获取搜索数据，检测并处理 Cloudflare 挑战页面
+   */
+  private async _fetchSearchData(searchURL: string): Promise<SearchData | null> {
+    try {
+      const resp = await fetchWithRetry(
+        searchURL,
+        {
+          method: "GET",
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            Accept: "application/json",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+          },
+        },
+        { timeout: 30000, retries: 2, acceptNonOk: true },
+      );
+
+      // Check if response is HTML (Cloudflare challenge page)
+      const contentType = resp.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        return null;
+      }
+
+      // Try to parse JSON
+      const text = await resp.text();
+      try {
+        return JSON.parse(text) as SearchData;
+      } catch {
+        // Not valid JSON - likely Cloudflare challenge page
+        return null;
+      }
+    } catch {
+      // Network error or timeout
+      return null;
+    }
   }
 
   private _convertToSearchResults(
@@ -172,14 +206,14 @@ class Discourse extends BasePlugin {
     // Quark
     const quarkMatches = blurb.match(QUARK_REGEX) || [];
     for (const url of quarkMatches) {
-      links.push({ type: "quark", url, password: "" });
+      links.push({ type: "quark" as CloudType, url, password: "" });
     }
 
     // Baidu (with password extraction)
     const baiduRegex = new RegExp(BAIDU_REGEX.source, "g");
     let baiduMatch: RegExpExecArray | null = baiduRegex.exec(blurb);
     while (baiduMatch !== null) {
-      const link: Link = { type: "baidu", url: baiduMatch[0], password: "" };
+      const link: Link = { type: "baidu" as CloudType, url: baiduMatch[0], password: "" };
       if (baiduMatch[1]) {
         link.password = baiduMatch[1];
       } else {
@@ -193,14 +227,14 @@ class Discourse extends BasePlugin {
     // Aliyun
     const aliyunMatches = blurb.match(ALIYUN_REGEX) || [];
     for (const url of aliyunMatches) {
-      links.push({ type: "aliyun", url, password: "" });
+      links.push({ type: "aliyun" as CloudType, url, password: "" });
     }
 
     // Xunlei (with password extraction)
     const xunleiRegex = new RegExp(XUNLEI_REGEX.source, "g");
     let xunleiMatch: RegExpExecArray | null = xunleiRegex.exec(blurb);
     while (xunleiMatch !== null) {
-      const link: Link = { type: "xunlei", url: xunleiMatch[0], password: "" };
+      const link: Link = { type: "xunlei" as CloudType, url: xunleiMatch[0], password: "" };
       if (xunleiMatch[1]) link.password = xunleiMatch[1];
       links.push(link);
       xunleiMatch = xunleiRegex.exec(blurb);
@@ -209,19 +243,19 @@ class Discourse extends BasePlugin {
     // Tianyi
     const tianyiMatches = blurb.match(TIANYI_REGEX) || [];
     for (const url of tianyiMatches) {
-      links.push({ type: "tianyi", url, password: "" });
+      links.push({ type: "tianyi" as CloudType, url, password: "" });
     }
 
     // UC
     const ucMatches = blurb.match(UC_REGEX) || [];
     for (const url of ucMatches) {
-      links.push({ type: "uc", url, password: "" });
+      links.push({ type: "uc" as CloudType, url, password: "" });
     }
 
     // 115
     const pan115Matches = blurb.match(PAN115_REGEX) || [];
     for (const url of pan115Matches) {
-      links.push({ type: "115", url, password: "" });
+      links.push({ type: "115" as CloudType, url, password: "" });
     }
 
     return links;

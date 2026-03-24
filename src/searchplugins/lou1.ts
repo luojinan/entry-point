@@ -137,7 +137,7 @@ class Lou1Plugin extends BasePlugin {
     const resp = await fetchWithRetry(
       searchURL,
       { headers },
-      { timeout: 12000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
     const html = await resp.text();
     const $ = cheerio.load(html);
@@ -200,7 +200,7 @@ class Lou1Plugin extends BasePlugin {
     const resp = await fetchWithRetry(
       detailURL,
       { headers },
-      { timeout: 12000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
     const html = await resp.text();
     const $ = cheerio.load(html);
@@ -242,7 +242,7 @@ class Lou1Plugin extends BasePlugin {
     const seen = new Set<string>();
 
     // From <a> href attributes
-    sel.find("a[href]").each((_, node) => {
+    sel.find("a[href]").each((_: unknown, node: cheerio.Element) => {
       const href = $(node).attr("href");
       if (!href) return;
 
@@ -341,11 +341,11 @@ class Lou1Plugin extends BasePlugin {
 
   _collectDetailTags($: any): string[] {
     const tagSet = new Set<string>();
-    $(".breadcrumb a, ol.breadcrumb a").each((_, el) => {
+    $(".breadcrumb a, ol.breadcrumb a").each((_: unknown, el: cheerio.Element) => {
       const text = $(el).text().trim();
       if (text && text !== "首页") tagSet.add(text);
     });
-    $("h4 a.badge").each((_, el) => {
+    $("h4 a.badge").each((_: unknown, el: cheerio.Element) => {
       const text = $(el).text().trim();
       if (text) tagSet.add(text);
     });

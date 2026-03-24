@@ -12,7 +12,7 @@ import {
   filterByKeyword,
   getRandomUA,
 } from "./base";
-import type { Link, SearchResult } from "./types";
+import type { CloudType, Link, SearchResult } from "./types";
 
 const BASE_URL = "https://4kfox.com";
 const SEARCH_URL = BASE_URL + "/search/%s-------------.html";
@@ -374,7 +374,7 @@ class Fox4k extends BasePlugin {
       const matches = pageText.match(regex) || [];
       for (const panLink of matches) {
         const password = this._extractPasswordFromText(pageText, panLink);
-        this._addDownloadLink(detail, panType, panLink, password);
+        this._addDownloadLink(detail, panType as CloudType, panLink, password);
       }
     }
 
@@ -438,7 +438,7 @@ class Fox4k extends BasePlugin {
         const password =
           this._extractPasswordFromLink(link) ||
           this._extractPasswordFromText(contextText || "", link);
-        this._addDownloadLink(detail, panType, link, password);
+        this._addDownloadLink(detail, panType as CloudType, link, password);
         return;
       }
     }
@@ -462,7 +462,7 @@ class Fox4k extends BasePlugin {
       const matches = text.match(regex) || [];
       for (const panLink of matches) {
         const password = this._extractPasswordFromText(text, panLink);
-        this._addDownloadLink(detail, panType, panLink, password);
+        this._addDownloadLink(detail, panType as CloudType, panLink, password);
       }
     }
   }
@@ -488,7 +488,7 @@ class Fox4k extends BasePlugin {
 
   private _addDownloadLink(
     detail: DetailInfo,
-    linkType: string,
+    linkType: CloudType,
     linkURL: string,
     password: string,
   ): void {
@@ -501,7 +501,7 @@ class Fox4k extends BasePlugin {
     }
 
     detail.links.push({
-      type: linkType as any,
+      type: linkType,
       url: linkURL,
       password: password || "",
     });

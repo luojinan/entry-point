@@ -11,7 +11,7 @@ import {
   generateUniqueID,
   getRandomUA,
 } from "./base";
-import type { CloudType, Link, SearchResult } from "./types";
+import type { Link, SearchResult } from "./types";
 
 const PLUGIN_NAME = "xuexizhinan";
 const SEARCH_URL = "https://xuexizhinan.com/?post_type=book&s=%s";
@@ -44,7 +44,7 @@ class XuexizhinanPlugin extends BasePlugin {
       {
         headers: { "User-Agent": USER_AGENT },
       },
-      { timeout: 10000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();
@@ -99,7 +99,7 @@ class XuexizhinanPlugin extends BasePlugin {
       {
         headers: { "User-Agent": USER_AGENT },
       },
-      { timeout: 10000, retries: 1 },
+      { timeout: 30000, retries: 1 },
     );
 
     const html = await resp.text();

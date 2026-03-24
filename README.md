@@ -2,6 +2,24 @@
 
 This is a template for a new TanStack Start project with React, TypeScript, and shadcn/ui.
 
+```
+ahhhhfs、alupan、hdmoli、jsnoteclub、kkmao、leijing、miaoso、mizixing、xdpan、xiaoji、xys、yiove、yunsou、nsgame
+
+
+- jikepan | Error: HTTP 522
+- qupansou | Error: HTTP 502
+- xdyh | SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+- haisou | Error: [haisou] All search tasks failed
+- sousou | Error: 所有搜索任务都失败或无结果
+- meitizy | Error: HTTP 405
+- nsgame | Error: HTTP 404
+- pianku | Error: HTTP 404
+- xiaozhang | Error: HTTP 404
+```
+
+- gying | Error: Search data not found in page
+
+
 ## 依赖
 
 ### vite + react 相关

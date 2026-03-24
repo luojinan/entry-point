@@ -13,7 +13,7 @@ import {
   generateUniqueID,
   getRandomUA,
 } from "./base";
-import type { Link, SearchResult } from "./types";
+import type { CloudType, Link, SearchResult } from "./types";
 
 const PLUGIN_NAME = "huban";
 const DETAIL_ID_REGEX = /\/id\/(\d+)/;
@@ -278,7 +278,7 @@ class HubanPlugin extends BasePlugin {
     );
   }
 
-  private determineLinkType(url: string): string {
+  private determineLinkType(url: string): CloudType {
     if (QUARK_LINK_REGEX.test(url)) return "quark";
     if (UC_LINK_REGEX.test(url)) return "uc";
     if (BAIDU_LINK_REGEX.test(url)) return "baidu";
@@ -294,7 +294,7 @@ class HubanPlugin extends BasePlugin {
     if (PIKPAK_LINK_REGEX.test(url)) return "pikpak";
     if (MAGNET_LINK_REGEX.test(url)) return "magnet";
     if (ED2K_LINK_REGEX.test(url)) return "ed2k";
-    return "";
+    return "others";
   }
 }
 

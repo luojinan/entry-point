@@ -6,7 +6,6 @@ import crypto from "crypto";
 import type {
   BasePluginInterface,
   CloudType,
-  Link,
   SearchResult,
 } from "./types";
 
@@ -106,11 +105,12 @@ export function extractPassword(text: string | null | undefined): string {
 export async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs: number = 10000,
+  timeoutMs: number = 30000,
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    // If caller already set a signal, we need to combine them
     const resp = await fetch(url, { ...options, signal: controller.signal });
     return resp;
   } finally {
@@ -120,25 +120,39 @@ export async function fetchWithTimeout(
 
 /**
  * 带重试的 fetch
+ * @param url - 请求地址
+ * @param options - fetch 选项
+ * @param timeout - 超时毫秒数，默认 30000 (Cloudflare Workers 延迟较高)
+ * @param retries - 重试次数，默认 2
+ * @param acceptNonOk - 是否接受非2xx响应（不重试），默认 false
  */
 export async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
-  { timeout = 10000, retries = 2 }: { timeout?: number; retries?: number } = {},
+  { timeout = 30000, retries = 2, acceptNonOk = false }: { timeout?: number; retries?: number; acceptNonOk?: boolean } = {},
 ): Promise<Response> {
   let lastErr: Error | undefined;
+  let lastResp: Response | undefined;
   for (let i = 0; i <= retries; i++) {
     try {
       const resp = await fetchWithTimeout(url, options, timeout);
+      // Return immediately for OK responses
       if (resp.ok) return resp;
+      // If caller accepts non-OK, return the response as-is (let caller handle status codes)
+      if (acceptNonOk) return resp;
+      // For server errors (5xx), retry; for client errors (4xx), return immediately
+      if (resp.status >= 400 && resp.status < 500) return resp;
       lastErr = new Error(`HTTP ${resp.status}`);
+      lastResp = resp;
     } catch (err) {
       lastErr = err as Error;
     }
     if (i < retries) {
-      await new Promise((r) => setTimeout(r, 2 ** i * 200));
+      await new Promise((r) => setTimeout(r, 2 ** i * 300));
     }
   }
+  // If we have a response (even non-OK), return it rather than throwing
+  if (lastResp) return lastResp;
   throw lastErr;
 }
 

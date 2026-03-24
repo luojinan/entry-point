@@ -9,6 +9,11 @@ export type CloudType =
   | "123"
   | "pikpak"
   | "mobile"
+  | "magnet"
+  | "ed2k"
+  | "weiyun"
+  | "lanzou"
+  | "jianguoyun"
   | "others";
 
 export interface Link {

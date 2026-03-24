@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
-import type { CloudType, Link, SearchResult } from "./types";
+import type { CloudType, SearchResult } from "./types";
 
 const SITE_URL = "https://nyaa.si";
 
@@ -40,7 +40,7 @@ class Nyaa extends BasePlugin {
           Referer: SITE_URL,
         },
       },
-      { timeout: 10000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();

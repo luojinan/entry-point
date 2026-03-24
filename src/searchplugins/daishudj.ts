@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
-import type { Link, SearchResult } from "./types";
+import type { CloudType, Link, SearchResult } from "./types";
 
 /**
  * daishudj 插件 - 袋鼠短剧 (daishuduanju.com) 搜索
@@ -76,7 +76,7 @@ class DaishudjPlugin extends BasePlugin {
           Referer: "https://www.daishuduanju.com/",
         },
       },
-      { timeout: 10000, retries: 3 },
+      { timeout: 30000, retries: 3 },
     );
 
     const html = await resp.text();
@@ -174,14 +174,15 @@ class DaishudjPlugin extends BasePlugin {
           Referer: "https://www.daishuduanju.com/",
         },
       },
-      { timeout: 8000, retries: 3 },
+      { timeout: 25000, retries: 3 },
     );
 
     const html = await resp.text();
     const $ = cheerio.load(html);
 
     // Try different containers
-    let container = $(".article-body");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let container: any = $(".article-body");
     if (container.length === 0) container = $("article.post");
     if (container.length === 0) container = $.root();
 
@@ -190,13 +191,14 @@ class DaishudjPlugin extends BasePlugin {
 
   private _extractLinks(
     $: cheerio.CheerioAPI,
-    selection: cheerio.Cheerio<cheerio.Element>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    selection: any,
   ): Link[] {
     const results: Link[] = [];
     const seen = new Set<string>();
 
     // Method 1: from <a> href attributes
-    selection.find("a[href]").each((_, node) => {
+    selection.find("a[href]").each((_: unknown, node: cheerio.Element) => {
       const href = ($(node).attr("href") || "").trim();
       if (!href) return;
 
@@ -205,7 +207,7 @@ class DaishudjPlugin extends BasePlugin {
       seen.add(normalized);
 
       const password = this._extractPasswordFromNode($, node);
-      results.push({ type: linkType as any, url: normalized, password });
+      results.push({ type: linkType as CloudType, url: normalized, password });
     });
 
     // Method 2: regex from text content
@@ -227,21 +229,21 @@ class DaishudjPlugin extends BasePlugin {
       const context = text.substring(start, end);
       const password = this._matchPassword(context);
 
-      results.push({ type: linkType as any, url: normalized, password });
+      results.push({ type: linkType as CloudType, url: normalized, password });
       match = this.textURLReg.exec(text);
     }
 
     return results;
   }
 
-  private _classifyLink(raw: string): { type: string; normalized: string } {
+  private _classifyLink(raw: string): { type: CloudType; normalized: string } {
     for (const pattern of this.linkPatterns) {
       const match = pattern.regex.exec(raw);
       if (match) {
-        return { type: pattern.type, normalized: match[0] };
+        return { type: pattern.type as CloudType, normalized: match[0] };
       }
     }
-    return { type: "", normalized: "" };
+    return { type: "others" as CloudType, normalized: "" };
   }
 
   private _extractPasswordFromNode(

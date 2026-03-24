@@ -79,7 +79,7 @@ class Zhizhen extends BasePlugin {
           Referer: "https://xiaomi666.fun/",
         },
       },
-      { timeout: 8000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();
@@ -227,7 +227,7 @@ class Zhizhen extends BasePlugin {
           Referer: "https://xiaomi666.fun/",
         },
       },
-      { timeout: 6000, retries: 2 },
+      { timeout: 20000, retries: 2 },
     );
 
     const html = await resp.text();

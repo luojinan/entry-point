@@ -3,7 +3,7 @@
  * 翻译自 Go 插件: plugin/qupanshe/qupanshe.go
  */
 
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
 import {
   BasePlugin,
   extractPassword,
@@ -52,7 +52,7 @@ class QupanshePlugin extends BasePlugin {
         headers: this._getHeaders(),
         redirect: "follow",
       },
-      15000,
+      45000,
     );
 
     if (!resp.ok) throw new Error(`首页请求返回状态码: ${resp.status}`);
@@ -110,7 +110,7 @@ class QupanshePlugin extends BasePlugin {
         body: body.toString(),
         redirect: "manual", // 不自动跟随重定向
       },
-      15000,
+      45000,
     );
 
     // 收集cookies
@@ -310,7 +310,7 @@ class QupanshePlugin extends BasePlugin {
         },
         redirect: "follow",
       },
-      30000,
+      45000,
     );
 
     if (!resp.ok) throw new Error(`请求返回状态码: ${resp.status}`);
@@ -411,6 +411,7 @@ class QupanshePlugin extends BasePlugin {
 
     // Step 1: 获取首页formhash
     const formhash = await this._getFormhash(cookieJar);
+    console.log("formhash", formhash);
 
     // Step 2: POST请求获取搜索结果URL
     const searchURL = await this._postSearchRequest(
@@ -419,8 +420,12 @@ class QupanshePlugin extends BasePlugin {
       cookieJar,
     );
 
+    console.log("searchURL", searchURL, keyword, cookieJar);
+
     // Step 3: GET请求获取搜索结果
     const results = await this._getSearchResults(searchURL, keyword, cookieJar);
+
+    console.log("results", results);
 
     // Step 4: 关键词过滤
     return filterByKeyword(results, keyword);

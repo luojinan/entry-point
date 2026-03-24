@@ -265,7 +265,7 @@ class Ddys extends BasePlugin {
 
         // Also check lanzou
         if (url.includes("lanzou")) {
-          urlType = "lanzou" as any;
+          urlType = "lanzou" as CloudType;
         }
 
         const password = this._extractPassword(htmlContent, url);

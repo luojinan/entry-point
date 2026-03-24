@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
-import type { Link, SearchResult } from "./types";
+import type { CloudType, Link, SearchResult } from "./types";
 
 const BASE_URL = "https://erxiaofn.click";
 const MAX_CONCURRENT = 20;
@@ -47,7 +47,7 @@ class Erxiao extends BasePlugin {
         method: "GET",
         headers: this._getHeaders(),
       },
-      { timeout: 8000, retries: 2 },
+      { timeout: 30000, retries: 2 },
     );
 
     const html = await resp.text();
@@ -247,7 +247,7 @@ class Erxiao extends BasePlugin {
           method: "GET",
           headers: this._getHeaders(),
         },
-        { timeout: 6000, retries: 2 },
+        { timeout: 20000, retries: 2 },
       );
 
       const html = await resp.text();
@@ -267,7 +267,7 @@ class Erxiao extends BasePlugin {
           if (linkType && !seen.has(clipboardText)) {
             seen.add(clipboardText);
             links.push({
-              type: linkType as any,
+              type: linkType,
               url: clipboardText,
               password: "",
             });
@@ -294,11 +294,11 @@ class Erxiao extends BasePlugin {
     return true;
   }
 
-  private _determineLinkType(url: string): string {
+  private _determineLinkType(url: string): CloudType {
     for (const [type, regex] of Object.entries(LINK_REGEXES)) {
-      if (regex.test(url)) return type;
+      if (regex.test(url)) return type as CloudType;
     }
-    return "";
+    return "others";
   }
 }
 
