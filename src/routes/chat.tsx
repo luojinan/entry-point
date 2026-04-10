@@ -135,6 +135,11 @@ function ChatSessionInner({
           <MessageBubble
             key={message.id}
             message={message}
+            isStreaming={
+              isStreaming &&
+              message.id === lastMessage?.id &&
+              message.role === "assistant"
+            }
             onToolApproval={addToolApprovalResponse}
           />
         ))}

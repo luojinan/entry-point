@@ -1,4 +1,5 @@
 import type { DynamicToolUIPart } from "ai";
+import { ChatMarkdown } from "@/components/chat/chat-markdown";
 import { DynamicToolCard } from "@/components/chat/dynamic-tool-card";
 import { ReasoningBlock } from "@/components/chat/reasoning-block";
 import { cn } from "@/lib/utils";
@@ -26,9 +27,11 @@ function asToolPart(part: { type: string }): DynamicToolUIPart | null {
 
 export function MessageBubble({
   message,
+  isStreaming = false,
   onToolApproval,
 }: {
   message: ChatMessage;
+  isStreaming?: boolean;
   onToolApproval: ToolApprovalHandler;
 }) {
   const isUser = message.role === "user";
@@ -52,10 +55,20 @@ export function MessageBubble({
           {message.parts.map((part, i) => {
             const key = `${message.id}-${i}`;
             if (part.type === "text") {
+              if (isUser) {
+                return (
+                  <div key={key} className="whitespace-pre-wrap">
+                    {part.text}
+                  </div>
+                );
+              }
+
               return (
-                <div key={key} className="whitespace-pre-wrap">
-                  {part.text}
-                </div>
+                <ChatMarkdown
+                  key={key}
+                  content={part.text}
+                  isStreaming={isStreaming}
+                />
               );
             }
             if (part.type === "reasoning") {
