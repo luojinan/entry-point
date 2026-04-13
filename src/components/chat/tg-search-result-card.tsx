@@ -49,6 +49,11 @@ function LinkItem({ link }: { link: MergedLink }) {
         <div className="truncate text-sm font-medium">{link.note}</div>
         <div className="text-muted-foreground flex items-center gap-2 text-xs">
           <span>{formatDate(link.datetime)}</span>
+          {link.source && (
+            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
+              {link.source}
+            </span>
+          )}
           {link.password && (
             <span className="text-amber-600 dark:text-amber-400">
               密码: {link.password}

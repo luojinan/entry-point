@@ -2,9 +2,11 @@
 
 This is a template for a new TanStack Start project with React, TypeScript, and shadcn/ui.
 
-```
-ahhhhfs、alupan、hdmoli、jsnoteclub、kkmao、leijing、miaoso、mizixing、xdpan、xiaoji、xys、yiove、yunsou、nsgame
+worker subfetch 限制50个
 
+```
+清除以下plugin 403 或 404 或 500
+ahhhhfs、alupan、hdmoli、jsnoteclub、kkmao、leijing、miaoso、mizixing、xdpan、xiaoji、xys、yiove、yunsou、nsgame
 
 - jikepan | Error: HTTP 522
 - qupansou | Error: HTTP 502
@@ -16,6 +18,8 @@ ahhhhfs、alupan、hdmoli、jsnoteclub、kkmao、leijing、miaoso、mizixing、x
 - pianku | Error: HTTP 404
 - xiaozhang | Error: HTTP 404
 ```
+
+TODO: 待清除 无夸克搜索结果的 plugin
 
 - gying | Error: Search data not found in page
 
