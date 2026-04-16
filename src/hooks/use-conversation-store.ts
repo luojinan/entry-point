@@ -1,5 +1,5 @@
-import type { UIMessage } from "ai";
 import { useCallback, useMemo, useState } from "react";
+import type { ChatMessage } from "@/lib/chat-message";
 import type { Conversation } from "@/lib/conversation-store";
 import { createLocalConversationStore } from "@/lib/conversation-store-local";
 
@@ -40,7 +40,7 @@ export function useConversationStore() {
     setActiveId(id);
   }, []);
 
-  const saveMessages = useCallback((id: string, messages: UIMessage[]) => {
+  const saveMessages = useCallback((id: string, messages: ChatMessage[]) => {
     store.saveMessages(id, messages);
   }, []);
 
@@ -52,7 +52,7 @@ export function useConversationStore() {
     [refresh],
   );
 
-  const loadMessages = useCallback((id: string): UIMessage[] => {
+  const loadMessages = useCallback((id: string): ChatMessage[] => {
     const conv = store.getConversation(id);
     return conv?.messages ?? [];
   }, []);

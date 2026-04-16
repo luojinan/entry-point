@@ -19,6 +19,9 @@ import { Route as ApiTgSearchRouteImport } from './routes/api/tg-search'
 import { Route as ApiNotifyRouteImport } from './routes/api/notify'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiExchangeRateRouteImport } from './routes/api/exchange-rate'
+import { Route as ApiChatUploadPolicyRouteImport } from './routes/api/chat-upload-policy'
+import { Route as ApiChatOcrRouteImport } from './routes/api/chat-ocr'
+import { Route as ApiChatObjectUrlRouteImport } from './routes/api/chat-object-url'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiQiemanLongWinPlanNotifyRouteImport } from './routes/api/qieman/long-win-plan-notify'
 import { Route as ApiQiemanLongWinPlanRouteImport } from './routes/api/qieman/long-win-plan'
@@ -75,6 +78,21 @@ const ApiExchangeRateRoute = ApiExchangeRateRouteImport.update({
   path: '/api/exchange-rate',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChatUploadPolicyRoute = ApiChatUploadPolicyRouteImport.update({
+  id: '/api/chat-upload-policy',
+  path: '/api/chat-upload-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatOcrRoute = ApiChatOcrRouteImport.update({
+  id: '/api/chat-ocr',
+  path: '/api/chat-ocr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatObjectUrlRoute = ApiChatObjectUrlRouteImport.update({
+  id: '/api/chat-object-url',
+  path: '/api/chat-object-url',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -111,6 +129,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/chat-object-url': typeof ApiChatObjectUrlRoute
+  '/api/chat-ocr': typeof ApiChatOcrRoute
+  '/api/chat-upload-policy': typeof ApiChatUploadPolicyRoute
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
@@ -128,6 +149,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/chat-object-url': typeof ApiChatObjectUrlRoute
+  '/api/chat-ocr': typeof ApiChatOcrRoute
+  '/api/chat-upload-policy': typeof ApiChatUploadPolicyRoute
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
@@ -146,6 +170,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/chat-object-url': typeof ApiChatObjectUrlRoute
+  '/api/chat-ocr': typeof ApiChatOcrRoute
+  '/api/chat-upload-policy': typeof ApiChatUploadPolicyRoute
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
@@ -165,6 +192,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/chat-object-url'
+    | '/api/chat-ocr'
+    | '/api/chat-upload-policy'
     | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
@@ -182,6 +212,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/chat-object-url'
+    | '/api/chat-ocr'
+    | '/api/chat-upload-policy'
     | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
@@ -199,6 +232,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/supabase'
     | '/api/chat'
+    | '/api/chat-object-url'
+    | '/api/chat-ocr'
+    | '/api/chat-upload-policy'
     | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
@@ -217,6 +253,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SupabaseRoute: typeof SupabaseRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiChatObjectUrlRoute: typeof ApiChatObjectUrlRoute
+  ApiChatOcrRoute: typeof ApiChatOcrRoute
+  ApiChatUploadPolicyRoute: typeof ApiChatUploadPolicyRoute
   ApiExchangeRateRoute: typeof ApiExchangeRateRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiNotifyRoute: typeof ApiNotifyRoute
@@ -300,6 +339,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiExchangeRateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/chat-upload-policy': {
+      id: '/api/chat-upload-policy'
+      path: '/api/chat-upload-policy'
+      fullPath: '/api/chat-upload-policy'
+      preLoaderRoute: typeof ApiChatUploadPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat-ocr': {
+      id: '/api/chat-ocr'
+      path: '/api/chat-ocr'
+      fullPath: '/api/chat-ocr'
+      preLoaderRoute: typeof ApiChatOcrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat-object-url': {
+      id: '/api/chat-object-url'
+      path: '/api/chat-object-url'
+      fullPath: '/api/chat-object-url'
+      preLoaderRoute: typeof ApiChatObjectUrlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -345,6 +405,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SupabaseRoute: SupabaseRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiChatObjectUrlRoute: ApiChatObjectUrlRoute,
+  ApiChatOcrRoute: ApiChatOcrRoute,
+  ApiChatUploadPolicyRoute: ApiChatUploadPolicyRoute,
   ApiExchangeRateRoute: ApiExchangeRateRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiNotifyRoute: ApiNotifyRoute,

@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatConversationLayout } from "@/components/chat/chat-conversation-layout";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useChatSession } from "@/hooks/use-chat-session";
 import { useConversationStore } from "@/hooks/use-conversation-store";
 import { AI_MODELS, type AIModelId } from "@/lib/ai-models";
-import type { ChatMessage } from "./api/chat";
+import type { ChatMessage } from "@/lib/chat-message";
 
 export const Route = createFileRoute("/chat")({
   component: ChatPage,
@@ -56,8 +55,8 @@ function ChatSession({
   onModelChange,
 }: {
   conversationId: string;
-  loadMessages: (id: string) => UIMessage[];
-  saveMessages: (id: string, messages: UIMessage[]) => void;
+  loadMessages: (id: string) => ChatMessage[];
+  saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
   onModelChange: (id: AIModelId) => void;
@@ -88,7 +87,7 @@ function ChatSessionInner({
 }: {
   conversationId: string;
   initialMessages: ChatMessage[];
-  saveMessages: (id: string, messages: UIMessage[]) => void;
+  saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
   onModelChange: (id: AIModelId) => void;
@@ -165,6 +164,7 @@ function ChatSessionInner({
 
       <div className="sticky bottom-0 z-10 -mx-2 border-t bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:-mx-6 sm:px-6">
         <ChatComposer
+          conversationId={conversationId}
           modelId={modelId}
           onModelChange={onModelChange}
           onSubmit={submitText}

@@ -1,17 +1,20 @@
 import { useChat } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
 import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { AIModelId } from "@/lib/ai-models";
-import type { ChatMessage } from "@/routes/api/chat";
+import {
+  type ChatImageAttachment,
+  type ChatMessage,
+  createImageAttachmentPart,
+} from "@/lib/chat-message";
 
 interface UseChatSessionOptions {
   conversationId: string;
   initialMessages: ChatMessage[];
-  saveMessages: (id: string, messages: UIMessage[]) => void;
+  saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
 }
@@ -73,11 +76,19 @@ export function useChatSession({
   );
 
   const submitText = useCallback(
-    (rawText: string) => {
+    (rawText: string, attachments: ChatImageAttachment[] = []) => {
       const text = rawText.trim();
-      if (!text || isStreaming || isLoading) return false;
-      autoTitle(text);
-      sendMessage({ text });
+      if ((!text && attachments.length === 0) || isStreaming || isLoading) {
+        return false;
+      }
+
+      autoTitle(text || attachments[0]?.fileName || "图片对话");
+      void sendMessage({
+        parts: [
+          ...attachments.map(createImageAttachmentPart),
+          ...(text ? [{ type: "text" as const, text }] : []),
+        ],
+      });
       return true;
     },
     [autoTitle, isLoading, isStreaming, sendMessage],

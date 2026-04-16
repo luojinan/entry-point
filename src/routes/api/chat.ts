@@ -4,15 +4,18 @@ import {
   convertToModelMessages,
   stepCountIs,
   streamText,
+  type ToolSet,
   tool,
-  type UIMessage,
 } from "ai";
 import { z } from "zod";
 import { getModel } from "@/lib/ai-provider";
 import { handleCorsPreflightRequest, withCors } from "@/lib/api-utils";
+import {
+  type ChatImageAttachment,
+  type ChatMessage,
+  isImageAttachmentPart,
+} from "@/lib/chat-message";
 import { search } from "@/lib/tg-search/search";
-
-export type ChatMessage = UIMessage;
 
 const SQL_WRITE_KEYWORDS = [
   "INSERT",
@@ -103,6 +106,30 @@ function shouldApproveSqlToolCall(input: unknown): boolean {
   return !isReadOnlySql(sql);
 }
 
+function attachmentToPromptText(attachment: ChatImageAttachment): string {
+  const lines = [
+    "[图片附件]",
+    `文件名: ${attachment.fileName}`,
+    `媒体类型: ${attachment.mimeType}`,
+  ];
+
+  if (attachment.ocr?.status === "ready") {
+    lines.push("OCR 状态: 成功");
+    lines.push(
+      attachment.ocr.plainText
+        ? `OCR 文本:\n${attachment.ocr.plainText}`
+        : "OCR 文本为空，图片中可能没有可识别文本。",
+    );
+  } else if (attachment.ocr?.status === "error") {
+    lines.push(`OCR 状态: 失败 (${attachment.ocr.error || "未知错误"})`);
+  } else {
+    lines.push("OCR 状态: 未完成");
+  }
+
+  lines.push("以上内容来自 OCR，可能存在识别误差。");
+  return lines.join("\n");
+}
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
@@ -112,11 +139,11 @@ export const Route = createFileRoute("/api/chat")({
         const {
           messages,
           model: modelId,
-        }: { messages: UIMessage[]; model?: string } = await request.json();
+        }: { messages: ChatMessage[]; model?: string } = await request.json();
 
         let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null =
           null;
-        let allTools: Record<string, unknown> = {};
+        let allTools: ToolSet = {};
 
         try {
           mcpClient = await createMCPClient({
@@ -149,7 +176,7 @@ export const Route = createFileRoute("/api/chat")({
             );
             mcpTool.needsApproval = readOnlyHint !== true;
           }
-          allTools = { ...mcpTools };
+          allTools = { ...(mcpTools as ToolSet) };
         } catch (e) {
           console.error("Failed to connect to Supabase MCP:", e);
         }
@@ -174,8 +201,19 @@ export const Route = createFileRoute("/api/chat")({
         const result = streamText({
           model: getModel(modelId),
           system:
-            "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。对于其他一般问题，直接用自身知识回答即可。",
-          messages: await convertToModelMessages(messages),
+            "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。当用户消息包含图片 OCR 内容时，请优先结合用户问题和 OCR 文本回答，并明确提醒 OCR 可能存在误差；如果 OCR 文本明显缺失、错乱或不完整，要建议用户重新上传更清晰的图片。对于其他一般问题，直接用自身知识回答即可。",
+          messages: await convertToModelMessages(messages, {
+            convertDataPart: (part) => {
+              if (isImageAttachmentPart(part)) {
+                return {
+                  type: "text",
+                  text: attachmentToPromptText(part.data),
+                };
+              }
+
+              return undefined;
+            },
+          }),
           tools: allTools,
           stopWhen: stepCountIs(5),
           onFinish: async () => {

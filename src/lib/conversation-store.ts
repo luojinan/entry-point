@@ -1,4 +1,4 @@
-import type { UIMessage } from "ai";
+import type { ChatMessage } from "@/lib/chat-message";
 
 export interface Conversation {
   id: string;
@@ -8,7 +8,7 @@ export interface Conversation {
 }
 
 export interface ConversationWithMessages extends Conversation {
-  messages: UIMessage[];
+  messages: ChatMessage[];
 }
 
 export interface ConversationStore {
@@ -20,5 +20,5 @@ export interface ConversationStore {
     updates: Partial<Pick<Conversation, "title">>,
   ): void;
   deleteConversation(id: string): void;
-  saveMessages(id: string, messages: UIMessage[]): void;
+  saveMessages(id: string, messages: ChatMessage[]): void;
 }

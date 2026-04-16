@@ -1,4 +1,4 @@
-import type { UIMessage } from "ai";
+import type { ChatMessage } from "./chat-message";
 import type {
   Conversation,
   ConversationStore,
@@ -12,7 +12,7 @@ interface StoredConversation {
   title: string;
   createdAt: number;
   updatedAt: number;
-  messages: UIMessage[];
+  messages: ChatMessage[];
 }
 
 function readAll(): StoredConversation[] {
@@ -79,7 +79,7 @@ export function createLocalConversationStore(): ConversationStore {
       writeAll(all.filter((c) => c.id !== id));
     },
 
-    saveMessages(id: string, messages: UIMessage[]) {
+    saveMessages(id: string, messages: ChatMessage[]) {
       const all = readAll();
       const idx = all.findIndex((c) => c.id === id);
       if (idx === -1) return;
