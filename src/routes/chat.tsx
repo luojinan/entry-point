@@ -6,8 +6,29 @@ import { MessageBubble } from "@/components/chat/message-bubble";
 import { Button } from "@/components/ui/button";
 import { useChatSession } from "@/hooks/use-chat-session";
 import { useConversationStore } from "@/hooks/use-conversation-store";
-import { AI_MODELS, type AIModelId } from "@/lib/ai-models";
+import type { AIModelId, AIModelOption } from "@/lib/ai-models";
 import type { ChatMessage } from "@/lib/chat-message";
+
+interface ApiEnvelope<T> {
+  code: number;
+  message: string;
+  data: T;
+}
+
+async function loadModelOptions(): Promise<AIModelOption[]> {
+  const response = await fetch("/api/ai-models");
+  const payload = (await response.json()) as ApiEnvelope<AIModelOption[]>;
+
+  if (!response.ok || payload.code !== 0) {
+    throw new Error(payload.message || "加载模型失败");
+  }
+
+  if (payload.data.length === 0) {
+    throw new Error("未查询到可用模型，请先在数据库中配置 llm_model_configs");
+  }
+
+  return payload.data;
+}
 
 export const Route = createFileRoute("/chat")({
   component: ChatPage,
@@ -15,7 +36,49 @@ export const Route = createFileRoute("/chat")({
 
 function ChatPage() {
   const store = useConversationStore();
-  const [modelId, setModelId] = useState<AIModelId>(AI_MODELS[0].id);
+  const [modelOptions, setModelOptions] = useState<AIModelOption[]>([]);
+  const [modelId, setModelId] = useState<AIModelId>("");
+  const [modelLoadError, setModelLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncModelOptions() {
+      try {
+        const models = await loadModelOptions();
+        if (cancelled) {
+          return;
+        }
+
+        setModelOptions(models);
+        setModelId((current) => {
+          if (models.some((option) => option.id === current)) {
+            return current;
+          }
+          return (
+            models.find((option) => option.isDefault)?.id ?? models[0]?.id ?? ""
+          );
+        });
+        setModelLoadError(null);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setModelOptions([]);
+        setModelId("");
+        setModelLoadError(
+          error instanceof Error ? error.message : "加载模型失败",
+        );
+      }
+    }
+
+    void syncModelOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <ChatConversationLayout
@@ -33,6 +96,8 @@ function ChatPage() {
           saveMessages={store.saveMessages}
           updateTitle={store.updateTitle}
           modelId={modelId}
+          modelOptions={modelOptions}
+          modelLoadError={modelLoadError}
           onModelChange={setModelId}
         />
       ) : (
@@ -52,6 +117,8 @@ function ChatSession({
   saveMessages,
   updateTitle,
   modelId,
+  modelOptions,
+  modelLoadError,
   onModelChange,
 }: {
   conversationId: string;
@@ -59,6 +126,8 @@ function ChatSession({
   saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
+  modelOptions: AIModelOption[];
+  modelLoadError: string | null;
   onModelChange: (id: AIModelId) => void;
 }) {
   const [initialMessages] = useState<ChatMessage[]>(() =>
@@ -72,6 +141,8 @@ function ChatSession({
       saveMessages={saveMessages}
       updateTitle={updateTitle}
       modelId={modelId}
+      modelOptions={modelOptions}
+      modelLoadError={modelLoadError}
       onModelChange={onModelChange}
     />
   );
@@ -83,6 +154,8 @@ function ChatSessionInner({
   saveMessages,
   updateTitle,
   modelId,
+  modelOptions,
+  modelLoadError,
   onModelChange,
 }: {
   conversationId: string;
@@ -90,6 +163,8 @@ function ChatSessionInner({
   saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
+  modelOptions: AIModelOption[];
+  modelLoadError: string | null;
   onModelChange: (id: AIModelId) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -160,12 +235,19 @@ function ChatSessionInner({
             {error.message || "请求失败，请重试"}
           </div>
         )}
+
+        {modelLoadError && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700">
+            {modelLoadError}
+          </div>
+        )}
       </div>
 
       <div className="sticky bottom-0 z-10 -mx-2 border-t bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:-mx-6 sm:px-6">
         <ChatComposer
           conversationId={conversationId}
           modelId={modelId}
+          modelOptions={modelOptions}
           onModelChange={onModelChange}
           onSubmit={submitText}
           disabled={isStreaming || isLoading}

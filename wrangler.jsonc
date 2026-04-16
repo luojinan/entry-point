@@ -5,8 +5,18 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
 
+  // Secrets should not be committed here.
+  // Configure production credentials with:
+  //   wrangler secret put JIANGUOYUN_USERNAME
+  //   wrangler secret put JIANGUOYUN_PASSWORD
   "vars": {
-    "AI_BASE_URL": "https://api.xiaomimimo.com/v1",
+    "JIANGUOYUN_BASE_URL": "https://dav.jianguoyun.com/dav/",
+    "JIANGUOYUN_ROOT_PATH": "/llm-fs",
+    "JIANGUOYUN_FORBIDDEN_PATH_PREFIXES": "/system,/private",
+    "JIANGUOYUN_MAX_TEXT_FILE_BYTES": "524288",
+    "JIANGUOYUN_MAX_WRITE_BYTES": "524288",
+    "JIANGUOYUN_MAX_LIST_ENTRIES": "200",
+    "JIANGUOYUN_TIMEOUT_MS": "15000",
     "SUPABASE_PROJECT_REF": "knclktpgdzpxdooyprdv",
     "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_BeqxNaQ58YbUAI1LCtmWpA_cRAuKoAc",
     "SUPABASE_URL": "https://knclktpgdzpxdooyprdv.supabase.co",

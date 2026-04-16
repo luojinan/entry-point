@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AI_MODELS, type AIModelId } from "@/lib/ai-models";
+import type { AIModelId, AIModelOption } from "@/lib/ai-models";
 import {
   ALLOWED_CHAT_IMAGE_TYPES,
   type ChatImageAttachment,
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 interface ChatComposerProps {
   conversationId: string;
   modelId: AIModelId;
+  modelOptions: AIModelOption[];
   onModelChange: (id: AIModelId) => void;
   onSubmit: (text: string, attachments?: ChatImageAttachment[]) => boolean;
   disabled?: boolean;
@@ -135,6 +136,7 @@ function revokePreviewUrl(url?: string) {
 export function ChatComposer({
   conversationId,
   modelId,
+  modelOptions,
   onModelChange,
   onSubmit,
   disabled = false,
@@ -172,9 +174,11 @@ export function ChatComposer({
       attachment.status !== "upload-error",
   );
   const canSend =
+    Boolean(modelId) &&
     !disabled &&
     !hasPendingAttachments &&
     (input.trim().length > 0 || sendableAttachments.length > 0);
+  const selectedModel = modelOptions.find((model) => model.id === modelId);
 
   const updateAttachment = (
     id: string,
@@ -351,13 +355,25 @@ export function ChatComposer({
             onModelChange(val as AIModelId);
           }}
         >
-          <SelectTrigger size="sm" className="w-fit min-w-44">
-            <SelectValue />
+          <SelectTrigger
+            size="sm"
+            className="w-fit min-w-44"
+            disabled={modelOptions.length === 0}
+          >
+            <SelectValue
+              placeholder={
+                modelOptions.length > 0 ? "选择模型" : "暂无可用模型"
+              }
+            >
+              {selectedModel
+                ? `${selectedModel.label} · ${selectedModel.providerLabel}`
+                : undefined}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {AI_MODELS.map((model) => (
+            {modelOptions.map((model) => (
               <SelectItem key={model.id} value={model.id}>
-                {model.label}
+                {model.label} · {model.providerLabel}
               </SelectItem>
             ))}
           </SelectContent>

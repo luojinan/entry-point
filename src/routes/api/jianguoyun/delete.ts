@@ -1,0 +1,48 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { handleCorsPreflightRequest, jsonResponse } from "@/lib/api-utils";
+import { jianguoyunDeleteSchema } from "@/lib/jianguoyun";
+import { deleteJianguoyunPath } from "@/lib/server/jianguoyun";
+import {
+  jianguoyunErrorResponse,
+  jianguoyunInvalidInputResponse,
+} from "@/lib/server/jianguoyun-api";
+
+export const Route = createFileRoute("/api/jianguoyun/delete")({
+  server: {
+    handlers: {
+      OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
+
+      POST: async ({ request }) => {
+        let body: unknown;
+
+        try {
+          body = await request.json();
+        } catch {
+          return jianguoyunInvalidInputResponse(
+            "Request body must be valid JSON",
+          );
+        }
+
+        const parsed = jianguoyunDeleteSchema.safeParse(body);
+        if (!parsed.success) {
+          return jianguoyunInvalidInputResponse(
+            parsed.error.issues[0]?.message || "Invalid delete payload",
+          );
+        }
+
+        try {
+          const result = await deleteJianguoyunPath(parsed.data);
+          return jsonResponse(result, 200, {
+            "X-Request-Id": result.requestId,
+          });
+        } catch (error) {
+          console.error("Jianguoyun delete error:", error);
+          return jianguoyunErrorResponse(
+            error,
+            "Failed to delete Jianguoyun path",
+          );
+        }
+      },
+    },
+  },
+});

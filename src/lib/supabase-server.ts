@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-type RuntimeEnv = Record<string, string | undefined> | undefined;
+export type RuntimeEnv = Record<string, string | undefined> | undefined;
 
 function readEnvValue(env: RuntimeEnv, key: string): string | undefined {
   return env?.[key] ?? process.env[key];
@@ -11,6 +11,13 @@ export function getRuntimeEnvValue(
   key: string,
 ): string | undefined {
   return readEnvValue(env, key);
+}
+
+export function getRequestEnv(context: unknown): RuntimeEnv {
+  const cloudflare = (
+    context as { cloudflare?: { env?: RuntimeEnv } } | undefined
+  )?.cloudflare;
+  return cloudflare?.env;
 }
 
 export function getSupabaseServerConfig(env: RuntimeEnv) {

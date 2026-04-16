@@ -23,10 +23,18 @@ import { Route as ApiChatUploadPolicyRouteImport } from './routes/api/chat-uploa
 import { Route as ApiChatOcrRouteImport } from './routes/api/chat-ocr'
 import { Route as ApiChatObjectUrlRouteImport } from './routes/api/chat-object-url'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiAiModelsRouteImport } from './routes/api/ai-models'
 import { Route as ApiQiemanLongWinPlanNotifyRouteImport } from './routes/api/qieman/long-win-plan-notify'
 import { Route as ApiQiemanLongWinPlanRouteImport } from './routes/api/qieman/long-win-plan'
 import { Route as ApiQiemanLongWinHoldingsDiffNotifyRouteImport } from './routes/api/qieman/long-win-holdings-diff-notify'
 import { Route as ApiQiemanLongWinHoldingsDiffRouteImport } from './routes/api/qieman/long-win-holdings-diff'
+import { Route as ApiJianguoyunWriteRouteImport } from './routes/api/jianguoyun/write'
+import { Route as ApiJianguoyunStatRouteImport } from './routes/api/jianguoyun/stat'
+import { Route as ApiJianguoyunReadRouteImport } from './routes/api/jianguoyun/read'
+import { Route as ApiJianguoyunMoveRouteImport } from './routes/api/jianguoyun/move'
+import { Route as ApiJianguoyunMkdirRouteImport } from './routes/api/jianguoyun/mkdir'
+import { Route as ApiJianguoyunListRouteImport } from './routes/api/jianguoyun/list'
+import { Route as ApiJianguoyunDeleteRouteImport } from './routes/api/jianguoyun/delete'
 
 const SupabaseRoute = SupabaseRouteImport.update({
   id: '/supabase',
@@ -98,6 +106,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAiModelsRoute = ApiAiModelsRouteImport.update({
+  id: '/api/ai-models',
+  path: '/api/ai-models',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiQiemanLongWinPlanNotifyRoute =
   ApiQiemanLongWinPlanNotifyRouteImport.update({
     id: '/api/qieman/long-win-plan-notify',
@@ -121,6 +134,41 @@ const ApiQiemanLongWinHoldingsDiffRoute =
     path: '/api/qieman/long-win-holdings-diff',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiJianguoyunWriteRoute = ApiJianguoyunWriteRouteImport.update({
+  id: '/api/jianguoyun/write',
+  path: '/api/jianguoyun/write',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiJianguoyunStatRoute = ApiJianguoyunStatRouteImport.update({
+  id: '/api/jianguoyun/stat',
+  path: '/api/jianguoyun/stat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiJianguoyunReadRoute = ApiJianguoyunReadRouteImport.update({
+  id: '/api/jianguoyun/read',
+  path: '/api/jianguoyun/read',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiJianguoyunMoveRoute = ApiJianguoyunMoveRouteImport.update({
+  id: '/api/jianguoyun/move',
+  path: '/api/jianguoyun/move',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiJianguoyunMkdirRoute = ApiJianguoyunMkdirRouteImport.update({
+  id: '/api/jianguoyun/mkdir',
+  path: '/api/jianguoyun/mkdir',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiJianguoyunListRoute = ApiJianguoyunListRouteImport.update({
+  id: '/api/jianguoyun/list',
+  path: '/api/jianguoyun/list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiJianguoyunDeleteRoute = ApiJianguoyunDeleteRouteImport.update({
+  id: '/api/jianguoyun/delete',
+  path: '/api/jianguoyun/delete',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -128,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/components-demo': typeof ComponentsDemoRoute
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
+  '/api/ai-models': typeof ApiAiModelsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/chat-object-url': typeof ApiChatObjectUrlRoute
   '/api/chat-ocr': typeof ApiChatOcrRoute
@@ -137,6 +186,13 @@ export interface FileRoutesByFullPath {
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
+  '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
+  '/api/jianguoyun/list': typeof ApiJianguoyunListRoute
+  '/api/jianguoyun/mkdir': typeof ApiJianguoyunMkdirRoute
+  '/api/jianguoyun/move': typeof ApiJianguoyunMoveRoute
+  '/api/jianguoyun/read': typeof ApiJianguoyunReadRoute
+  '/api/jianguoyun/stat': typeof ApiJianguoyunStatRoute
+  '/api/jianguoyun/write': typeof ApiJianguoyunWriteRoute
   '/api/qieman/long-win-holdings-diff': typeof ApiQiemanLongWinHoldingsDiffRoute
   '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
@@ -148,6 +204,7 @@ export interface FileRoutesByTo {
   '/components-demo': typeof ComponentsDemoRoute
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
+  '/api/ai-models': typeof ApiAiModelsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/chat-object-url': typeof ApiChatObjectUrlRoute
   '/api/chat-ocr': typeof ApiChatOcrRoute
@@ -157,6 +214,13 @@ export interface FileRoutesByTo {
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
+  '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
+  '/api/jianguoyun/list': typeof ApiJianguoyunListRoute
+  '/api/jianguoyun/mkdir': typeof ApiJianguoyunMkdirRoute
+  '/api/jianguoyun/move': typeof ApiJianguoyunMoveRoute
+  '/api/jianguoyun/read': typeof ApiJianguoyunReadRoute
+  '/api/jianguoyun/stat': typeof ApiJianguoyunStatRoute
+  '/api/jianguoyun/write': typeof ApiJianguoyunWriteRoute
   '/api/qieman/long-win-holdings-diff': typeof ApiQiemanLongWinHoldingsDiffRoute
   '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
@@ -169,6 +233,7 @@ export interface FileRoutesById {
   '/components-demo': typeof ComponentsDemoRoute
   '/login': typeof LoginRoute
   '/supabase': typeof SupabaseRoute
+  '/api/ai-models': typeof ApiAiModelsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/chat-object-url': typeof ApiChatObjectUrlRoute
   '/api/chat-ocr': typeof ApiChatOcrRoute
@@ -178,6 +243,13 @@ export interface FileRoutesById {
   '/api/notify': typeof ApiNotifyRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
+  '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
+  '/api/jianguoyun/list': typeof ApiJianguoyunListRoute
+  '/api/jianguoyun/mkdir': typeof ApiJianguoyunMkdirRoute
+  '/api/jianguoyun/move': typeof ApiJianguoyunMoveRoute
+  '/api/jianguoyun/read': typeof ApiJianguoyunReadRoute
+  '/api/jianguoyun/stat': typeof ApiJianguoyunStatRoute
+  '/api/jianguoyun/write': typeof ApiJianguoyunWriteRoute
   '/api/qieman/long-win-holdings-diff': typeof ApiQiemanLongWinHoldingsDiffRoute
   '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
@@ -191,6 +263,7 @@ export interface FileRouteTypes {
     | '/components-demo'
     | '/login'
     | '/supabase'
+    | '/api/ai-models'
     | '/api/chat'
     | '/api/chat-object-url'
     | '/api/chat-ocr'
@@ -200,6 +273,13 @@ export interface FileRouteTypes {
     | '/api/notify'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
+    | '/api/jianguoyun/delete'
+    | '/api/jianguoyun/list'
+    | '/api/jianguoyun/mkdir'
+    | '/api/jianguoyun/move'
+    | '/api/jianguoyun/read'
+    | '/api/jianguoyun/stat'
+    | '/api/jianguoyun/write'
     | '/api/qieman/long-win-holdings-diff'
     | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
@@ -211,6 +291,7 @@ export interface FileRouteTypes {
     | '/components-demo'
     | '/login'
     | '/supabase'
+    | '/api/ai-models'
     | '/api/chat'
     | '/api/chat-object-url'
     | '/api/chat-ocr'
@@ -220,6 +301,13 @@ export interface FileRouteTypes {
     | '/api/notify'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
+    | '/api/jianguoyun/delete'
+    | '/api/jianguoyun/list'
+    | '/api/jianguoyun/mkdir'
+    | '/api/jianguoyun/move'
+    | '/api/jianguoyun/read'
+    | '/api/jianguoyun/stat'
+    | '/api/jianguoyun/write'
     | '/api/qieman/long-win-holdings-diff'
     | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
@@ -231,6 +319,7 @@ export interface FileRouteTypes {
     | '/components-demo'
     | '/login'
     | '/supabase'
+    | '/api/ai-models'
     | '/api/chat'
     | '/api/chat-object-url'
     | '/api/chat-ocr'
@@ -240,6 +329,13 @@ export interface FileRouteTypes {
     | '/api/notify'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
+    | '/api/jianguoyun/delete'
+    | '/api/jianguoyun/list'
+    | '/api/jianguoyun/mkdir'
+    | '/api/jianguoyun/move'
+    | '/api/jianguoyun/read'
+    | '/api/jianguoyun/stat'
+    | '/api/jianguoyun/write'
     | '/api/qieman/long-win-holdings-diff'
     | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
@@ -252,6 +348,7 @@ export interface RootRouteChildren {
   ComponentsDemoRoute: typeof ComponentsDemoRoute
   LoginRoute: typeof LoginRoute
   SupabaseRoute: typeof SupabaseRoute
+  ApiAiModelsRoute: typeof ApiAiModelsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiChatObjectUrlRoute: typeof ApiChatObjectUrlRoute
   ApiChatOcrRoute: typeof ApiChatOcrRoute
@@ -261,6 +358,13 @@ export interface RootRouteChildren {
   ApiNotifyRoute: typeof ApiNotifyRoute
   ApiTgSearchRoute: typeof ApiTgSearchRoute
   QiemanLongWinPlanRoute: typeof QiemanLongWinPlanRoute
+  ApiJianguoyunDeleteRoute: typeof ApiJianguoyunDeleteRoute
+  ApiJianguoyunListRoute: typeof ApiJianguoyunListRoute
+  ApiJianguoyunMkdirRoute: typeof ApiJianguoyunMkdirRoute
+  ApiJianguoyunMoveRoute: typeof ApiJianguoyunMoveRoute
+  ApiJianguoyunReadRoute: typeof ApiJianguoyunReadRoute
+  ApiJianguoyunStatRoute: typeof ApiJianguoyunStatRoute
+  ApiJianguoyunWriteRoute: typeof ApiJianguoyunWriteRoute
   ApiQiemanLongWinHoldingsDiffRoute: typeof ApiQiemanLongWinHoldingsDiffRoute
   ApiQiemanLongWinHoldingsDiffNotifyRoute: typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   ApiQiemanLongWinPlanRoute: typeof ApiQiemanLongWinPlanRoute
@@ -367,6 +471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ai-models': {
+      id: '/api/ai-models'
+      path: '/api/ai-models'
+      fullPath: '/api/ai-models'
+      preLoaderRoute: typeof ApiAiModelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/qieman/long-win-plan-notify': {
       id: '/api/qieman/long-win-plan-notify'
       path: '/api/qieman/long-win-plan-notify'
@@ -395,6 +506,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiQiemanLongWinHoldingsDiffRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/jianguoyun/write': {
+      id: '/api/jianguoyun/write'
+      path: '/api/jianguoyun/write'
+      fullPath: '/api/jianguoyun/write'
+      preLoaderRoute: typeof ApiJianguoyunWriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/jianguoyun/stat': {
+      id: '/api/jianguoyun/stat'
+      path: '/api/jianguoyun/stat'
+      fullPath: '/api/jianguoyun/stat'
+      preLoaderRoute: typeof ApiJianguoyunStatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/jianguoyun/read': {
+      id: '/api/jianguoyun/read'
+      path: '/api/jianguoyun/read'
+      fullPath: '/api/jianguoyun/read'
+      preLoaderRoute: typeof ApiJianguoyunReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/jianguoyun/move': {
+      id: '/api/jianguoyun/move'
+      path: '/api/jianguoyun/move'
+      fullPath: '/api/jianguoyun/move'
+      preLoaderRoute: typeof ApiJianguoyunMoveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/jianguoyun/mkdir': {
+      id: '/api/jianguoyun/mkdir'
+      path: '/api/jianguoyun/mkdir'
+      fullPath: '/api/jianguoyun/mkdir'
+      preLoaderRoute: typeof ApiJianguoyunMkdirRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/jianguoyun/list': {
+      id: '/api/jianguoyun/list'
+      path: '/api/jianguoyun/list'
+      fullPath: '/api/jianguoyun/list'
+      preLoaderRoute: typeof ApiJianguoyunListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/jianguoyun/delete': {
+      id: '/api/jianguoyun/delete'
+      path: '/api/jianguoyun/delete'
+      fullPath: '/api/jianguoyun/delete'
+      preLoaderRoute: typeof ApiJianguoyunDeleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -404,6 +564,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComponentsDemoRoute: ComponentsDemoRoute,
   LoginRoute: LoginRoute,
   SupabaseRoute: SupabaseRoute,
+  ApiAiModelsRoute: ApiAiModelsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiChatObjectUrlRoute: ApiChatObjectUrlRoute,
   ApiChatOcrRoute: ApiChatOcrRoute,
@@ -413,6 +574,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiNotifyRoute: ApiNotifyRoute,
   ApiTgSearchRoute: ApiTgSearchRoute,
   QiemanLongWinPlanRoute: QiemanLongWinPlanRoute,
+  ApiJianguoyunDeleteRoute: ApiJianguoyunDeleteRoute,
+  ApiJianguoyunListRoute: ApiJianguoyunListRoute,
+  ApiJianguoyunMkdirRoute: ApiJianguoyunMkdirRoute,
+  ApiJianguoyunMoveRoute: ApiJianguoyunMoveRoute,
+  ApiJianguoyunReadRoute: ApiJianguoyunReadRoute,
+  ApiJianguoyunStatRoute: ApiJianguoyunStatRoute,
+  ApiJianguoyunWriteRoute: ApiJianguoyunWriteRoute,
   ApiQiemanLongWinHoldingsDiffRoute: ApiQiemanLongWinHoldingsDiffRoute,
   ApiQiemanLongWinHoldingsDiffNotifyRoute:
     ApiQiemanLongWinHoldingsDiffNotifyRoute,

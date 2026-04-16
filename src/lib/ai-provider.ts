@@ -1,16 +1,22 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { wrapLanguageModel } from "ai";
-import { AI_MODELS } from "./ai-models";
+import { getChatModelConfig } from "@/lib/server/llm-config";
+import type { RuntimeEnv } from "@/lib/supabase-server";
 
-const provider = createOpenAICompatible({
-  name: "custom-ai",
-  apiKey: process.env.AI_API_KEY ?? "",
-  baseURL: process.env.AI_BASE_URL ?? "",
-});
+export async function getModel(modelId?: string, env?: RuntimeEnv) {
+  const config = await getChatModelConfig(env, modelId);
 
-export function getModel(modelId?: string) {
-  const model = provider(modelId || AI_MODELS[0].id);
+  if (config.protocol !== "openai_compatible") {
+    throw new Error(`Unsupported LLM protocol: ${config.protocol}`);
+  }
+
+  const provider = createOpenAICompatible({
+    name: config.providerCode,
+    apiKey: config.apiKey,
+    baseURL: config.baseURL,
+  });
+  const model = provider(config.modelId);
 
   if (import.meta.env.DEV) {
     return wrapLanguageModel({

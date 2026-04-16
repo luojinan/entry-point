@@ -1,5 +1,9 @@
-export const AI_MODELS = [
-  { id: "mimo-v2-flash", label: "mimo-v2-flash" },
-] as const;
+export interface AIModelOption {
+  id: string;
+  label: string;
+  providerLabel: string;
+  modelId: string;
+  isDefault: boolean;
+}
 
-export type AIModelId = (typeof AI_MODELS)[number]["id"];
+export type AIModelId = string;
