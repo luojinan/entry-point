@@ -16,6 +16,9 @@ type ToolApprovalHandler = (opts: {
   reason?: string;
 }) => void | PromiseLike<void>;
 
+const TOOL_DENIED_REASON =
+  "The user explicitly denied this tool execution request. 用户明确拒绝执行该工具调用。Treat this as a user refusal, not a tool error. Do not retry unless the user later clearly approves it.";
+
 export function DynamicToolCard({
   part,
   onApproval,
@@ -47,7 +50,11 @@ export function DynamicToolCard({
               variant="outline"
               size="sm"
               onClick={() => {
-                onApproval({ id: part.approval.id, approved: false });
+                onApproval({
+                  id: part.approval.id,
+                  approved: false,
+                  reason: TOOL_DENIED_REASON,
+                });
               }}
             >
               拒绝

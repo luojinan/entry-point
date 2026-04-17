@@ -20,15 +20,15 @@ importers:
       '@ai-sdk/react':
         specifier: 3.0.92
         version: 3.0.92(react@19.2.4)(zod@4.3.6)
+      '@alicloud/credentials':
+        specifier: ^2.4.4
+        version: 2.4.4
       '@alicloud/ocr-api20210707':
         specifier: ^3.1.3
         version: 3.1.3
-      '@alicloud/openapi-client':
-        specifier: ^0.4.15
-        version: 0.4.15
-      '@alicloud/tea-util':
-        specifier: ^1.4.11
-        version: 1.4.11
+      '@alicloud/openapi-core':
+        specifier: ^1.0.7
+        version: 1.0.7
       '@base-ui/react':
         specifier: ^1.0.0
         version: 1.2.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -221,9 +221,6 @@ packages:
   '@alicloud/ocr-api20210707@3.1.3':
     resolution: {integrity: sha512-gHcvq5nIgNMOmglfaiRzDZeiv7qdWEXRhmhEGVl2Qvzy1whF77sxbm1cfNoPSbrb3DQo9uJIEwaRLUVBHCxSWA==, tarball: https://registry.npmmirror.com/@alicloud/ocr-api20210707/-/ocr-api20210707-3.1.3.tgz}
 
-  '@alicloud/openapi-client@0.4.15':
-    resolution: {integrity: sha512-4VE0/k5ZdQbAhOSTqniVhuX1k5DUeUMZv74degn3wIWjLY6Bq+hxjaGsaHYlLZ2gA5wUrs8NcI5TE+lIQS3iiA==, tarball: https://registry.npmmirror.com/@alicloud/openapi-client/-/openapi-client-0.4.15.tgz}
-
   '@alicloud/openapi-core@1.0.7':
     resolution: {integrity: sha512-I80PQVfmlzRiXGHwutMp2zTpiqUVv8ts30nWAfksfHUSTIapk3nj9IXaPbULMPGNV6xqEyshO2bj2a+pmwc2tQ==, tarball: https://registry.npmmirror.com/@alicloud/openapi-core/-/openapi-core-1.0.7.tgz}
 
@@ -235,12 +232,6 @@ packages:
 
   '@alicloud/tea-util@1.4.11':
     resolution: {integrity: sha512-HyPEEQ8F0WoZegiCp7sVdrdm6eBOB+GCvGl4182u69LDFktxfirGLcAx3WExUr1zFWkq2OSmBroTwKQ4w/+Yww==, tarball: https://registry.npmmirror.com/@alicloud/tea-util/-/tea-util-1.4.11.tgz}
-
-  '@alicloud/tea-util@1.4.9':
-    resolution: {integrity: sha512-S0wz76rGtoPKskQtRTGqeuqBHFj8BqUn0Vh+glXKun2/9UpaaaWmuJwcmtImk6bJZfLYEShDF/kxDmDJoNYiTw==, tarball: https://registry.npmmirror.com/@alicloud/tea-util/-/tea-util-1.4.9.tgz}
-
-  '@alicloud/tea-xml@0.0.3':
-    resolution: {integrity: sha512-+/9GliugjrLglsXVrd1D80EqqKgGpyA0eQ6+1ZdUOYCaRguaSwz44trX3PaxPu/HhIPJg9PsGQQ3cSLXWZjbAA==, tarball: https://registry.npmmirror.com/@alicloud/tea-xml/-/tea-xml-0.0.3.tgz}
 
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
@@ -2170,9 +2161,6 @@ packages:
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
-
-  '@types/xml2js@0.4.14':
-    resolution: {integrity: sha512-4YnrRemBShWRO2QjvUin8ESA41rH+9nQGLUGZV/1IDhi3SL9OhdpNC/MrulTWuptXKwhx/aDxE7toV0f/ypIXQ==, tarball: https://registry.npmmirror.com/@types/xml2js/-/xml2js-0.4.14.tgz}
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
@@ -5220,17 +5208,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@alicloud/openapi-client@0.4.15':
-    dependencies:
-      '@alicloud/credentials': 2.4.4
-      '@alicloud/gateway-spi': 0.0.8
-      '@alicloud/openapi-util': 0.3.3
-      '@alicloud/tea-typescript': 1.8.0
-      '@alicloud/tea-util': 1.4.9
-      '@alicloud/tea-xml': 0.0.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@alicloud/openapi-core@1.0.7':
     dependencies:
       '@alicloud/credentials': 2.4.4
@@ -5261,21 +5238,6 @@ snapshots:
       '@alicloud/tea-typescript': 1.8.0
       '@darabonba/typescript': 1.0.4
       kitx: 2.2.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@alicloud/tea-util@1.4.9':
-    dependencies:
-      '@alicloud/tea-typescript': 1.8.0
-      kitx: 2.2.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@alicloud/tea-xml@0.0.3':
-    dependencies:
-      '@alicloud/tea-typescript': 1.8.0
-      '@types/xml2js': 0.4.14
-      xml2js: 0.6.2
     transitivePeerDependencies:
       - supports-color
 
@@ -7300,10 +7262,6 @@ snapshots:
   '@types/validate-npm-package-name@4.0.2': {}
 
   '@types/ws@8.18.1':
-    dependencies:
-      '@types/node': 22.19.12
-
-  '@types/xml2js@0.4.14':
     dependencies:
       '@types/node': 22.19.12
 

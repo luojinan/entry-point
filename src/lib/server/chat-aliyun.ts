@@ -1,9 +1,10 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { posix as pathPosix } from "node:path";
-import OcrClient, {
-  RecognizeGeneralRequest,
-} from "@alicloud/ocr-api20210707/dist/client.js";
-import { Config as OpenApiConfig } from "@alicloud/openapi-client/dist/client.js";
+import * as Credentials from "@alicloud/credentials";
+import type CredentialClient from "@alicloud/credentials/dist/src/client.js";
+import * as OCRApi from "@alicloud/ocr-api20210707";
+import type OCRClientInstance from "@alicloud/ocr-api20210707/dist/client.js";
+import { $OpenApiUtil } from "@alicloud/openapi-core";
 import {
   type ChatAttachmentOCRResult,
   type ChatOCRResponse,
@@ -17,6 +18,38 @@ const DEFAULT_OSS_UPLOAD_PREFIX = "chat-images";
 const DEFAULT_OCR_REGION = "cn-hangzhou";
 const DEFAULT_SIGNED_URL_TTL_SECONDS = 60 * 10;
 const DEFAULT_UPLOAD_POLICY_TTL_SECONDS = 60 * 5;
+const { Config: CredentialConfig } = Credentials;
+const { RecognizeAllTextRequest } = OCRApi;
+
+type Constructor<T> = new (...args: unknown[]) => T;
+
+function resolveModuleConstructor<T>(
+  value: unknown,
+  packageName: string,
+): Constructor<T> {
+  const moduleRecord =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : undefined;
+  const candidates = [moduleRecord?.default, moduleRecord?.default?.default];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "function") {
+      return candidate as Constructor<T>;
+    }
+  }
+
+  throw new TypeError(`Failed to resolve constructor from ${packageName}`);
+}
+
+const CredentialCtor = resolveModuleConstructor<CredentialClient>(
+  Credentials,
+  "@alicloud/credentials",
+);
+const OCRClientCtor = resolveModuleConstructor<OCRClientInstance>(
+  OCRApi,
+  "@alicloud/ocr-api20210707",
+);
 
 interface BuildUploadPolicyOptions {
   conversationId: string;
@@ -32,12 +65,33 @@ interface SignObjectUrlOptions {
   expiresInSeconds?: number;
 }
 
-function getRequiredEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
+function getRequiredEnv(name: string | string[]): string {
+  const names = Array.isArray(name) ? name : [name];
+
+  for (const envName of names) {
+    const value = process.env[envName]?.trim();
+    if (value) {
+      return value;
+    }
   }
-  return value;
+
+  throw new Error(
+    `Missing required environment variable: ${names.join(" or ")}`,
+  );
+}
+
+function getAliyunAccessKeyId(): string {
+  return getRequiredEnv([
+    "ALIBABA_CLOUD_ACCESS_KEY_ID",
+    "ALIYUN_ACCESS_KEY_ID",
+  ]);
+}
+
+function getAliyunAccessKeySecret(): string {
+  return getRequiredEnv([
+    "ALIBABA_CLOUD_ACCESS_KEY_SECRET",
+    "ALIYUN_ACCESS_KEY_SECRET",
+  ]);
 }
 
 function normalizePrefix(prefix: string): string {
@@ -89,7 +143,15 @@ function assertObjectKeyAllowed(objectKey: string) {
   }
 }
 
-function parseOCRData(raw: string | undefined): ChatAttachmentOCRResult {
+function parseOCRData(
+  raw:
+    | string
+    | {
+        content?: string;
+        prism_wordsInfo?: Array<{ word?: string }>;
+      }
+    | undefined,
+): ChatAttachmentOCRResult {
   if (!raw) {
     return {
       status: "error",
@@ -101,15 +163,25 @@ function parseOCRData(raw: string | undefined): ChatAttachmentOCRResult {
   }
 
   try {
-    const parsed = JSON.parse(raw) as {
-      content?: string;
-      prism_wordsInfo?: Array<{ word?: string }>;
-    };
-    const lines =
+    const parsed =
+      typeof raw === "string"
+        ? (JSON.parse(raw) as {
+            content?: string;
+            prism_wordsInfo?: Array<{ word?: string }>;
+          })
+        : raw;
+    const wordLines =
       parsed.prism_wordsInfo
         ?.map((item) => item.word?.trim() ?? "")
         .filter(Boolean) ?? [];
-    const plainText = (parsed.content ?? lines.join("\n")).trim();
+    const plainText = (parsed.content ?? wordLines.join("\n")).trim();
+    const lines =
+      wordLines.length > 0
+        ? wordLines
+        : plainText
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean);
 
     return {
       status: "ready",
@@ -130,22 +202,54 @@ function parseOCRData(raw: string | undefined): ChatAttachmentOCRResult {
   }
 }
 
-let ocrClient: OcrClient | null = null;
+interface OCRInvokeResult {
+  code: string;
+  message?: string;
+  requestId?: string;
+  ocr: ChatAttachmentOCRResult;
+}
 
-function getOCRClient(): OcrClient {
+let ocrClient: OCRClientInstance | null = null;
+
+function getOCRClient(): OCRClientInstance {
   if (ocrClient) {
     return ocrClient;
   }
 
-  const config = new OpenApiConfig({
-    accessKeyId: getRequiredEnv("ALIYUN_ACCESS_KEY_ID"),
-    accessKeySecret: getRequiredEnv("ALIYUN_ACCESS_KEY_SECRET"),
-    regionId: process.env.ALIYUN_OCR_REGION || DEFAULT_OCR_REGION,
-    endpoint: process.env.ALIYUN_OCR_ENDPOINT || undefined,
+  const regionId = process.env.ALIYUN_OCR_REGION || DEFAULT_OCR_REGION;
+  const credential = new CredentialCtor(
+    new CredentialConfig({
+      type: "access_key",
+      accessKeyId: getAliyunAccessKeyId(),
+      accessKeySecret: getAliyunAccessKeySecret(),
+    }),
+  );
+  const config = new $OpenApiUtil.Config({
+    credential,
+    regionId,
   });
+  config.endpoint =
+    process.env.ALIYUN_OCR_ENDPOINT?.trim() ||
+    `ocr-api.${regionId}.aliyuncs.com`;
 
-  ocrClient = new OcrClient(config);
+  ocrClient = new OCRClientCtor(config);
   return ocrClient;
+}
+
+async function recognizeWithAllText(url: string): Promise<OCRInvokeResult> {
+  const response = await getOCRClient().recognizeAllText(
+    new RecognizeAllTextRequest({
+      type: "General",
+      url,
+    }),
+  );
+
+  return {
+    code: String(response.body?.code ?? ""),
+    message: response.body?.message,
+    requestId: response.body?.requestId,
+    ocr: parseOCRData(response.body?.data),
+  };
 }
 
 export function buildChatUploadPolicy({
@@ -156,8 +260,8 @@ export function buildChatUploadPolicy({
 }: BuildUploadPolicyOptions): ChatUploadPolicyResponse {
   assertAllowedImageUpload(contentType, size);
 
-  const accessKeyId = getRequiredEnv("ALIYUN_ACCESS_KEY_ID");
-  const accessKeySecret = getRequiredEnv("ALIYUN_ACCESS_KEY_SECRET");
+  const accessKeyId = getAliyunAccessKeyId();
+  const accessKeySecret = getAliyunAccessKeySecret();
   const bucket = getRequiredEnv("ALIYUN_OSS_BUCKET");
   const region = getRequiredEnv("ALIYUN_OSS_REGION");
   const prefix = normalizePrefix(
@@ -209,8 +313,8 @@ export function signChatObjectUrl({
 }: SignObjectUrlOptions): ChatSignedObjectUrlResponse {
   assertObjectKeyAllowed(objectKey);
 
-  const accessKeyId = getRequiredEnv("ALIYUN_ACCESS_KEY_ID");
-  const accessKeySecret = getRequiredEnv("ALIYUN_ACCESS_KEY_SECRET");
+  const accessKeyId = getAliyunAccessKeyId();
+  const accessKeySecret = getAliyunAccessKeySecret();
   const expiresAt = Math.floor(Date.now() / 1000) + expiresInSeconds;
   const canonicalizedResource = `/${bucket}/${objectKey}`;
   const stringToSign = `GET\n\n\n${expiresAt}\n${canonicalizedResource}`;
@@ -237,14 +341,8 @@ export async function recognizeChatImage(
   objectKey: string,
 ): Promise<ChatOCRResponse> {
   const preview = signChatObjectUrl({ bucket, region, objectKey });
-  const response = await getOCRClient().recognizeGeneral(
-    new RecognizeGeneralRequest({
-      url: preview.url,
-    }),
-  );
-
-  const result = parseOCRData(response.body?.data);
-  const code = String(response.body?.code ?? "");
+  const result = await recognizeWithAllText(preview.url);
+  const code = result.code;
   if (code && code !== "200") {
     return {
       bucket,
@@ -257,8 +355,8 @@ export async function recognizeChatImage(
         plainText: "",
         lines: [],
         provider: "aliyun-ocr",
-        error: response.body?.message || `OCR request failed with code ${code}`,
-        requestId: response.body?.requestId,
+        error: result.message || `OCR request failed with code ${code}`,
+        requestId: result.requestId,
       },
     };
   }
@@ -270,8 +368,8 @@ export async function recognizeChatImage(
     previewUrl: preview.url,
     previewUrlExpiresAt: preview.expiresAt,
     ocr: {
-      ...result,
-      requestId: response.body?.requestId,
+      ...result.ocr,
+      requestId: result.requestId,
     },
   };
 }
