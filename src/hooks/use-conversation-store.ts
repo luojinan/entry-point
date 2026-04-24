@@ -52,9 +52,22 @@ export function useConversationStore() {
     [refresh],
   );
 
+  const saveSelectedSkillIds = useCallback(
+    (id: string, selectedSkillIds: string[]) => {
+      store.updateConversation(id, { selectedSkillIds });
+      refresh();
+    },
+    [refresh],
+  );
+
   const loadMessages = useCallback((id: string): ChatMessage[] => {
     const conv = store.getConversation(id);
     return conv?.messages ?? [];
+  }, []);
+
+  const loadSelectedSkillIds = useCallback((id: string): string[] => {
+    const conv = store.getConversation(id);
+    return conv?.selectedSkillIds ?? [];
   }, []);
 
   return useMemo(
@@ -67,6 +80,8 @@ export function useConversationStore() {
       saveMessages,
       updateTitle,
       loadMessages,
+      saveSelectedSkillIds,
+      loadSelectedSkillIds,
     }),
     [
       conversations,
@@ -77,6 +92,8 @@ export function useConversationStore() {
       saveMessages,
       updateTitle,
       loadMessages,
+      saveSelectedSkillIds,
+      loadSelectedSkillIds,
     ],
   );
 }

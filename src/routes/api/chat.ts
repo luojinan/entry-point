@@ -9,7 +9,11 @@ import {
 } from "ai";
 import { z } from "zod";
 import { getModel } from "@/lib/ai-provider";
-import { handleCorsPreflightRequest, withCors } from "@/lib/api-utils";
+import {
+  errorResponse,
+  handleCorsPreflightRequest,
+  withCors,
+} from "@/lib/api-utils";
 import {
   type ChatImageAttachment,
   type ChatMessage,
@@ -31,6 +35,8 @@ import {
   statJianguoyunPath,
   writeJianguoyunText,
 } from "@/lib/server/jianguoyun";
+import { getSkillsByIds } from "@/lib/server/skill-loader";
+import { buildSkillsPrompt, skillSelectionSchema } from "@/lib/skills";
 import { getRequestEnv } from "@/lib/supabase-server";
 import { search } from "@/lib/tg-search/search";
 
@@ -166,17 +172,45 @@ function createToolSetWithout(
   ) as ToolSet;
 }
 
+const chatRequestSchema = z.object({
+  messages: z.array(z.custom<ChatMessage>()),
+  model: z.string().optional(),
+  skillIds: z.array(z.string()).optional(),
+});
+
+const BASE_SYSTEM_PROMPT =
+  "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用远程共享文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程共享文件系统。远程共享文件系统工具对应的是共享的远端文件系统，不是本地磁盘。处理远程共享文件系统中的文件时，优先先用 statJianguoyunPath 或 listJianguoyunFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。当用户消息包含图片 OCR 内容时，请优先结合用户问题和 OCR 文本回答，并明确提醒 OCR 可能存在误差；如果 OCR 文本明显缺失、错乱或不完整，要建议用户重新上传更清晰的图片。对于其他一般问题，直接用自身知识回答即可。";
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
       POST: async ({ request, context }) => {
-        const {
-          messages,
-          model: modelId,
-        }: { messages: ChatMessage[]; model?: string } = await request.json();
+        const parsedBody = chatRequestSchema.safeParse(await request.json());
+        if (!parsedBody.success) {
+          return errorResponse(
+            parsedBody.error.issues[0]?.message || "Invalid chat request body",
+            400,
+          );
+        }
+
+        const selectedSkillIds = skillSelectionSchema.safeParse(
+          parsedBody.data.skillIds ?? [],
+        );
+        if (!selectedSkillIds.success) {
+          return errorResponse(
+            selectedSkillIds.error.issues[0]?.message || "Invalid skillIds",
+            400,
+          );
+        }
+
+        const { messages, model: modelId } = parsedBody.data;
         const env = getRequestEnv(context);
+        const skills = await getSkillsByIds(selectedSkillIds.data);
+        const systemPrompt = [BASE_SYSTEM_PROMPT, buildSkillsPrompt(skills)]
+          .filter(Boolean)
+          .join("\n\n");
 
         let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null =
           null;
@@ -373,8 +407,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const result = streamText({
           model: await getModel(modelId, env),
-          system:
-            "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用远程共享文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程共享文件系统。远程共享文件系统工具对应的是共享的远端文件系统，不是本地磁盘。处理远程共享文件系统中的文件时，优先先用 statJianguoyunPath 或 listJianguoyunFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。当用户消息包含图片 OCR 内容时，请优先结合用户问题和 OCR 文本回答，并明确提醒 OCR 可能存在误差；如果 OCR 文本明显缺失、错乱或不完整，要建议用户重新上传更清晰的图片。对于其他一般问题，直接用自身知识回答即可。",
+          system: systemPrompt,
           messages: await convertToModelMessages(messages, {
             convertDataPart: (part) => {
               if (isImageAttachmentPart(part)) {

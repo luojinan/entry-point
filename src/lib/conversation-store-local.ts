@@ -1,4 +1,5 @@
 import type { ChatMessage } from "./chat-message";
+import { MAX_SELECTED_SKILLS, skillIdSchema, uniqueSkillIds } from "./skills";
 import type {
   Conversation,
   ConversationStore,
@@ -12,6 +13,7 @@ interface StoredConversation {
   title: string;
   createdAt: number;
   updatedAt: number;
+  selectedSkillIds: string[];
   messages: ChatMessage[];
 }
 
@@ -19,7 +21,13 @@ function readAll(): StoredConversation[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as StoredConversation[];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed
+      .map(normalizeStoredConversation)
+      .filter((value): value is StoredConversation => value !== null);
   } catch {
     return [];
   }
@@ -54,6 +62,7 @@ export function createLocalConversationStore(): ConversationStore {
         title: title ?? "新对话",
         createdAt: now,
         updatedAt: now,
+        selectedSkillIds: [],
         messages: [],
       };
       const all = readAll();
@@ -65,12 +74,19 @@ export function createLocalConversationStore(): ConversationStore {
 
     updateConversation(
       id: string,
-      updates: Partial<Pick<Conversation, "title">>,
+      updates: Partial<Pick<Conversation, "title" | "selectedSkillIds">>,
     ) {
       const all = readAll();
       const idx = all.findIndex((c) => c.id === id);
       if (idx === -1) return;
-      Object.assign(all[idx], updates, { updatedAt: Date.now() });
+
+      if (typeof updates.title === "string") {
+        all[idx].title = updates.title;
+      }
+      if (Array.isArray(updates.selectedSkillIds)) {
+        all[idx].selectedSkillIds = sanitizeSkillIds(updates.selectedSkillIds);
+      }
+      all[idx].updatedAt = Date.now();
       writeAll(all);
     },
 
@@ -88,4 +104,44 @@ export function createLocalConversationStore(): ConversationStore {
       writeAll(all);
     },
   };
+}
+
+function normalizeStoredConversation(
+  value: unknown,
+): StoredConversation | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.id !== "string" ||
+    typeof record.title !== "string" ||
+    typeof record.createdAt !== "number" ||
+    typeof record.updatedAt !== "number" ||
+    !Array.isArray(record.messages)
+  ) {
+    return null;
+  }
+
+  return {
+    id: record.id,
+    title: record.title,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+    messages: record.messages as ChatMessage[],
+    selectedSkillIds: sanitizeSkillIds(record.selectedSkillIds),
+  };
+}
+
+function sanitizeSkillIds(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return uniqueSkillIds(
+    value
+      .filter((item): item is string => typeof item === "string")
+      .filter((item) => skillIdSchema.safeParse(item).success),
+  ).slice(0, MAX_SELECTED_SKILLS);
 }

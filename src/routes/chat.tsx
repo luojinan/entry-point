@@ -8,6 +8,7 @@ import { useChatSession } from "@/hooks/use-chat-session";
 import { useConversationStore } from "@/hooks/use-conversation-store";
 import type { AIModelId, AIModelOption } from "@/lib/ai-models";
 import type { ChatMessage } from "@/lib/chat-message";
+import type { SkillSummary } from "@/lib/skills";
 
 interface ApiEnvelope<T> {
   code: number;
@@ -30,6 +31,17 @@ async function loadModelOptions(): Promise<AIModelOption[]> {
   return payload.data;
 }
 
+async function loadSkillOptions(): Promise<SkillSummary[]> {
+  const response = await fetch("/api/skills");
+  const payload = (await response.json()) as ApiEnvelope<SkillSummary[]>;
+
+  if (!response.ok || payload.code !== 0) {
+    throw new Error(payload.message || "加载 skills 失败");
+  }
+
+  return payload.data;
+}
+
 export const Route = createFileRoute("/chat")({
   component: ChatPage,
 });
@@ -39,6 +51,9 @@ function ChatPage() {
   const [modelOptions, setModelOptions] = useState<AIModelOption[]>([]);
   const [modelId, setModelId] = useState<AIModelId>("");
   const [modelLoadError, setModelLoadError] = useState<string | null>(null);
+  const [skillOptions, setSkillOptions] = useState<SkillSummary[]>([]);
+  const [skillLoadError, setSkillLoadError] = useState<string | null>(null);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +95,42 @@ function ChatPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncSkillOptions() {
+      try {
+        setIsLoadingSkills(true);
+        const skills = await loadSkillOptions();
+        if (cancelled) {
+          return;
+        }
+
+        setSkillOptions(skills);
+        setSkillLoadError(null);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setSkillOptions([]);
+        setSkillLoadError(
+          error instanceof Error ? error.message : "加载 skills 失败",
+        );
+      } finally {
+        if (!cancelled) {
+          setIsLoadingSkills(false);
+        }
+      }
+    }
+
+    void syncSkillOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <ChatConversationLayout
       conversations={store.conversations}
@@ -93,11 +144,16 @@ function ChatPage() {
           key={store.activeId}
           conversationId={store.activeId}
           loadMessages={store.loadMessages}
+          loadSelectedSkillIds={store.loadSelectedSkillIds}
           saveMessages={store.saveMessages}
+          saveSelectedSkillIds={store.saveSelectedSkillIds}
           updateTitle={store.updateTitle}
           modelId={modelId}
           modelOptions={modelOptions}
           modelLoadError={modelLoadError}
+          skillOptions={skillOptions}
+          skillLoadError={skillLoadError}
+          isLoadingSkills={isLoadingSkills}
           onModelChange={setModelId}
         />
       ) : (
@@ -114,35 +170,53 @@ function ChatPage() {
 function ChatSession({
   conversationId,
   loadMessages,
+  loadSelectedSkillIds,
   saveMessages,
+  saveSelectedSkillIds,
   updateTitle,
   modelId,
   modelOptions,
   modelLoadError,
+  skillOptions,
+  skillLoadError,
+  isLoadingSkills,
   onModelChange,
 }: {
   conversationId: string;
   loadMessages: (id: string) => ChatMessage[];
+  loadSelectedSkillIds: (id: string) => string[];
   saveMessages: (id: string, messages: ChatMessage[]) => void;
+  saveSelectedSkillIds: (id: string, skillIds: string[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
   modelOptions: AIModelOption[];
   modelLoadError: string | null;
+  skillOptions: SkillSummary[];
+  skillLoadError: string | null;
+  isLoadingSkills: boolean;
   onModelChange: (id: AIModelId) => void;
 }) {
   const [initialMessages] = useState<ChatMessage[]>(() =>
     loadMessages(conversationId),
+  );
+  const [initialSelectedSkillIds] = useState<string[]>(() =>
+    loadSelectedSkillIds(conversationId),
   );
 
   return (
     <ChatSessionInner
       conversationId={conversationId}
       initialMessages={initialMessages}
+      initialSelectedSkillIds={initialSelectedSkillIds}
       saveMessages={saveMessages}
+      saveSelectedSkillIds={saveSelectedSkillIds}
       updateTitle={updateTitle}
       modelId={modelId}
       modelOptions={modelOptions}
       modelLoadError={modelLoadError}
+      skillOptions={skillOptions}
+      skillLoadError={skillLoadError}
+      isLoadingSkills={isLoadingSkills}
       onModelChange={onModelChange}
     />
   );
@@ -151,23 +225,36 @@ function ChatSession({
 function ChatSessionInner({
   conversationId,
   initialMessages,
+  initialSelectedSkillIds,
   saveMessages,
+  saveSelectedSkillIds,
   updateTitle,
   modelId,
   modelOptions,
   modelLoadError,
+  skillOptions,
+  skillLoadError,
+  isLoadingSkills,
   onModelChange,
 }: {
   conversationId: string;
   initialMessages: ChatMessage[];
+  initialSelectedSkillIds: string[];
   saveMessages: (id: string, messages: ChatMessage[]) => void;
+  saveSelectedSkillIds: (id: string, skillIds: string[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
   modelOptions: AIModelOption[];
   modelLoadError: string | null;
+  skillOptions: SkillSummary[];
+  skillLoadError: string | null;
+  isLoadingSkills: boolean;
   onModelChange: (id: AIModelId) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>(
+    initialSelectedSkillIds,
+  );
   const {
     messages,
     error,
@@ -181,7 +268,13 @@ function ChatSessionInner({
     saveMessages,
     updateTitle,
     modelId,
+    selectedSkillIds,
   });
+
+  const handleSelectedSkillIdsChange = (skillIds: string[]) => {
+    setSelectedSkillIds(skillIds);
+    saveSelectedSkillIds(conversationId, skillIds);
+  };
 
   const lastMessage = messages[messages.length - 1];
   const lastMessagePartsLength = lastMessage?.parts.length ?? 0;
@@ -249,6 +342,11 @@ function ChatSessionInner({
           modelId={modelId}
           modelOptions={modelOptions}
           onModelChange={onModelChange}
+          skillOptions={skillOptions}
+          selectedSkillIds={selectedSkillIds}
+          onSelectedSkillIdsChange={handleSelectedSkillIdsChange}
+          skillLoadError={skillLoadError}
+          isLoadingSkills={isLoadingSkills}
           onSubmit={submitText}
           disabled={isStreaming || isLoading}
         />

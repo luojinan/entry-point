@@ -5,6 +5,7 @@ export interface Conversation {
   title: string;
   createdAt: number;
   updatedAt: number;
+  selectedSkillIds: string[];
 }
 
 export interface ConversationWithMessages extends Conversation {
@@ -17,7 +18,7 @@ export interface ConversationStore {
   createConversation(title?: string): Conversation;
   updateConversation(
     id: string,
-    updates: Partial<Pick<Conversation, "title">>,
+    updates: Partial<Pick<Conversation, "title" | "selectedSkillIds">>,
   ): void;
   deleteConversation(id: string): void;
   saveMessages(id: string, messages: ChatMessage[]): void;

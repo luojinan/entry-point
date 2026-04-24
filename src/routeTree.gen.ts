@@ -16,6 +16,7 @@ import { Route as ChatRouteImport } from './routes/chat'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as QiemanLongWinPlanRouteImport } from './routes/qieman/long-win-plan'
 import { Route as ApiTgSearchRouteImport } from './routes/api/tg-search'
+import { Route as ApiSkillsRouteImport } from './routes/api/skills'
 import { Route as ApiNotifyRouteImport } from './routes/api/notify'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiExchangeRateRouteImport } from './routes/api/exchange-rate'
@@ -69,6 +70,11 @@ const QiemanLongWinPlanRoute = QiemanLongWinPlanRouteImport.update({
 const ApiTgSearchRoute = ApiTgSearchRouteImport.update({
   id: '/api/tg-search',
   path: '/api/tg-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSkillsRoute = ApiSkillsRouteImport.update({
+  id: '/api/skills',
+  path: '/api/skills',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNotifyRoute = ApiNotifyRouteImport.update({
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
+  '/api/skills': typeof ApiSkillsRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
+  '/api/skills': typeof ApiSkillsRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
+  '/api/skills': typeof ApiSkillsRoute
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
+    | '/api/skills'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
     | '/api/jianguoyun/delete'
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
+    | '/api/skills'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
     | '/api/jianguoyun/delete'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/api/exchange-rate'
     | '/api/health'
     | '/api/notify'
+    | '/api/skills'
     | '/api/tg-search'
     | '/qieman/long-win-plan'
     | '/api/jianguoyun/delete'
@@ -356,6 +368,7 @@ export interface RootRouteChildren {
   ApiExchangeRateRoute: typeof ApiExchangeRateRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiNotifyRoute: typeof ApiNotifyRoute
+  ApiSkillsRoute: typeof ApiSkillsRoute
   ApiTgSearchRoute: typeof ApiTgSearchRoute
   QiemanLongWinPlanRoute: typeof QiemanLongWinPlanRoute
   ApiJianguoyunDeleteRoute: typeof ApiJianguoyunDeleteRoute
@@ -420,6 +433,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tg-search'
       fullPath: '/api/tg-search'
       preLoaderRoute: typeof ApiTgSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/skills': {
+      id: '/api/skills'
+      path: '/api/skills'
+      fullPath: '/api/skills'
+      preLoaderRoute: typeof ApiSkillsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/notify': {
@@ -572,6 +592,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiExchangeRateRoute: ApiExchangeRateRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiNotifyRoute: ApiNotifyRoute,
+  ApiSkillsRoute: ApiSkillsRoute,
   ApiTgSearchRoute: ApiTgSearchRoute,
   QiemanLongWinPlanRoute: QiemanLongWinPlanRoute,
   ApiJianguoyunDeleteRoute: ApiJianguoyunDeleteRoute,

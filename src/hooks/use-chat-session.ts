@@ -17,6 +17,7 @@ interface UseChatSessionOptions {
   saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
+  selectedSkillIds: string[];
 }
 
 export function useChatSession({
@@ -25,16 +26,22 @@ export function useChatSession({
   saveMessages,
   updateTitle,
   modelId,
+  selectedSkillIds,
 }: UseChatSessionOptions) {
   const titleUpdatedRef = useRef(initialMessages.length > 0);
   const modelIdRef = useRef(modelId);
+  const selectedSkillIdsRef = useRef(selectedSkillIds);
   modelIdRef.current = modelId;
+  selectedSkillIdsRef.current = selectedSkillIds;
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: () => ({ model: modelIdRef.current }),
+        body: () => ({
+          model: modelIdRef.current,
+          skillIds: [...selectedSkillIdsRef.current],
+        }),
       }),
     [],
   );
