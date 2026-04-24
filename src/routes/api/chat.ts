@@ -35,8 +35,8 @@ import {
   statJianguoyunPath,
   writeJianguoyunText,
 } from "@/lib/server/jianguoyun";
-import { getSkillsByIds } from "@/lib/server/skill-loader";
-import { buildSkillsPrompt, skillSelectionSchema } from "@/lib/skills";
+import { listSkills } from "@/lib/server/skill-loader";
+import { buildSkillsMetadataPrompt } from "@/lib/skills";
 import { getRequestEnv } from "@/lib/supabase-server";
 import { search } from "@/lib/tg-search/search";
 
@@ -195,20 +195,13 @@ export const Route = createFileRoute("/api/chat")({
           );
         }
 
-        const selectedSkillIds = skillSelectionSchema.safeParse(
-          parsedBody.data.skillIds ?? [],
-        );
-        if (!selectedSkillIds.success) {
-          return errorResponse(
-            selectedSkillIds.error.issues[0]?.message || "Invalid skillIds",
-            400,
-          );
-        }
-
         const { messages, model: modelId } = parsedBody.data;
         const env = getRequestEnv(context);
-        const skills = await getSkillsByIds(selectedSkillIds.data);
-        const systemPrompt = [BASE_SYSTEM_PROMPT, buildSkillsPrompt(skills)]
+        const skills = await listSkills();
+        const systemPrompt = [
+          BASE_SYSTEM_PROMPT,
+          buildSkillsMetadataPrompt(skills),
+        ]
           .filter(Boolean)
           .join("\n\n");
 

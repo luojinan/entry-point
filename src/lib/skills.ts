@@ -62,11 +62,19 @@ export interface SkillDefinition {
   runtime: SkillRuntime;
   updatedAt?: string;
   instructions: string;
+  source: string;
   entry?: string;
   permissions?: {
     network?: boolean;
     fs?: boolean;
   };
+}
+
+export interface SkillDocumentView {
+  id: string;
+  title: string;
+  updatedAt?: string;
+  content: string;
 }
 
 export interface SkillSummary {
@@ -76,6 +84,11 @@ export interface SkillSummary {
   tags: string[];
   runtime: SkillRuntime;
   updatedAt?: string;
+  entry?: string;
+  permissions?: {
+    network?: boolean;
+    fs?: boolean;
+  };
 }
 
 interface ParsedDocumentFallback {
@@ -99,14 +112,68 @@ export function buildSkillSummary(skill: SkillDefinition): SkillSummary {
     tags: skill.tags,
     runtime: skill.runtime,
     updatedAt: skill.updatedAt,
+    entry: skill.entry,
+    permissions: skill.permissions,
   };
+}
+
+export function buildSkillDocumentView(
+  skill: SkillDefinition,
+): SkillDocumentView {
+  return {
+    id: skill.id,
+    title: skill.title,
+    updatedAt: skill.updatedAt,
+    content: skill.source,
+  };
+}
+
+export function buildSkillsMetadataPrompt(skills: SkillSummary[]): string {
+  if (skills.length === 0) {
+    return "";
+  }
+
+  const sections = skills.map((skill) => {
+    const lines = [
+      `## Skill: ${skill.title}`,
+      `ID: ${skill.id}`,
+      `Description: ${skill.description}`,
+      `Runtime: ${skill.runtime}`,
+    ];
+
+    if (skill.tags.length > 0) {
+      lines.push(`Tags: ${skill.tags.join(", ")}`);
+    }
+
+    if (skill.updatedAt) {
+      lines.push(`Updated At: ${skill.updatedAt}`);
+    }
+
+    if (skill.entry) {
+      lines.push(`Declared entry: ${skill.entry}`);
+    }
+
+    if (skill.permissions) {
+      lines.push(
+        `Declared permissions: network=${String(skill.permissions.network ?? false)}, fs=${String(skill.permissions.fs ?? false)}`,
+      );
+    }
+
+    lines.push(
+      "Metadata only. Skill instructions are not preloaded into context unless a later mechanism explicitly expands them.",
+    );
+
+    return lines.join("\n");
+  });
+
+  return ["[Available Skills Metadata]", ...sections].join("\n\n");
 }
 
 export function splitSkillFrontmatter(source: string): {
   frontmatter: string | null;
   body: string;
 } {
-  const normalized = source.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+  const normalized = normalizeSkillSource(source);
   const match = normalized.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
   if (!match) {
     return {
@@ -124,6 +191,7 @@ export function parseSkillDocument(
   source: string,
   updatedAt?: string,
 ): SkillDefinition {
+  const normalizedSource = normalizeSkillSource(source);
   const { frontmatter, body } = splitSkillFrontmatter(source);
   const fallback = extractDocumentFallback(body);
 
@@ -164,6 +232,7 @@ export function parseSkillDocument(
     runtime: metadata.runtime ?? "prompt-only",
     updatedAt,
     instructions: body,
+    source: normalizedSource,
     entry: metadata.entry,
     permissions: metadata.permissions,
   };
@@ -235,6 +304,10 @@ function formatSkillTitle(skillId: string): string {
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
+}
+
+function normalizeSkillSource(source: string): string {
+  return source.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
 }
 
 function parseFrontmatterBlock(

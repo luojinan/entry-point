@@ -25,6 +25,7 @@ import { Route as ApiChatOcrRouteImport } from './routes/api/chat-ocr'
 import { Route as ApiChatObjectUrlRouteImport } from './routes/api/chat-object-url'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiAiModelsRouteImport } from './routes/api/ai-models'
+import { Route as ApiSkillsSkillIdRouteImport } from './routes/api/skills.$skillId'
 import { Route as ApiQiemanLongWinPlanNotifyRouteImport } from './routes/api/qieman/long-win-plan-notify'
 import { Route as ApiQiemanLongWinPlanRouteImport } from './routes/api/qieman/long-win-plan'
 import { Route as ApiQiemanLongWinHoldingsDiffNotifyRouteImport } from './routes/api/qieman/long-win-holdings-diff-notify'
@@ -117,6 +118,11 @@ const ApiAiModelsRoute = ApiAiModelsRouteImport.update({
   path: '/api/ai-models',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSkillsSkillIdRoute = ApiSkillsSkillIdRouteImport.update({
+  id: '/$skillId',
+  path: '/$skillId',
+  getParentRoute: () => ApiSkillsRoute,
+} as any)
 const ApiQiemanLongWinPlanNotifyRoute =
   ApiQiemanLongWinPlanNotifyRouteImport.update({
     id: '/api/qieman/long-win-plan-notify',
@@ -190,7 +196,7 @@ export interface FileRoutesByFullPath {
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
-  '/api/skills': typeof ApiSkillsRoute
+  '/api/skills': typeof ApiSkillsRouteWithChildren
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
   '/api/qieman/long-win-plan-notify': typeof ApiQiemanLongWinPlanNotifyRoute
+  '/api/skills/$skillId': typeof ApiSkillsSkillIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -219,7 +226,7 @@ export interface FileRoutesByTo {
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
-  '/api/skills': typeof ApiSkillsRoute
+  '/api/skills': typeof ApiSkillsRouteWithChildren
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
   '/api/qieman/long-win-plan-notify': typeof ApiQiemanLongWinPlanNotifyRoute
+  '/api/skills/$skillId': typeof ApiSkillsSkillIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -249,7 +257,7 @@ export interface FileRoutesById {
   '/api/exchange-rate': typeof ApiExchangeRateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/notify': typeof ApiNotifyRoute
-  '/api/skills': typeof ApiSkillsRoute
+  '/api/skills': typeof ApiSkillsRouteWithChildren
   '/api/tg-search': typeof ApiTgSearchRoute
   '/qieman/long-win-plan': typeof QiemanLongWinPlanRoute
   '/api/jianguoyun/delete': typeof ApiJianguoyunDeleteRoute
@@ -263,6 +271,7 @@ export interface FileRoutesById {
   '/api/qieman/long-win-holdings-diff-notify': typeof ApiQiemanLongWinHoldingsDiffNotifyRoute
   '/api/qieman/long-win-plan': typeof ApiQiemanLongWinPlanRoute
   '/api/qieman/long-win-plan-notify': typeof ApiQiemanLongWinPlanNotifyRoute
+  '/api/skills/$skillId': typeof ApiSkillsSkillIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
     | '/api/qieman/long-win-plan-notify'
+    | '/api/skills/$skillId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -323,6 +333,7 @@ export interface FileRouteTypes {
     | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
     | '/api/qieman/long-win-plan-notify'
+    | '/api/skills/$skillId'
   id:
     | '__root__'
     | '/'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/api/qieman/long-win-holdings-diff-notify'
     | '/api/qieman/long-win-plan'
     | '/api/qieman/long-win-plan-notify'
+    | '/api/skills/$skillId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -368,7 +380,7 @@ export interface RootRouteChildren {
   ApiExchangeRateRoute: typeof ApiExchangeRateRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiNotifyRoute: typeof ApiNotifyRoute
-  ApiSkillsRoute: typeof ApiSkillsRoute
+  ApiSkillsRoute: typeof ApiSkillsRouteWithChildren
   ApiTgSearchRoute: typeof ApiTgSearchRoute
   QiemanLongWinPlanRoute: typeof QiemanLongWinPlanRoute
   ApiJianguoyunDeleteRoute: typeof ApiJianguoyunDeleteRoute
@@ -498,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/skills/$skillId': {
+      id: '/api/skills/$skillId'
+      path: '/$skillId'
+      fullPath: '/api/skills/$skillId'
+      preLoaderRoute: typeof ApiSkillsSkillIdRouteImport
+      parentRoute: typeof ApiSkillsRoute
+    }
     '/api/qieman/long-win-plan-notify': {
       id: '/api/qieman/long-win-plan-notify'
       path: '/api/qieman/long-win-plan-notify'
@@ -578,6 +597,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ApiSkillsRouteChildren {
+  ApiSkillsSkillIdRoute: typeof ApiSkillsSkillIdRoute
+}
+
+const ApiSkillsRouteChildren: ApiSkillsRouteChildren = {
+  ApiSkillsSkillIdRoute: ApiSkillsSkillIdRoute,
+}
+
+const ApiSkillsRouteWithChildren = ApiSkillsRoute._addFileChildren(
+  ApiSkillsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRoute,
@@ -592,7 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiExchangeRateRoute: ApiExchangeRateRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiNotifyRoute: ApiNotifyRoute,
-  ApiSkillsRoute: ApiSkillsRoute,
+  ApiSkillsRoute: ApiSkillsRouteWithChildren,
   ApiTgSearchRoute: ApiTgSearchRoute,
   QiemanLongWinPlanRoute: QiemanLongWinPlanRoute,
   ApiJianguoyunDeleteRoute: ApiJianguoyunDeleteRoute,

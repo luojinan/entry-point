@@ -1,10 +1,5 @@
 **Deploy**: Cloudflare Workers via Wrangler
 
-Before editing files, check whether the dev server is already running by probing port `2190` first
-
-If the probe succeeds, treat dev as already started.
-Only if the probe fails should you run `pnpm run dev`.
-
 ## Browser Automation
 
 Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.

@@ -30,6 +30,11 @@ export * from '${esmPath}';
 }
 
 const config = defineConfig({
+  server: {
+    // Bind on IPv4 as well so local tooling can reliably reach the dev server
+    // via 127.0.0.1 instead of only ::1/localhost.
+    host: "0.0.0.0",
+  },
   plugins: [
     cheerioEsmFix(),
     devtools(),

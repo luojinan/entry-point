@@ -23,20 +23,14 @@ import {
   isAllowedChatImageType,
   MAX_CHAT_IMAGE_SIZE_BYTES,
 } from "@/lib/chat-message";
-import type { SkillSummary } from "@/lib/skills";
 import { cn } from "@/lib/utils";
-import { ChatSkillPicker } from "./chat-skill-picker";
+import { ChatSkillsViewer } from "./chat-skills-viewer";
 
 interface ChatComposerProps {
   conversationId: string;
   modelId: AIModelId;
   modelOptions: AIModelOption[];
   onModelChange: (id: AIModelId) => void;
-  skillOptions: SkillSummary[];
-  selectedSkillIds: string[];
-  onSelectedSkillIdsChange: (skillIds: string[]) => void;
-  skillLoadError?: string | null;
-  isLoadingSkills?: boolean;
   onSubmit: (text: string, attachments?: ChatImageAttachment[]) => boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -145,11 +139,6 @@ export function ChatComposer({
   modelId,
   modelOptions,
   onModelChange,
-  skillOptions,
-  selectedSkillIds,
-  onSelectedSkillIdsChange,
-  skillLoadError = null,
-  isLoadingSkills = false,
   onSubmit,
   disabled = false,
   placeholder = "输入消息... (Enter 发送, Shift+Enter 换行)",
@@ -391,14 +380,7 @@ export function ChatComposer({
           </SelectContent>
         </Select>
 
-        <ChatSkillPicker
-          skills={skillOptions}
-          selectedSkillIds={selectedSkillIds}
-          onSelectedSkillIdsChange={onSelectedSkillIdsChange}
-          disabled={disabled}
-          error={skillLoadError}
-          isLoading={isLoadingSkills}
-        />
+        <ChatSkillsViewer disabled={disabled} />
 
         <input
           ref={fileInputRef}
