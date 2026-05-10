@@ -1,35 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
+import {
+  getRequestEnv,
+  getRequiredRuntimeEnvValue,
+  getRuntimeEnvValue,
+  type RuntimeEnv,
+} from "@/lib/runtime-env";
 
-export type RuntimeEnv = Record<string, string | undefined> | undefined;
-
-function readEnvValue(env: RuntimeEnv, key: string): string | undefined {
-  return env?.[key] ?? process.env[key];
-}
-
-export function getRuntimeEnvValue(
-  env: RuntimeEnv,
-  key: string,
-): string | undefined {
-  return readEnvValue(env, key);
-}
-
-export function getRequestEnv(context: unknown): RuntimeEnv {
-  const cloudflare = (
-    context as { cloudflare?: { env?: RuntimeEnv } } | undefined
-  )?.cloudflare;
-  return cloudflare?.env;
-}
+export type { RuntimeEnv } from "@/lib/runtime-env";
+export { getRequestEnv, getRuntimeEnvValue };
 
 export function getSupabaseServerConfig(env: RuntimeEnv) {
-  const url =
-    readEnvValue(env, "SUPABASE_URL") ?? readEnvValue(env, "VITE_SUPABASE_URL");
-  const serviceRoleKey = readEnvValue(env, "SUPABASE_SERVICE_ROLE_KEY");
-  const publishableKey = readEnvValue(env, "VITE_SUPABASE_PUBLISHABLE_KEY");
+  const url = getRequiredRuntimeEnvValue(env, "SUPABASE_URL");
+  const serviceRoleKey = getRuntimeEnvValue(env, "SUPABASE_SERVICE_ROLE_KEY");
+  const publishableKey = getRuntimeEnvValue(env, "SUPABASE_PUBLISHABLE_KEY");
   const key = serviceRoleKey ?? publishableKey;
 
   if (!url || !key) {
     throw new Error(
-      "Missing Supabase server configuration. Set SUPABASE_URL/VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_PUBLISHABLE_KEY.",
+      "Missing Supabase server configuration. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or SUPABASE_PUBLISHABLE_KEY.",
     );
   }
 

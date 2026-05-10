@@ -1,6 +1,16 @@
+import { getRuntimeEnvValue, type RuntimeEnv } from "@/lib/runtime-env";
+import type {
+  BasePluginInterface,
+  SearchResult as PluginResult,
+} from "@/searchplugins/types";
 import { parseSearchResults } from "./parser";
-import type { BasePluginInterface, SearchResult as PluginResult } from "@/searchplugins/types";
-import type { LinkType, MergedLink, MergedLinks, SearchResponse, SearchResult } from "./types";
+import type {
+  LinkType,
+  MergedLink,
+  MergedLinks,
+  SearchResponse,
+  SearchResult,
+} from "./types";
 
 const FALLBACK_CHANNELS = [
   "Quark_Movies",
@@ -12,10 +22,10 @@ const FALLBACK_CHANNELS = [
   "Aliyun_4K_Movies",
 ];
 
-function getDefaultChannels(): string[] {
-  const env = process.env.TG_CHANNELS;
-  if (!env?.trim()) return FALLBACK_CHANNELS;
-  return env
+function getDefaultChannels(env?: RuntimeEnv): string[] {
+  const channels = getRuntimeEnvValue(env, "TG_CHANNELS");
+  if (!channels) return FALLBACK_CHANNELS;
+  return channels
     .split(",")
     .map((c) => c.trim())
     .filter(Boolean);
@@ -159,8 +169,7 @@ function mergeMergedLinks(
   // 按时间倒序排序
   for (const type in merged) {
     merged[type].sort(
-      (a, b) =>
-        new Date(b.datetime).getTime() - new Date(a.datetime).getTime(),
+      (a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime(),
     );
   }
 
@@ -174,9 +183,10 @@ export async function search(
   resultType: "results" | "merged_by_type" | "all" = "merged_by_type",
   includePlugins?: boolean,
   pluginNames?: string[],
+  env?: RuntimeEnv,
 ): Promise<SearchResponse> {
   // 先执行 TG 搜索
-  const tgResponse = await searchTG(keyword, channels, resultType);
+  const tgResponse = await searchTG(keyword, channels, resultType, env);
 
   if (!includePlugins) {
     return tgResponse;
@@ -186,7 +196,7 @@ export async function search(
   let pluginLinks: MergedLink[] = [];
   try {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - dynamic import to avoid bundling cheerio/node:stream in Workers
+    // @ts-expect-error - dynamic import to avoid bundling cheerio/node:stream in Workers
     const mod = await import(
       /* @vite-ignore */
       "@/searchplugins"
@@ -222,10 +232,7 @@ export async function search(
   }
 
   // merged_by_type / all 模式：合并 TG 和 plugin 结果
-  const merged = mergeMergedLinks(
-    tgResponse.merged_by_type ?? {},
-    pluginLinks,
-  );
+  const merged = mergeMergedLinks(tgResponse.merged_by_type ?? {}, pluginLinks);
   const total = Object.values(merged).reduce(
     (sum, links) => sum + links.length,
     0,
@@ -243,8 +250,9 @@ export async function searchTG(
   keyword: string,
   channels?: string[],
   resultType: "results" | "merged_by_type" | "all" = "merged_by_type",
+  env?: RuntimeEnv,
 ): Promise<SearchResponse> {
-  const resolved = channels?.length ? channels : getDefaultChannels();
+  const resolved = channels?.length ? channels : getDefaultChannels(env);
 
   // 并行抓取所有频道
   const fetchPromises = resolved.map(async (channel) => {

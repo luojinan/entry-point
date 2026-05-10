@@ -180,6 +180,13 @@ tanstack
 
 add `wrangler.jsonc` & set `cloudflare({ viteEnvironment: { name: 'ssr' } })` vite plugin
 
+### 环境变量分层
+
+- 构建期变量只使用 `VITE_*`，例如 `VITE_SUPABASE_URL`、`VITE_SUPABASE_PUBLISHABLE_KEY`。
+- 运行时变量统一走 Worker `env` / `wrangler`，例如 `SUPABASE_*`、`JIANGUOYUN_*`、`ALIYUN_*`、`TG_CHANNELS`。
+- `wrangler.jsonc` 不再放 `VITE_*`，它们应通过本地 `.env` 或 CI 构建环境提供。
+- 本地变量模板见 [`.env.example`](./.env.example)。
+
 ## shadcn 组件编写示例
 
 在 shadcn 文档中找合适的组件之后，使用 pnpm 下载组件源码，pnpm会根据项目内指定的组件库（baseui）去下载对应的组件源码

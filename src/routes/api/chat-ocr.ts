@@ -5,6 +5,7 @@ import {
   jsonResponse,
 } from "@/lib/api-utils";
 import type { ChatOCRRequest } from "@/lib/chat-message";
+import { getRequestEnv } from "@/lib/runtime-env";
 import { recognizeChatImage } from "@/lib/server/chat-aliyun";
 
 export const Route = createFileRoute("/api/chat-ocr")({
@@ -12,8 +13,9 @@ export const Route = createFileRoute("/api/chat-ocr")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      POST: async ({ request }) => {
+      POST: async ({ request, context }) => {
         try {
+          const env = getRequestEnv(context);
           const body = (await request.json()) as ChatOCRRequest;
 
           if (!body.bucket) {
@@ -27,7 +29,12 @@ export const Route = createFileRoute("/api/chat-ocr")({
           }
 
           return jsonResponse(
-            await recognizeChatImage(body.bucket, body.region, body.objectKey),
+            await recognizeChatImage(
+              body.bucket,
+              body.region,
+              body.objectKey,
+              env,
+            ),
           );
         } catch (error) {
           console.error("Chat OCR error:", error);

@@ -1,21 +1,22 @@
 import { posix as pathPosix } from "node:path";
-import {
-  SkillDocumentError,
-  type SkillDefinition,
-  type SkillSummary,
-  SKILL_CONTENT_CACHE_TTL_MS,
-  SKILL_ENTRY_FILE,
-  skillIdSchema,
-  SKILL_LIST_CACHE_TTL_MS,
-  SKILLS_ROOT_PATH,
-  buildSkillSummary,
-  parseSkillDocument,
-} from "@/lib/skills";
+import type { RuntimeEnv } from "@/lib/runtime-env";
 import {
   JianguoyunError,
   listJianguoyunPath,
   readJianguoyunText,
 } from "@/lib/server/jianguoyun";
+import {
+  buildSkillSummary,
+  parseSkillDocument,
+  SKILL_CONTENT_CACHE_TTL_MS,
+  SKILL_ENTRY_FILE,
+  SKILL_LIST_CACHE_TTL_MS,
+  SKILLS_ROOT_PATH,
+  type SkillDefinition,
+  SkillDocumentError,
+  type SkillSummary,
+  skillIdSchema,
+} from "@/lib/skills";
 
 interface CacheEntry<T> {
   expiresAt: number;
@@ -27,7 +28,7 @@ const skillSummaryCache: { current: CacheEntry<SkillSummary[]> | null } = {
 };
 const skillContentCache = new Map<string, CacheEntry<SkillDefinition | null>>();
 
-export async function listSkills(): Promise<SkillSummary[]> {
+export async function listSkills(env?: RuntimeEnv): Promise<SkillSummary[]> {
   const now = Date.now();
   const cached = skillSummaryCache.current;
   if (cached && cached.expiresAt > now) {
@@ -38,7 +39,7 @@ export async function listSkills(): Promise<SkillSummary[]> {
     ReturnType<typeof listJianguoyunPath>
   >["entries"];
   try {
-    const result = await listJianguoyunPath(SKILLS_ROOT_PATH);
+    const result = await listJianguoyunPath(SKILLS_ROOT_PATH, env);
     directoryEntries = result.entries;
   } catch (error) {
     if (isMissingPath(error)) {
@@ -60,7 +61,7 @@ export async function listSkills(): Promise<SkillSummary[]> {
     await Promise.all(
       skillIds.map(async (skillId) => {
         try {
-          const skill = await getSkillById(skillId);
+          const skill = await getSkillById(skillId, env);
           if (!skill?.enabled) {
             return null;
           }
@@ -88,11 +89,12 @@ export async function listSkills(): Promise<SkillSummary[]> {
 
 export async function getSkillsByIds(
   skillIds: string[],
+  env?: RuntimeEnv,
 ): Promise<SkillDefinition[]> {
   const skills = await Promise.all(
     skillIds.map(async (skillId) => {
       try {
-        return await getSkillById(skillId);
+        return await getSkillById(skillId, env);
       } catch (error) {
         if (error instanceof SkillDocumentError) {
           console.warn(
@@ -113,6 +115,7 @@ export async function getSkillsByIds(
 
 export async function getSkillById(
   skillId: string,
+  env?: RuntimeEnv,
 ): Promise<SkillDefinition | null> {
   const parsedId = skillIdSchema.safeParse(skillId);
   if (!parsedId.success) {
@@ -128,7 +131,7 @@ export async function getSkillById(
   const skillPath = buildSkillPath(parsedId.data);
 
   try {
-    const result = await readJianguoyunText(skillPath);
+    const result = await readJianguoyunText(skillPath, env);
     const skill = parseSkillDocument(
       parsedId.data,
       result.content,

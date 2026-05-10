@@ -5,6 +5,7 @@ import {
   jsonResponse,
 } from "@/lib/api-utils";
 import type { ChatSignedObjectUrlRequest } from "@/lib/chat-message";
+import { getRequestEnv } from "@/lib/runtime-env";
 import { signChatObjectUrl } from "@/lib/server/chat-aliyun";
 
 export const Route = createFileRoute("/api/chat-object-url")({
@@ -12,8 +13,9 @@ export const Route = createFileRoute("/api/chat-object-url")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      POST: async ({ request }) => {
+      POST: async ({ request, context }) => {
         try {
+          const env = getRequestEnv(context);
           const body = (await request.json()) as ChatSignedObjectUrlRequest;
 
           if (!body.bucket) {
@@ -27,11 +29,14 @@ export const Route = createFileRoute("/api/chat-object-url")({
           }
 
           return jsonResponse(
-            signChatObjectUrl({
-              bucket: body.bucket,
-              region: body.region,
-              objectKey: body.objectKey,
-            }),
+            signChatObjectUrl(
+              {
+                bucket: body.bucket,
+                region: body.region,
+                objectKey: body.objectKey,
+              },
+              env,
+            ),
           );
         } catch (error) {
           console.error("Chat object URL error:", error);

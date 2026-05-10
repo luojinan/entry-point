@@ -15,6 +15,11 @@ import type {
   JianguoyunWriteInput,
   JianguoyunWriteResult,
 } from "@/lib/jianguoyun";
+import {
+  getRequiredRuntimeEnvValue,
+  getRuntimeEnvValue,
+  type RuntimeEnv,
+} from "@/lib/runtime-env";
 
 export type JianguoyunErrorCode =
   | "INVALID_PATH"
@@ -54,10 +59,11 @@ interface DavPropfindEntry extends JianguoyunEntry {
 
 const DEFAULT_JIANGUOYUN_BASE_URL = "https://dav.jianguoyun.com/dav/";
 const DEFAULT_JIANGUOYUN_ROOT_PATH = "/llm-fs";
-const DEFAULT_TIMEOUT_MS = 15_000;
-const DEFAULT_MAX_TEXT_FILE_BYTES = 512 * 1024;
-const DEFAULT_MAX_WRITE_BYTES = 512 * 1024;
-const DEFAULT_MAX_LIST_ENTRIES = 200;
+const FORBIDDEN_PATH_PREFIXES = ["/system", "/private"];
+const MAX_TEXT_FILE_BYTES = 512 * 1024;
+const MAX_WRITE_BYTES = 512 * 1024;
+const MAX_LIST_ENTRIES = 200;
+const TIMEOUT_MS = 15_000;
 const TEXT_LIKE_EXTENSIONS = new Set([
   ".conf",
   ".csv",
@@ -125,22 +131,8 @@ export function isJianguoyunError(error: unknown): error is JianguoyunError {
   return error instanceof JianguoyunError;
 }
 
-function getRequiredEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
-
-function parseNumberEnv(name: string, fallback: number): number {
-  const raw = process.env[name]?.trim();
-  if (!raw) {
-    return fallback;
-  }
-
-  const value = Number.parseInt(raw, 10);
-  return Number.isFinite(value) && value > 0 ? value : fallback;
+function getRequiredEnv(name: string, env?: RuntimeEnv): string {
+  return getRequiredRuntimeEnvValue(env, name);
 }
 
 function normalizeRootPath(path: string): string {
@@ -148,45 +140,26 @@ function normalizeRootPath(path: string): string {
   return normalized.endsWith("/") ? normalized.slice(0, -1) : normalized;
 }
 
-function normalizeForbiddenPrefixes(prefixes: string): string[] {
-  return prefixes
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .map((value) => normalizePathValue(value, { allowRoot: true }))
-    .filter((value, index, items) => items.indexOf(value) === index)
-    .sort((left, right) => left.length - right.length);
-}
-
-function getConfig(): JianguoyunConfig {
+function getConfig(env?: RuntimeEnv): JianguoyunConfig {
   const baseUrlValue =
-    process.env.JIANGUOYUN_BASE_URL?.trim() || DEFAULT_JIANGUOYUN_BASE_URL;
+    getRuntimeEnvValue(env, "JIANGUOYUN_BASE_URL") ||
+    DEFAULT_JIANGUOYUN_BASE_URL;
   const baseUrl = new URL(baseUrlValue);
 
   return {
     baseUrl: baseUrl.toString(),
     basePathname: baseUrl.pathname.replace(/\/$/, ""),
-    username: getRequiredEnv("JIANGUOYUN_USERNAME"),
-    password: getRequiredEnv("JIANGUOYUN_PASSWORD"),
+    username: getRequiredEnv("JIANGUOYUN_USERNAME", env),
+    password: getRequiredEnv("JIANGUOYUN_PASSWORD", env),
     rootPath: normalizeRootPath(
-      process.env.JIANGUOYUN_ROOT_PATH || DEFAULT_JIANGUOYUN_ROOT_PATH,
+      getRuntimeEnvValue(env, "JIANGUOYUN_ROOT_PATH") ||
+        DEFAULT_JIANGUOYUN_ROOT_PATH,
     ),
-    forbiddenPathPrefixes: normalizeForbiddenPrefixes(
-      process.env.JIANGUOYUN_FORBIDDEN_PATH_PREFIXES || "",
-    ),
-    maxTextFileBytes: parseNumberEnv(
-      "JIANGUOYUN_MAX_TEXT_FILE_BYTES",
-      DEFAULT_MAX_TEXT_FILE_BYTES,
-    ),
-    maxWriteBytes: parseNumberEnv(
-      "JIANGUOYUN_MAX_WRITE_BYTES",
-      DEFAULT_MAX_WRITE_BYTES,
-    ),
-    maxListEntries: parseNumberEnv(
-      "JIANGUOYUN_MAX_LIST_ENTRIES",
-      DEFAULT_MAX_LIST_ENTRIES,
-    ),
-    timeoutMs: parseNumberEnv("JIANGUOYUN_TIMEOUT_MS", DEFAULT_TIMEOUT_MS),
+    forbiddenPathPrefixes: FORBIDDEN_PATH_PREFIXES,
+    maxTextFileBytes: MAX_TEXT_FILE_BYTES,
+    maxWriteBytes: MAX_WRITE_BYTES,
+    maxListEntries: MAX_LIST_ENTRIES,
+    timeoutMs: TIMEOUT_MS,
   };
 }
 
@@ -710,8 +683,9 @@ async function listInternal(
 
 export async function listJianguoyunPath(
   path: string,
+  env?: RuntimeEnv,
 ): Promise<JianguoyunListResult> {
-  const config = getConfig();
+  const config = getConfig(env);
   const requestId = createRequestId();
   const normalizedPath = normalizeUserPath(path, requestId, {
     allowRoot: true,
@@ -722,8 +696,9 @@ export async function listJianguoyunPath(
 
 export async function statJianguoyunPath(
   path: string,
+  env?: RuntimeEnv,
 ): Promise<JianguoyunStatResult> {
-  const config = getConfig();
+  const config = getConfig(env);
   const requestId = createRequestId();
   const normalizedPath = normalizeUserPath(path, requestId, {
     allowRoot: true,
@@ -734,8 +709,9 @@ export async function statJianguoyunPath(
 
 export async function readJianguoyunText(
   path: string,
+  env?: RuntimeEnv,
 ): Promise<JianguoyunReadResult> {
-  const config = getConfig();
+  const config = getConfig(env);
   const requestId = createRequestId();
   const normalizedPath = normalizeUserPath(path, requestId);
   assertPathAllowed(normalizedPath, config, requestId);
@@ -800,8 +776,9 @@ export async function readJianguoyunText(
 
 export async function writeJianguoyunText(
   input: JianguoyunWriteInput,
+  env?: RuntimeEnv,
 ): Promise<JianguoyunWriteResult> {
-  const config = getConfig();
+  const config = getConfig(env);
   const requestId = createRequestId();
   const normalizedPath = normalizeUserPath(input.path, requestId);
   assertPathAllowed(normalizedPath, config, requestId);
@@ -881,8 +858,9 @@ export async function writeJianguoyunText(
 
 export async function moveJianguoyunPath(
   input: JianguoyunMoveInput,
+  env?: RuntimeEnv,
 ): Promise<JianguoyunMoveResult> {
-  const config = getConfig();
+  const config = getConfig(env);
   const requestId = createRequestId();
   const fromPath = normalizeUserPath(input.from, requestId);
   const toPath = normalizeUserPath(input.to, requestId);
@@ -942,8 +920,9 @@ export async function moveJianguoyunPath(
 
 export async function deleteJianguoyunPath(
   input: JianguoyunDeleteInput,
+  env?: RuntimeEnv,
 ): Promise<JianguoyunDeleteResult> {
-  const config = getConfig();
+  const config = getConfig(env);
   const requestId = createRequestId();
   const normalizedPath = normalizeUserPath(input.path, requestId);
   assertPathAllowed(normalizedPath, config, requestId);
@@ -981,8 +960,9 @@ export async function deleteJianguoyunPath(
 
 export async function createJianguoyunDirectory(
   input: JianguoyunMkdirInput,
+  env?: RuntimeEnv,
 ): Promise<JianguoyunMkdirResult> {
-  const config = getConfig();
+  const config = getConfig(env);
   const requestId = createRequestId();
   const normalizedPath = normalizeUserPath(input.path, requestId);
   assertPathAllowed(normalizedPath, config, requestId);

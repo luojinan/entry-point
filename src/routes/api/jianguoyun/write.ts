@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { handleCorsPreflightRequest, jsonResponse } from "@/lib/api-utils";
 import { jianguoyunWriteSchema } from "@/lib/jianguoyun";
+import { getRequestEnv } from "@/lib/runtime-env";
 import { writeJianguoyunText } from "@/lib/server/jianguoyun";
 import {
   jianguoyunErrorResponse,
@@ -12,8 +13,9 @@ export const Route = createFileRoute("/api/jianguoyun/write")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      POST: async ({ request }) => {
+      POST: async ({ request, context }) => {
         let body: unknown;
+        const env = getRequestEnv(context);
 
         try {
           body = await request.json();
@@ -31,7 +33,7 @@ export const Route = createFileRoute("/api/jianguoyun/write")({
         }
 
         try {
-          const result = await writeJianguoyunText(parsed.data);
+          const result = await writeJianguoyunText(parsed.data, env);
           return jsonResponse(result, 200, {
             "X-Request-Id": result.requestId,
           });

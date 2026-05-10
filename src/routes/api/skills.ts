@@ -4,6 +4,7 @@ import {
   handleCorsPreflightRequest,
   jsonResponse,
 } from "@/lib/api-utils";
+import { getRequestEnv } from "@/lib/runtime-env";
 import { listSkills } from "@/lib/server/skill-loader";
 
 export const Route = createFileRoute("/api/skills")({
@@ -11,9 +12,9 @@ export const Route = createFileRoute("/api/skills")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      GET: async () => {
+      GET: async ({ context }) => {
         try {
-          const skills = await listSkills();
+          const skills = await listSkills(getRequestEnv(context));
           return jsonResponse(skills);
         } catch (error) {
           console.error("Error in /api/skills:", error);

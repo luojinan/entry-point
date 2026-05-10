@@ -26,6 +26,7 @@ import {
   jianguoyunQueryPathSchema,
   jianguoyunWriteSchema,
 } from "@/lib/jianguoyun";
+import { getRequestEnv, getRuntimeEnvValue } from "@/lib/runtime-env";
 import {
   createJianguoyunDirectory,
   deleteJianguoyunPath,
@@ -37,7 +38,6 @@ import {
 } from "@/lib/server/jianguoyun";
 import { listSkills } from "@/lib/server/skill-loader";
 import { buildSkillsMetadataPrompt } from "@/lib/skills";
-import { getRequestEnv } from "@/lib/supabase-server";
 import { search } from "@/lib/tg-search/search";
 
 const SQL_WRITE_KEYWORDS = [
@@ -197,7 +197,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const { messages, model: modelId } = parsedBody.data;
         const env = getRequestEnv(context);
-        const skills = await listSkills();
+        const skills = await listSkills(env);
         const systemPrompt = [
           BASE_SYSTEM_PROMPT,
           buildSkillsMetadataPrompt(skills),
@@ -210,12 +210,21 @@ export const Route = createFileRoute("/api/chat")({
         let allTools: ToolSet = {};
 
         try {
+          const projectRef = getRuntimeEnvValue(env, "SUPABASE_PROJECT_REF");
+          const accessToken = getRuntimeEnvValue(env, "SUPABASE_ACCESS_TOKEN");
+
+          if (!projectRef || !accessToken) {
+            throw new Error(
+              "Missing SUPABASE_PROJECT_REF or SUPABASE_ACCESS_TOKEN for Supabase MCP",
+            );
+          }
+
           mcpClient = await createMCPClient({
             transport: {
               type: "http",
-              url: `https://mcp.supabase.com/mcp?project_ref=${process.env.SUPABASE_PROJECT_REF}`,
+              url: `https://mcp.supabase.com/mcp?project_ref=${projectRef}`,
               headers: {
-                Authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,
+                Authorization: `Bearer ${accessToken}`,
               },
             },
           });
@@ -330,6 +339,8 @@ export const Route = createFileRoute("/api/chat")({
               undefined,
               "merged_by_type",
               true,
+              undefined,
+              env,
             );
             return result;
           },
@@ -339,7 +350,7 @@ export const Route = createFileRoute("/api/chat")({
             description:
               "浏览远程共享文件系统中的目录内容，返回指定路径下的文件和子目录。适用于用户明确提到目录、路径、文件位置时。",
             inputSchema: jianguoyunQueryPathSchema,
-            execute: async ({ path }) => listJianguoyunPath(path),
+            execute: async ({ path }) => listJianguoyunPath(path, env),
           }),
           false,
         );
@@ -348,7 +359,7 @@ export const Route = createFileRoute("/api/chat")({
             description:
               "查看远程共享文件系统中某个路径的元数据，确认它是否存在、是文件还是目录，以及最近更新时间。",
             inputSchema: jianguoyunQueryPathSchema,
-            execute: async ({ path }) => statJianguoyunPath(path),
+            execute: async ({ path }) => statJianguoyunPath(path, env),
           }),
           false,
         );
@@ -357,7 +368,7 @@ export const Route = createFileRoute("/api/chat")({
             description:
               "读取远程共享文件系统中的文本文件内容。适用于查看具体文档、说明文本或配置文件。",
             inputSchema: jianguoyunQueryPathSchema,
-            execute: async ({ path }) => readJianguoyunText(path),
+            execute: async ({ path }) => readJianguoyunText(path, env),
           }),
           false,
         );
@@ -366,7 +377,7 @@ export const Route = createFileRoute("/api/chat")({
             description:
               "在远程共享文件系统中创建或更新文本文件。适用于写入文档、说明、导出文本或配置文件。",
             inputSchema: jianguoyunWriteSchema,
-            execute: async (input) => writeJianguoyunText(input),
+            execute: async (input) => writeJianguoyunText(input, env),
           }),
           true,
         );
@@ -375,7 +386,7 @@ export const Route = createFileRoute("/api/chat")({
             description:
               "在远程共享文件系统中移动或重命名文件、目录。适用于整理目录结构或调整文件名。",
             inputSchema: jianguoyunMoveSchema,
-            execute: async (input) => moveJianguoyunPath(input),
+            execute: async (input) => moveJianguoyunPath(input, env),
           }),
           true,
         );
@@ -384,7 +395,7 @@ export const Route = createFileRoute("/api/chat")({
             description:
               "删除远程共享文件系统中的文件或目录。适用于明确的文件清理请求。删除目录时需要显式传 recursive=true。",
             inputSchema: jianguoyunDeleteSchema,
-            execute: async (input) => deleteJianguoyunPath(input),
+            execute: async (input) => deleteJianguoyunPath(input, env),
           }),
           true,
         );
@@ -393,7 +404,7 @@ export const Route = createFileRoute("/api/chat")({
             description:
               "在远程共享文件系统中创建目录。适用于准备文档、导出文件或其他文本文件的存放路径。",
             inputSchema: jianguoyunMkdirSchema,
-            execute: async (input) => createJianguoyunDirectory(input),
+            execute: async (input) => createJianguoyunDirectory(input, env),
           }),
           true,
         );

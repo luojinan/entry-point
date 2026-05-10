@@ -29,7 +29,7 @@ export * from '${esmPath}';
   };
 }
 
-const config = defineConfig({
+const config = defineConfig(({ mode }) => ({
   server: {
     // Bind on IPv4 as well so local tooling can reliably reach the dev server
     // via 127.0.0.1 instead of only ::1/localhost.
@@ -39,8 +39,8 @@ const config = defineConfig({
     cheerioEsmFix(),
     devtools(),
     // cloudflare({ viteEnvironment: { name: 'ssr' } }),
-    // 仅在 build 时启用 cloudflare 插件（devtool使用了nodejs环境fs，而cloudflare dev runtime 不支持使用fs）
-    process.env.NODE_ENV === 'production' && cloudflare({ viteEnvironment: { name: 'ssr' } }),
+    // 仅在生产构建时启用 cloudflare 插件（devtool使用了nodejs环境fs，而cloudflare dev runtime 不支持使用fs）
+    mode === "production" && cloudflare({ viteEnvironment: { name: "ssr" } }),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
@@ -90,6 +90,6 @@ const config = defineConfig({
     tanstackStart(),
     viteReact(),
   ],
-});
+}));
 
 export default config;

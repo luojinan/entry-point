@@ -13,6 +13,11 @@ import {
   isAllowedChatImageType,
   MAX_CHAT_IMAGE_SIZE_BYTES,
 } from "@/lib/chat-message";
+import {
+  getRequiredRuntimeEnvValue,
+  getRuntimeEnvValue,
+  type RuntimeEnv,
+} from "@/lib/runtime-env";
 
 const DEFAULT_OSS_UPLOAD_PREFIX = "chat-images";
 const DEFAULT_OCR_REGION = "cn-hangzhou";
@@ -65,33 +70,22 @@ interface SignObjectUrlOptions {
   expiresInSeconds?: number;
 }
 
-function getRequiredEnv(name: string | string[]): string {
-  const names = Array.isArray(name) ? name : [name];
+function getRequiredEnv(name: string | string[], env?: RuntimeEnv): string {
+  return getRequiredRuntimeEnvValue(env, name);
+}
 
-  for (const envName of names) {
-    const value = process.env[envName]?.trim();
-    if (value) {
-      return value;
-    }
-  }
-
-  throw new Error(
-    `Missing required environment variable: ${names.join(" or ")}`,
+function getAliyunAccessKeyId(env?: RuntimeEnv): string {
+  return getRequiredEnv(
+    ["ALIBABA_CLOUD_ACCESS_KEY_ID", "ALIYUN_ACCESS_KEY_ID"],
+    env,
   );
 }
 
-function getAliyunAccessKeyId(): string {
-  return getRequiredEnv([
-    "ALIBABA_CLOUD_ACCESS_KEY_ID",
-    "ALIYUN_ACCESS_KEY_ID",
-  ]);
-}
-
-function getAliyunAccessKeySecret(): string {
-  return getRequiredEnv([
-    "ALIBABA_CLOUD_ACCESS_KEY_SECRET",
-    "ALIYUN_ACCESS_KEY_SECRET",
-  ]);
+function getAliyunAccessKeySecret(env?: RuntimeEnv): string {
+  return getRequiredEnv(
+    ["ALIBABA_CLOUD_ACCESS_KEY_SECRET", "ALIYUN_ACCESS_KEY_SECRET"],
+    env,
+  );
 }
 
 function normalizePrefix(prefix: string): string {
@@ -134,9 +128,10 @@ function assertAllowedImageUpload(contentType: string, size: number) {
   }
 }
 
-function assertObjectKeyAllowed(objectKey: string) {
+function assertObjectKeyAllowed(objectKey: string, env?: RuntimeEnv) {
   const prefix = normalizePrefix(
-    process.env.ALIYUN_OSS_UPLOAD_PREFIX || DEFAULT_OSS_UPLOAD_PREFIX,
+    getRuntimeEnvValue(env, "ALIYUN_OSS_UPLOAD_PREFIX") ||
+      DEFAULT_OSS_UPLOAD_PREFIX,
   );
   if (!objectKey.startsWith(`${prefix}/`)) {
     throw new Error("Object key is outside the allowed upload prefix");
@@ -211,17 +206,18 @@ interface OCRInvokeResult {
 
 let ocrClient: OCRClientInstance | null = null;
 
-function getOCRClient(): OCRClientInstance {
+function getOCRClient(env?: RuntimeEnv): OCRClientInstance {
   if (ocrClient) {
     return ocrClient;
   }
 
-  const regionId = process.env.ALIYUN_OCR_REGION || DEFAULT_OCR_REGION;
+  const regionId =
+    getRuntimeEnvValue(env, "ALIYUN_OCR_REGION") || DEFAULT_OCR_REGION;
   const credential = new CredentialCtor(
     new CredentialConfig({
       type: "access_key",
-      accessKeyId: getAliyunAccessKeyId(),
-      accessKeySecret: getAliyunAccessKeySecret(),
+      accessKeyId: getAliyunAccessKeyId(env),
+      accessKeySecret: getAliyunAccessKeySecret(env),
     }),
   );
   const config = new $OpenApiUtil.Config({
@@ -229,15 +225,18 @@ function getOCRClient(): OCRClientInstance {
     regionId,
   });
   config.endpoint =
-    process.env.ALIYUN_OCR_ENDPOINT?.trim() ||
+    getRuntimeEnvValue(env, "ALIYUN_OCR_ENDPOINT") ||
     `ocr-api.${regionId}.aliyuncs.com`;
 
   ocrClient = new OCRClientCtor(config);
   return ocrClient;
 }
 
-async function recognizeWithAllText(url: string): Promise<OCRInvokeResult> {
-  const response = await getOCRClient().recognizeAllText(
+async function recognizeWithAllText(
+  url: string,
+  env?: RuntimeEnv,
+): Promise<OCRInvokeResult> {
+  const response = await getOCRClient(env).recognizeAllText(
     new RecognizeAllTextRequest({
       type: "General",
       url,
@@ -252,20 +251,19 @@ async function recognizeWithAllText(url: string): Promise<OCRInvokeResult> {
   };
 }
 
-export function buildChatUploadPolicy({
-  conversationId,
-  fileName,
-  contentType,
-  size,
-}: BuildUploadPolicyOptions): ChatUploadPolicyResponse {
+export function buildChatUploadPolicy(
+  { conversationId, fileName, contentType, size }: BuildUploadPolicyOptions,
+  env?: RuntimeEnv,
+): ChatUploadPolicyResponse {
   assertAllowedImageUpload(contentType, size);
 
-  const accessKeyId = getAliyunAccessKeyId();
-  const accessKeySecret = getAliyunAccessKeySecret();
-  const bucket = getRequiredEnv("ALIYUN_OSS_BUCKET");
-  const region = getRequiredEnv("ALIYUN_OSS_REGION");
+  const accessKeyId = getAliyunAccessKeyId(env);
+  const accessKeySecret = getAliyunAccessKeySecret(env);
+  const bucket = getRequiredEnv("ALIYUN_OSS_BUCKET", env);
+  const region = getRequiredEnv("ALIYUN_OSS_REGION", env);
   const prefix = normalizePrefix(
-    process.env.ALIYUN_OSS_UPLOAD_PREFIX || DEFAULT_OSS_UPLOAD_PREFIX,
+    getRuntimeEnvValue(env, "ALIYUN_OSS_UPLOAD_PREFIX") ||
+      DEFAULT_OSS_UPLOAD_PREFIX,
   );
 
   const safeConversationId = sanitizeSegment(conversationId).slice(0, 64);
@@ -305,16 +303,19 @@ export function buildChatUploadPolicy({
   };
 }
 
-export function signChatObjectUrl({
-  bucket,
-  region,
-  objectKey,
-  expiresInSeconds = DEFAULT_SIGNED_URL_TTL_SECONDS,
-}: SignObjectUrlOptions): ChatSignedObjectUrlResponse {
-  assertObjectKeyAllowed(objectKey);
+export function signChatObjectUrl(
+  {
+    bucket,
+    region,
+    objectKey,
+    expiresInSeconds = DEFAULT_SIGNED_URL_TTL_SECONDS,
+  }: SignObjectUrlOptions,
+  env?: RuntimeEnv,
+): ChatSignedObjectUrlResponse {
+  assertObjectKeyAllowed(objectKey, env);
 
-  const accessKeyId = getAliyunAccessKeyId();
-  const accessKeySecret = getAliyunAccessKeySecret();
+  const accessKeyId = getAliyunAccessKeyId(env);
+  const accessKeySecret = getAliyunAccessKeySecret(env);
   const expiresAt = Math.floor(Date.now() / 1000) + expiresInSeconds;
   const canonicalizedResource = `/${bucket}/${objectKey}`;
   const stringToSign = `GET\n\n\n${expiresAt}\n${canonicalizedResource}`;
@@ -339,9 +340,10 @@ export async function recognizeChatImage(
   bucket: string,
   region: string,
   objectKey: string,
+  env?: RuntimeEnv,
 ): Promise<ChatOCRResponse> {
-  const preview = signChatObjectUrl({ bucket, region, objectKey });
-  const result = await recognizeWithAllText(preview.url);
+  const preview = signChatObjectUrl({ bucket, region, objectKey }, env);
+  const result = await recognizeWithAllText(preview.url, env);
   const code = result.code;
   if (code && code !== "200") {
     return {

@@ -3,7 +3,11 @@ import {
   createSupabaseServerClient,
   getRuntimeEnvValue,
   getSupabaseServerConfig,
+  type RuntimeEnv,
 } from "@/lib/supabase-server";
+
+export { getRequestEnv } from "@/lib/runtime-env";
+
 import { loadLongWinPlan } from "./long-win-plan";
 import {
   computePlanDiff,
@@ -14,8 +18,6 @@ import {
   syncPlanSnapshots,
 } from "./plan-snapshot";
 import type { LongWinPlanResponse } from "./types";
-
-export type RuntimeEnv = Record<string, string | undefined> | undefined;
 
 export interface LoadLongWinHoldingsDiffOptions {
   prodCode: string;
@@ -31,13 +33,6 @@ export interface LoadedLongWinHoldingsDiff {
   currentFetchedAt: string;
   diff: PlanDiffResult;
   storageMode: "service_role" | "publishable_key_fallback";
-}
-
-export function getRequestEnv(context: unknown): RuntimeEnv {
-  const cloudflare = (
-    context as { cloudflare?: { env?: RuntimeEnv } } | undefined
-  )?.cloudflare;
-  return cloudflare?.env;
 }
 
 export function ensureQiemanDiffAuthorized(

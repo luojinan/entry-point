@@ -9,16 +9,17 @@
   // Configure production credentials with:
   //   wrangler secret put JIANGUOYUN_USERNAME
   //   wrangler secret put JIANGUOYUN_PASSWORD
+  //   wrangler secret put ALIYUN_ACCESS_KEY_ID
+  //   wrangler secret put ALIYUN_ACCESS_KEY_SECRET
+  //   wrangler secret put SUPABASE_ACCESS_TOKEN
+  //   wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+  //   wrangler secret put QIEMAN_DIFF_API_KEY
+  // VITE_* 仅用于构建期浏览器注入，不应配置在 wrangler runtime vars 中。
   "vars": {
     "JIANGUOYUN_BASE_URL": "https://dav.jianguoyun.com/dav/",
     "JIANGUOYUN_ROOT_PATH": "/llm-fs",
-    "JIANGUOYUN_FORBIDDEN_PATH_PREFIXES": "/system,/private",
-    "JIANGUOYUN_MAX_TEXT_FILE_BYTES": "524288",
-    "JIANGUOYUN_MAX_WRITE_BYTES": "524288",
-    "JIANGUOYUN_MAX_LIST_ENTRIES": "200",
-    "JIANGUOYUN_TIMEOUT_MS": "15000",
     "SUPABASE_PROJECT_REF": "knclktpgdzpxdooyprdv",
-    "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_BeqxNaQ58YbUAI1LCtmWpA_cRAuKoAc",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_BeqxNaQ58YbUAI1LCtmWpA_cRAuKoAc",
     "SUPABASE_URL": "https://knclktpgdzpxdooyprdv.supabase.co",
     "TG_CHANNELS": "Quark_Movies,ucquark,QuarkFree,yunpanquark,kuakedongman,shareAliyun,Aliyun_4K_Movies"
   }

@@ -4,6 +4,7 @@ import {
   handleCorsPreflightRequest,
   jsonResponse,
 } from "@/lib/api-utils";
+import { getRequestEnv } from "@/lib/runtime-env";
 import { search } from "@/lib/tg-search/search";
 import type { SearchRequest } from "@/lib/tg-search/types";
 
@@ -12,7 +13,8 @@ export const Route = createFileRoute("/api/tg-search")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      GET: async ({ request }) => {
+      GET: async ({ request, context }) => {
+        const env = getRequestEnv(context);
         const url = new URL(request.url);
         const keyword = url.searchParams.get("kw");
         const channelsParam = url.searchParams.get("channels");
@@ -49,6 +51,7 @@ export const Route = createFileRoute("/api/tg-search")({
             resultType,
             includePlugins,
             plugins,
+            env,
           );
           return jsonResponse(data);
         } catch (error) {
@@ -60,8 +63,9 @@ export const Route = createFileRoute("/api/tg-search")({
         }
       },
 
-      POST: async ({ request }) => {
+      POST: async ({ request, context }) => {
         try {
+          const env = getRequestEnv(context);
           const body = (await request.json()) as SearchRequest;
 
           if (!body.keyword) {
@@ -77,6 +81,7 @@ export const Route = createFileRoute("/api/tg-search")({
             resultType,
             body.include_plugins ?? true,
             body.plugins,
+            env,
           );
           return jsonResponse(data);
         } catch (error) {

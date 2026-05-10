@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { handleCorsPreflightRequest, jsonResponse } from "@/lib/api-utils";
 import { jianguoyunQueryPathSchema } from "@/lib/jianguoyun";
+import { getRequestEnv } from "@/lib/runtime-env";
 import { listJianguoyunPath } from "@/lib/server/jianguoyun";
 import {
   jianguoyunErrorResponse,
@@ -12,7 +13,8 @@ export const Route = createFileRoute("/api/jianguoyun/list")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      GET: async ({ request }) => {
+      GET: async ({ request, context }) => {
+        const env = getRequestEnv(context);
         const url = new URL(request.url);
         const parsed = jianguoyunQueryPathSchema.safeParse({
           path: url.searchParams.get("path"),
@@ -26,7 +28,7 @@ export const Route = createFileRoute("/api/jianguoyun/list")({
         }
 
         try {
-          const result = await listJianguoyunPath(parsed.data.path);
+          const result = await listJianguoyunPath(parsed.data.path, env);
           return jsonResponse(result, 200, {
             "X-Request-Id": result.requestId,
           });
