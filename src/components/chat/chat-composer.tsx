@@ -382,7 +382,7 @@ export function ChatComposer({
           </SelectContent>
         </Select>
 
-        <ChatSkillsViewer disabled={disabled} />
+        <ChatSkillsViewer />
 
         <input
           ref={fileInputRef}

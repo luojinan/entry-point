@@ -434,7 +434,12 @@ export const Route = createFileRoute("/api/chat")({
           },
         });
 
-        return withCors(result.toUIMessageStreamResponse());
+        return withCors(
+          result.toUIMessageStreamResponse({
+            sendReasoning: true,
+            sendSources: true,
+          }),
+        );
       },
     },
   },

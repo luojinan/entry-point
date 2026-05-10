@@ -1,6 +1,12 @@
-import { ArrowLeft02Icon, File01Icon } from "@hugeicons/core-free-icons";
+import {
+  ArrowLeft02Icon,
+  File01Icon,
+  Refresh01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import {
   AlertDialog,
@@ -17,6 +23,11 @@ import {
   type SkillDocumentView,
   type SkillSummary,
 } from "@/lib/skills";
+import {
+  readSkillsViewerCache,
+  type SkillsViewerCache,
+  writeSkillsViewerCache,
+} from "@/lib/skills-viewer-cache";
 import { cn } from "@/lib/utils";
 
 interface ChatSkillsViewerProps {
@@ -29,10 +40,22 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
+const SKILLS_QUERY_KEY = ["skills", "viewer", "list"] as const;
+const EMPTY_DOCUMENT_QUERY_KEY = [
+  "skills",
+  "viewer",
+  "document",
+  "empty",
+] as const;
+
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
   timeStyle: "short",
 });
+
+function getSkillDocumentQueryKey(skillId: string) {
+  return ["skills", "viewer", "document", skillId] as const;
+}
 
 async function loadSkillOptions(signal?: AbortSignal): Promise<SkillSummary[]> {
   const response = await fetch("/api/skills", { signal });
@@ -45,8 +68,13 @@ async function loadSkillOptions(signal?: AbortSignal): Promise<SkillSummary[]> {
   return payload.data;
 }
 
-async function loadSkillDocument(skillId: string): Promise<SkillDocumentView> {
-  const response = await fetch(`/api/skills/${encodeURIComponent(skillId)}`);
+async function loadSkillDocument(
+  skillId: string,
+  signal?: AbortSignal,
+): Promise<SkillDocumentView> {
+  const response = await fetch(`/api/skills/${encodeURIComponent(skillId)}`, {
+    signal,
+  });
   const payload = (await response.json()) as ApiEnvelope<SkillDocumentView>;
 
   if (!response.ok || payload.code !== 0) {
@@ -69,21 +97,123 @@ function formatUpdatedAt(updatedAt?: string): string | null {
   return dateFormatter.format(value);
 }
 
+function getErrorMessage(error: unknown): string | null {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return null;
+}
+
+function updateBrowserCache(
+  setBrowserCache: Dispatch<SetStateAction<SkillsViewerCache>>,
+  updater: (current: SkillsViewerCache) => SkillsViewerCache,
+) {
+  setBrowserCache((current) => {
+    const next = updater(current);
+    if (next === current) {
+      return current;
+    }
+    writeSkillsViewerCache(next);
+    return next;
+  });
+}
+
 export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
   const [open, setOpen] = useState(false);
-  const [skills, setSkills] = useState<SkillSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "detail">("list");
-  const [documents, setDocuments] = useState<Record<string, SkillDocumentView>>(
-    {},
+  const [browserCache, setBrowserCache] = useState<SkillsViewerCache>(() =>
+    readSkillsViewerCache(),
   );
-  const [documentError, setDocumentError] = useState<string | null>(null);
-  const [loadingDocumentId, setLoadingDocumentId] = useState<string | null>(
-    null,
-  );
+
+  const hasCachedSkills = browserCache.skills !== null;
+  const cachedSkills = browserCache.skills ?? [];
+  const cachedSelectedDocument = selectedSkillId
+    ? (browserCache.documents[selectedSkillId] ?? null)
+    : null;
+
+  const {
+    data: skillsData,
+    error: skillsError,
+    isFetching: isFetchingSkills,
+    refetch: refetchSkills,
+  } = useQuery({
+    queryKey: SKILLS_QUERY_KEY,
+    queryFn: ({ signal }) => loadSkillOptions(signal),
+    enabled: open && !hasCachedSkills,
+    initialData: browserCache.skills ?? undefined,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const skills = skillsData ?? cachedSkills;
+
+  const {
+    data: selectedDocumentData,
+    error: selectedDocumentQueryError,
+    isFetching: isFetchingDocument,
+    refetch: refetchSelectedDocument,
+  } = useQuery({
+    queryKey: selectedSkillId
+      ? getSkillDocumentQueryKey(selectedSkillId)
+      : EMPTY_DOCUMENT_QUERY_KEY,
+    queryFn: ({ signal }) => loadSkillDocument(selectedSkillId!, signal),
+    enabled:
+      open &&
+      view === "detail" &&
+      Boolean(selectedSkillId) &&
+      !cachedSelectedDocument,
+    initialData: cachedSelectedDocument ?? undefined,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  useEffect(() => {
+    if (skillsData === undefined) {
+      return;
+    }
+
+    updateBrowserCache(setBrowserCache, (current) => {
+      if (current.skills === skillsData) {
+        return current;
+      }
+
+      return {
+        ...current,
+        skills: skillsData,
+      };
+    });
+  }, [skillsData]);
+
+  useEffect(() => {
+    if (!selectedDocumentData) {
+      return;
+    }
+
+    updateBrowserCache(setBrowserCache, (current) => {
+      const currentDocument = current.documents[selectedDocumentData.id];
+      if (
+        currentDocument?.title === selectedDocumentData.title &&
+        currentDocument?.updatedAt === selectedDocumentData.updatedAt &&
+        currentDocument?.content === selectedDocumentData.content
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        documents: {
+          ...current.documents,
+          [selectedDocumentData.id]: selectedDocumentData,
+        },
+      };
+    });
+  }, [selectedDocumentData]);
 
   useEffect(() => {
     if (skills.length === 0) {
@@ -102,126 +232,48 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
   useEffect(() => {
     if (!open) {
       setView("list");
-      setDocumentError(null);
     }
   }, [open]);
-
-  useEffect(() => {
-    if (!open || hasLoaded) {
-      return;
-    }
-
-    let cancelled = false;
-    const controller = new AbortController();
-
-    setIsLoading(true);
-    setError(null);
-
-    void loadSkillOptions(controller.signal)
-      .then((loadedSkills) => {
-        if (cancelled) {
-          return;
-        }
-
-        setSkills(loadedSkills);
-        setHasLoaded(true);
-      })
-      .catch((loadError) => {
-        if (cancelled) {
-          return;
-        }
-
-        setSkills([]);
-        setError(
-          loadError instanceof Error ? loadError.message : "加载 skills 失败",
-        );
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [hasLoaded, open]);
-
-  useEffect(() => {
-    if (
-      !open ||
-      view !== "detail" ||
-      !selectedSkillId ||
-      documents[selectedSkillId]
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-    const currentSkillId = selectedSkillId;
-
-    setLoadingDocumentId(currentSkillId);
-    setDocumentError(null);
-
-    void loadSkillDocument(currentSkillId)
-      .then((document) => {
-        if (cancelled) {
-          return;
-        }
-
-        setDocuments((current) => ({
-          ...current,
-          [document.id]: document,
-        }));
-      })
-      .catch((loadError) => {
-        if (cancelled) {
-          return;
-        }
-
-        setDocumentError(
-          loadError instanceof Error
-            ? loadError.message
-            : "加载 skill 内容失败",
-        );
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoadingDocumentId((current) =>
-            current === currentSkillId ? null : current,
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [documents, open, selectedSkillId, view]);
 
   const selectedSkill = useMemo(
     () =>
       skills.find((skill) => skill.id === selectedSkillId) ?? skills[0] ?? null,
     [selectedSkillId, skills],
   );
-  const selectedDocument = selectedSkillId ? documents[selectedSkillId] : null;
+  const selectedDocument = selectedDocumentData ?? cachedSelectedDocument;
 
-  const helperText = error
-    ? error
-    : isLoading
-      ? "正在加载 Skills 元数据"
-      : hasLoaded
+  const skillsErrorMessage = getErrorMessage(skillsError);
+  const documentErrorMessage = selectedDocument
+    ? null
+    : getErrorMessage(selectedDocumentQueryError);
+  const isRefreshing = isFetchingSkills || isFetchingDocument;
+
+  const helperText = skillsErrorMessage
+    ? skillsErrorMessage
+    : isFetchingSkills
+      ? hasCachedSkills
+        ? "正在刷新 Skills 元数据"
+        : "正在加载 Skills 元数据"
+      : hasCachedSkills
         ? skills.length > 0
-          ? `已加载 ${skills.length} 个 Skills 元数据`
+          ? `已缓存 ${skills.length} 个 Skills 元数据`
           : "暂无可用 Skills"
-        : "点击后加载 Skills 元数据";
+        : "首次打开后会自动加载 Skills 元数据";
+
+  async function handleRefresh() {
+    await refetchSkills();
+
+    if (view === "detail" && selectedSkillId) {
+      await refetchSelectedDocument();
+    }
+  }
 
   return (
     <div className="min-w-0">
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogTrigger
           render={<Button variant="outline" size="icon-sm" />}
-          disabled={disabled || (isLoading && skills.length === 0)}
+          disabled={disabled}
           aria-label="查看 Skills"
           title={`查看 Skills${helperText ? `：${helperText}` : ""}`}
         >
@@ -239,12 +291,28 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
                   Skills 查看器
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-left text-sm">
-                  打开弹窗时才会拉取 Skills 元数据，这里只负责查看。
+                  首次无缓存时会自动加载一次，后续请手动刷新。
                 </AlertDialogDescription>
               </div>
-              <Badge variant="outline" className="shrink-0">
-                {skills.length} items
-              </Badge>
+              <div className="flex shrink-0 items-center gap-2">
+                <Badge variant="outline">{skills.length} items</Badge>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isRefreshing}
+                  onClick={() => {
+                    void handleRefresh();
+                  }}
+                >
+                  <HugeiconsIcon
+                    icon={Refresh01Icon}
+                    strokeWidth={2}
+                    className={cn(isRefreshing && "animate-spin")}
+                  />
+                  {isRefreshing ? "刷新中..." : "刷新"}
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -315,8 +383,14 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
                     <SkillDetail
                       skill={selectedSkill}
                       document={selectedDocument}
-                      isLoading={loadingDocumentId === selectedSkill.id}
-                      error={documentError}
+                      isLoading={
+                        open &&
+                        view === "detail" &&
+                        !!selectedSkillId &&
+                        !selectedDocument &&
+                        isFetchingDocument
+                      }
+                      error={documentErrorMessage}
                     />
                   </div>
                 </>
@@ -327,7 +401,7 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
           <div className="bg-muted/25 border-t px-4 py-3 sm:px-5">
             <div className="flex items-center justify-between gap-3">
               <div className="text-muted-foreground text-xs leading-5">
-                Skills 元数据已默认可见，不再按会话单独选择注入。
+                Skills 元数据默认可见，详情会优先读取浏览器缓存。
               </div>
               <AlertDialogCancel size="sm">关闭</AlertDialogCancel>
             </div>

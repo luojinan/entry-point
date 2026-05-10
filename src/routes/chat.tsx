@@ -186,6 +186,11 @@ function ChatSessionInner({
 
   const lastMessage = messages[messages.length - 1];
   const lastMessagePartsLength = lastMessage?.parts.length ?? 0;
+  const showStreamingPlaceholder =
+    isStreaming &&
+    (!lastMessage ||
+      lastMessage.role !== "assistant" ||
+      !lastMessage.parts.some((part) => part.type !== "step-start"));
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -218,7 +223,7 @@ function ChatSessionInner({
           />
         ))}
 
-        {isLoading && (
+        {(isLoading || showStreamingPlaceholder) && (
           <div className="flex items-start gap-2">
             <div className="bg-muted rounded-lg px-3 py-2 text-sm">
               <span className="inline-flex gap-1">
