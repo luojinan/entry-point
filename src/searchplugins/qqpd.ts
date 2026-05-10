@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -99,7 +100,9 @@ interface SearchResultWithImages extends SearchResult {
  */
 function parseCookieString(cookieStr: string): Record<string, string> {
   const cookies: Record<string, string> = {};
-  if (!cookieStr) return cookies;
+  if (!cookieStr) {
+    return cookies;
+  }
 
   const skipAttrs = new Set([
     "domain",
@@ -114,7 +117,9 @@ function parseCookieString(cookieStr: string): Record<string, string> {
   const pairs = cookieStr.split(";");
   for (const pair of pairs) {
     const trimmed = pair.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {
+      continue;
+    }
     const idx = trimmed.indexOf("=");
     if (idx > 0) {
       const key = trimmed.substring(0, idx).trim();
@@ -169,7 +174,9 @@ class QqpdPlugin extends BasePlugin {
 
       const files = fs.readdirSync(STORAGE_DIR);
       for (const file of files) {
-        if (!file.endsWith(".json")) continue;
+        if (!file.endsWith(".json")) {
+          continue;
+        }
 
         try {
           const filePath = path.join(STORAGE_DIR, file);
@@ -213,7 +220,9 @@ class QqpdPlugin extends BasePlugin {
 
     for (const user of allUsers) {
       // Must be active status
-      if (user.status !== "active") continue;
+      if (user.status !== "active") {
+        continue;
+      }
 
       // Check cookie expiration
       if (user.expire_at) {
@@ -228,10 +237,14 @@ class QqpdPlugin extends BasePlugin {
       }
 
       // Must have channels
-      if (!user.channels || user.channels.length === 0) continue;
+      if (!user.channels || user.channels.length === 0) {
+        continue;
+      }
 
       // Must have a cookie
-      if (!user.cookie) continue;
+      if (!user.cookie) {
+        continue;
+      }
 
       active.push(user);
     }
@@ -345,11 +358,15 @@ class QqpdPlugin extends BasePlugin {
    * Returns the merged cookie string.
    */
   private async refreshCookie(cookieStr: string): Promise<string> {
-    if (!cookieStr) return cookieStr;
+    if (!cookieStr) {
+      return cookieStr;
+    }
 
     const oldCookies = parseCookieString(cookieStr);
     let uin = oldCookies["uin"] || "";
-    if (!uin) return cookieStr;
+    if (!uin) {
+      return cookieStr;
+    }
 
     // Strip o0/o prefix from uin
     if (uin.startsWith("o0")) {
@@ -385,7 +402,9 @@ class QqpdPlugin extends BasePlugin {
           let rest = header.substring(idx + 1);
           // Take value up to the first semicolon
           const semiIdx = rest.indexOf(";");
-          if (semiIdx >= 0) rest = rest.substring(0, semiIdx);
+          if (semiIdx >= 0) {
+            rest = rest.substring(0, semiIdx);
+          }
           const value = rest.trim();
           if (key && value) {
             newCookies[key] = value;
@@ -420,7 +439,9 @@ class QqpdPlugin extends BasePlugin {
     channelID: string,
     guildID: string,
   ): Promise<SearchResult[]> {
-    if (!guildID) return [];
+    if (!guildID) {
+      return [];
+    }
 
     // Refresh cookies to update dynamic fields (uuid etc.)
     try {
@@ -432,7 +453,9 @@ class QqpdPlugin extends BasePlugin {
     // Parse cookie to get p_skey
     const cookies = parseCookieString(cookieStr);
     const pSkey = cookies["p_skey"];
-    if (!pSkey) return [];
+    if (!pSkey) {
+      return [];
+    }
 
     // Compute bkn
     const bknValue = bkn(pSkey);
@@ -480,19 +503,27 @@ class QqpdPlugin extends BasePlugin {
 
       // Navigate response: data.union_result.guild_feeds
       const data = apiResp.data;
-      if (!data) return [];
+      if (!data) {
+        return [];
+      }
 
       const unionResult = data.union_result;
-      if (!unionResult) return [];
+      if (!unionResult) {
+        return [];
+      }
 
       const guildFeeds = unionResult.guild_feeds;
-      if (!Array.isArray(guildFeeds) || guildFeeds.length === 0) return [];
+      if (!Array.isArray(guildFeeds) || guildFeeds.length === 0) {
+        return [];
+      }
 
       // Parse each feed item
       const results: SearchResult[] = [];
       for (let i = 0; i < guildFeeds.length; i++) {
         const item = guildFeeds[i];
-        if (!item) continue;
+        if (!item) {
+          continue;
+        }
 
         const result = this.extractResultInfo(item, channelID, i);
         if (result && result.title && result.links.length > 0) {
@@ -563,7 +594,9 @@ class QqpdPlugin extends BasePlugin {
    * Extract pan links from message content (auto-deduplicate).
    */
   private extractLinksFromContent(content: string): Link[] {
-    if (!content) return [];
+    if (!content) {
+      return [];
+    }
 
     const links: Link[] = [];
     const seen = new Set<string>();
@@ -634,15 +667,21 @@ class QqpdPlugin extends BasePlugin {
     keyword: string,
     ext: Record<string, unknown> = {},
   ): Promise<SearchResult[]> {
-    if (!keyword) return [];
+    if (!keyword) {
+      return [];
+    }
 
     // 1. Load all users from disk
     const allUsers = this.loadAllUsers();
-    if (allUsers.length === 0) return [];
+    if (allUsers.length === 0) {
+      return [];
+    }
 
     // 2. Get active users
     let activeUsers = this.getActiveUsers(allUsers);
-    if (activeUsers.length === 0) return [];
+    if (activeUsers.length === 0) {
+      return [];
+    }
 
     // 3. Limit user count (take most recently active)
     if (activeUsers.length > MAX_CONCURRENT_USERS) {
@@ -660,7 +699,9 @@ class QqpdPlugin extends BasePlugin {
 
     // 4. Build channel tasks (unique channels, load balanced)
     const tasks = this.buildChannelTasks(activeUsers);
-    if (tasks.length === 0) return [];
+    if (tasks.length === 0) {
+      return [];
+    }
 
     // 5. Resolve guild_ids for tasks that don't have one cached
     for (const task of tasks) {

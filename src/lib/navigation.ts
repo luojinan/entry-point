@@ -73,5 +73,8 @@ export function writeNavigationLinksCache(links: NavigationLinkRow[]) {
     return;
   }
 
-  window.localStorage.setItem(NAVIGATION_LINKS_CACHE_KEY, JSON.stringify(links));
+  window.localStorage.setItem(
+    NAVIGATION_LINKS_CACHE_KEY,
+    JSON.stringify(links),
+  );
 }

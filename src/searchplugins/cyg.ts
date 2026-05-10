@@ -117,7 +117,9 @@ class CygPlugin extends BasePlugin {
       date?: string;
       category_name?: string;
     }>;
-    if (!posts || posts.length === 0) return [];
+    if (!posts || posts.length === 0) {
+      return [];
+    }
 
     // Fetch download links concurrently for each post
     const linkPromises = posts.map((post) =>
@@ -128,7 +130,9 @@ class CygPlugin extends BasePlugin {
     const results: SearchResult[] = [];
     for (let i = 0; i < posts.length; i++) {
       const links = linkResults[i];
-      if (links.length === 0) continue;
+      if (links.length === 0) {
+        continue;
+      }
 
       const post = posts[i];
       results.push({
@@ -164,7 +168,9 @@ class CygPlugin extends BasePlugin {
     );
 
     const downloadData = await resp.json();
-    if (!downloadData || !Array.isArray(downloadData)) return [];
+    if (!downloadData || !Array.isArray(downloadData)) {
+      return [];
+    }
 
     return downloadData.map(
       (item: { url?: string; name?: string; downloadPwd?: string }) => {
@@ -185,7 +191,9 @@ class CygPlugin extends BasePlugin {
 
   private _determineCloudTypeByURL(url: string): CloudType {
     for (const { regex, type } of this.urlPatterns) {
-      if (regex.test(url)) return type as CloudType;
+      if (regex.test(url)) {
+        return type as CloudType;
+      }
     }
     return "others";
   }

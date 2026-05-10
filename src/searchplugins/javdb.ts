@@ -1,6 +1,8 @@
+import crypto from "crypto";
+
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
-import crypto from "crypto";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -89,7 +91,9 @@ class JavdbPlugin extends BasePlugin {
     const results: SearchResultWithDetail[] = [];
 
     $(".movie-list .item").each((i, el) => {
-      if (results.length >= MAX_RESULTS) return;
+      if (results.length >= MAX_RESULTS) {
+        return;
+      }
 
       const result = this.parseResultItem($, $(el), i + 1);
       if (result) {
@@ -106,12 +110,16 @@ class JavdbPlugin extends BasePlugin {
     index: number,
   ): SearchResultWithDetail | null {
     const linkEl = s.find("a.box");
-    if (linkEl.length === 0) return null;
+    if (linkEl.length === 0) {
+      return null;
+    }
 
     let detailURL = linkEl.attr("href") || "";
     const title = linkEl.attr("title") || "";
 
-    if (!detailURL || !title) return null;
+    if (!detailURL || !title) {
+      return null;
+    }
 
     if (detailURL.startsWith("/")) {
       detailURL = BASE_URL + detailURL;
@@ -145,17 +153,25 @@ class JavdbPlugin extends BasePlugin {
     const tags: string[] = [];
     s.find(".tags .tag").each((i: number, tagEl: any) => {
       const tag = $(tagEl).text().trim();
-      if (tag) tags.push(tag);
+      if (tag) {
+        tags.push(tag);
+      }
     });
 
     // Build content
     const contentParts: string[] = [];
-    if (videoNumber) contentParts.push(`\u756A\u865F\uFF1A${videoNumber}`);
-    if (rating) contentParts.push(`\u8A55\u5206\uFF1A${rating}`);
-    if (releaseDate)
+    if (videoNumber) {
+      contentParts.push(`\u756A\u865F\uFF1A${videoNumber}`);
+    }
+    if (rating) {
+      contentParts.push(`\u8A55\u5206\uFF1A${rating}`);
+    }
+    if (releaseDate) {
       contentParts.push(`\u767C\u5E03\u65E5\u671F\uFF1A${releaseDate}`);
-    if (tags.length > 0)
+    }
+    if (tags.length > 0) {
       contentParts.push(`\u6A19\u7C64\uFF1A${tags.join(" ")}`);
+    }
 
     const content = contentParts.join("\n");
 
@@ -187,7 +203,9 @@ class JavdbPlugin extends BasePlugin {
 
     const tasks = searchResults.map(async (result) => {
       const detailURL = result._detailURL;
-      if (!detailURL) return [];
+      if (!detailURL) {
+        return [];
+      }
 
       try {
         const magnetLinks = await this.fetchDetailPageMagnetLinks(detailURL);
@@ -238,8 +256,12 @@ class JavdbPlugin extends BasePlugin {
         30000,
       );
 
-      if (resp.status === 429) return [];
-      if (!resp.ok) return [];
+      if (resp.status === 429) {
+        return [];
+      }
+      if (!resp.ok) {
+        return [];
+      }
 
       const html = await resp.text();
       return this.parseMagnetLinks(html);
@@ -254,12 +276,18 @@ class JavdbPlugin extends BasePlugin {
 
     $(".magnet-links .item").each((i, el) => {
       const magnetEl = $(el).find(".magnet-name a");
-      if (magnetEl.length === 0) return;
+      if (magnetEl.length === 0) {
+        return;
+      }
 
       let magnetURL = magnetEl.attr("href") || "";
-      if (!magnetURL) return;
+      if (!magnetURL) {
+        return;
+      }
 
-      if (!magnetURL.startsWith("magnet:")) return;
+      if (!magnetURL.startsWith("magnet:")) {
+        return;
+      }
 
       // Decode HTML entities
       magnetURL = magnetURL.replace(/&amp;/g, "&");

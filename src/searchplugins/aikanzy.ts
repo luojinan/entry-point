@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, cleanHTML, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -68,17 +69,23 @@ class AikanzyPlugin extends BasePlugin {
     $("article.post-list.contt.blockimg").each((i, el) => {
       const detailLink = $(el).find("a[href]").first();
       const detailURL = detailLink.attr("href");
-      if (!detailURL) return;
+      if (!detailURL) {
+        return;
+      }
 
       const articleID = this._extractArticleID(detailURL);
-      if (!articleID) return;
+      if (!articleID) {
+        return;
+      }
 
       let title = $(el)
         .find("header.entry-header span.entry-title a")
         .text()
         .trim();
       title = cleanHTML(title); // remove <b> etc
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       const category = $(el).find("div.entry-meta > a").first().text().trim();
       const publishDate = $(el).find("time").first().text().trim();
@@ -100,7 +107,9 @@ class AikanzyPlugin extends BasePlugin {
       });
     });
 
-    if (articleItems.length === 0) return [];
+    if (articleItems.length === 0) {
+      return [];
+    }
 
     // Fetch detail pages concurrently
     const detailPromises = articleItems.map((item) =>
@@ -111,16 +120,26 @@ class AikanzyPlugin extends BasePlugin {
     const results: SearchResult[] = [];
     for (let i = 0; i < articleItems.length; i++) {
       const links = detailResults[i];
-      if (links.length === 0) continue;
+      if (links.length === 0) {
+        continue;
+      }
 
       const item = articleItems[i];
 
       // Assemble content
       const contentParts: string[] = [];
-      if (item.summary) contentParts.push(item.summary);
-      if (item.category) contentParts.push(item.category);
-      if (item.publishDate) contentParts.push(item.publishDate);
-      if (item.viewCount > 0) contentParts.push(`${item.viewCount}阅读`);
+      if (item.summary) {
+        contentParts.push(item.summary);
+      }
+      if (item.category) {
+        contentParts.push(item.category);
+      }
+      if (item.publishDate) {
+        contentParts.push(item.publishDate);
+      }
+      if (item.viewCount > 0) {
+        contentParts.push(`${item.viewCount}阅读`);
+      }
       const content = contentParts.join(" | ");
 
       const tags = item.category ? [item.category] : [];
@@ -178,11 +197,15 @@ class AikanzyPlugin extends BasePlugin {
       "a[href*='pan.quark.cn'], a[href*='drive.uc.cn'], a[href*='pan.baidu.com'], a[href*='pan.xunlei.com']",
     ).each((i, el) => {
       const href = $(el).attr("href");
-      if (!href || foundURLs.has(href)) return;
+      if (!href || foundURLs.has(href)) {
+        return;
+      }
       foundURLs.add(href);
 
       const linkType = this._determineLinkType(href);
-      if (!linkType) return;
+      if (!linkType) {
+        return;
+      }
 
       links.push({
         type: linkType,
@@ -226,10 +249,18 @@ class AikanzyPlugin extends BasePlugin {
 
   private _determineLinkType(urlStr: string): CloudType | "" {
     const lower = urlStr.toLowerCase();
-    if (lower.includes("pan.quark.cn")) return "quark";
-    if (lower.includes("drive.uc.cn")) return "uc";
-    if (lower.includes("pan.baidu.com")) return "baidu";
-    if (lower.includes("pan.xunlei.com")) return "xunlei";
+    if (lower.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (lower.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (lower.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (lower.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
     return "";
   }
 

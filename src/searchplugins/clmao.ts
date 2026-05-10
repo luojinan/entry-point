@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, SearchResult } from "./types";
 
@@ -176,7 +177,9 @@ class ClmaoPlugin extends BasePlugin {
       .find(".slist ul li")
       .each((i, li) => {
         const text = $(li).text().trim();
-        if (text) files.push(text);
+        if (text) {
+          files.push(text);
+        }
       });
 
     if (files.length > 0) {

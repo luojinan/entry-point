@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -62,7 +63,9 @@ class JutoushePlugin extends BasePlugin {
       const title = linkElem.text().trim();
       const detailPath = linkElem.attr("href");
 
-      if (!detailPath || !title) return;
+      if (!detailPath || !title) {
+        return;
+      }
 
       const detailURL = BASE_URL + detailPath;
 
@@ -127,9 +130,13 @@ class JutoushePlugin extends BasePlugin {
 
       $(".dlipp-cont-bd a.dlipp-dl-btn").each((i: number, el: any) => {
         const href = $(el).attr("href");
-        if (!href) return;
+        if (!href) {
+          return;
+        }
 
-        if (!this.isValidNetworkDriveURL(href)) return;
+        if (!this.isValidNetworkDriveURL(href)) {
+          return;
+        }
 
         const cloudType = this.determineCloudType(href);
         const password = this.extractPasswordFromURL(href);
@@ -148,31 +155,56 @@ class JutoushePlugin extends BasePlugin {
   }
 
   determineCloudType(url: string): CloudType {
-    if (url.includes("pan.quark.cn")) return "quark";
-    if (url.includes("drive.uc.cn")) return "uc";
-    if (url.includes("pan.baidu.com")) return "baidu";
-    if (url.includes("aliyundrive.com") || url.includes("alipan.com"))
+    if (url.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (url.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (url.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (url.includes("aliyundrive.com") || url.includes("alipan.com")) {
       return "aliyun";
-    if (url.includes("pan.xunlei.com")) return "xunlei";
-    if (url.includes("cloud.189.cn")) return "tianyi";
-    if (url.includes("115.com")) return "115";
-    if (url.includes("123pan.com")) return "123";
-    if (url.includes("caiyun.139.com")) return "mobile";
-    if (url.includes("mypikpak.com")) return "pikpak";
+    }
+    if (url.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (url.includes("cloud.189.cn")) {
+      return "tianyi";
+    }
+    if (url.includes("115.com")) {
+      return "115";
+    }
+    if (url.includes("123pan.com")) {
+      return "123";
+    }
+    if (url.includes("caiyun.139.com")) {
+      return "mobile";
+    }
+    if (url.includes("mypikpak.com")) {
+      return "pikpak";
+    }
     return "others";
   }
 
   extractPasswordFromURL(url: string): string {
     if (url.includes("pan.baidu.com") && url.includes("pwd=")) {
       const match = url.match(/pwd=([^&]+)/);
-      if (match && match.length > 1) return match[1];
+      if (match && match.length > 1) {
+        return match[1];
+      }
     }
     return "";
   }
 
   isValidNetworkDriveURL(url: string): boolean {
-    if (!url) return false;
-    if (!url.startsWith("http://") && !url.startsWith("https://")) return false;
+    if (!url) {
+      return false;
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return false;
+    }
 
     const knownDomains = [
       "pan.quark.cn",
@@ -193,7 +225,9 @@ class JutoushePlugin extends BasePlugin {
 
   extractIDFromURL(urlPath: string): string {
     const match = urlPath.match(/\/([^/]+)\/(\d+)\.html/);
-    if (match && match.length > 2) return match[2];
+    if (match && match.length > 2) {
+      return match[2];
+    }
     return urlPath.replace(/\//g, "_");
   }
 
@@ -202,7 +236,9 @@ class JutoushePlugin extends BasePlugin {
     const categoryPattern = /\u3010([^\u3011]+)\u3011/g;
     let match: RegExpExecArray | null = categoryPattern.exec(title);
     while (match !== null) {
-      if (match.length > 1) tags.push(match[1]);
+      if (match.length > 1) {
+        tags.push(match[1]);
+      }
       match = categoryPattern.exec(title);
     }
 
@@ -213,11 +249,15 @@ class JutoushePlugin extends BasePlugin {
   }
 
   parseDate(dateStr: string): string {
-    if (!dateStr) return new Date().toISOString();
+    if (!dateStr) {
+      return new Date().toISOString();
+    }
 
     // Try YYYY-MM-DD
     const parsed = new Date(dateStr);
-    if (!isNaN(parsed.getTime())) return parsed.toISOString();
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
 
     // Try YYYY年MM月DD日
     const match = dateStr.match(/(\d{4})\u5E74(\d{1,2})\u6708(\d{1,2})\u65E5/);

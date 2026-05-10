@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+
 import {
   ALIYUN_PAN_PATTERN,
   ALL_PAN_LINKS_PATTERN,
@@ -26,14 +27,30 @@ import type { Link, SearchResult } from "./types";
 function isSupportedLink(url: string): boolean {
   const lowerURL = url.toLowerCase();
 
-  if (BAIDU_PAN_PATTERN.test(lowerURL)) return true;
-  if (TIANYI_PAN_PATTERN.test(lowerURL)) return true;
-  if (UC_PAN_PATTERN.test(lowerURL)) return true;
-  if (PAN_123_PATTERN.test(lowerURL)) return true;
-  if (QUARK_PAN_PATTERN.test(lowerURL)) return true;
-  if (XUNLEI_PAN_PATTERN.test(lowerURL)) return true;
-  if (PAN_115_PATTERN.test(lowerURL)) return true;
-  if (ALIYUN_PAN_PATTERN.test(lowerURL)) return true;
+  if (BAIDU_PAN_PATTERN.test(lowerURL)) {
+    return true;
+  }
+  if (TIANYI_PAN_PATTERN.test(lowerURL)) {
+    return true;
+  }
+  if (UC_PAN_PATTERN.test(lowerURL)) {
+    return true;
+  }
+  if (PAN_123_PATTERN.test(lowerURL)) {
+    return true;
+  }
+  if (QUARK_PAN_PATTERN.test(lowerURL)) {
+    return true;
+  }
+  if (XUNLEI_PAN_PATTERN.test(lowerURL)) {
+    return true;
+  }
+  if (PAN_115_PATTERN.test(lowerURL)) {
+    return true;
+  }
+  if (ALIYUN_PAN_PATTERN.test(lowerURL)) {
+    return true;
+  }
 
   return ALL_PAN_LINKS_PATTERN.test(lowerURL);
 }
@@ -207,10 +224,14 @@ export function parseSearchResults(
 
     // 提取消息ID
     const dataPost = messageDiv.attr("data-post");
-    if (!dataPost) return;
+    if (!dataPost) {
+      return;
+    }
 
     const parts = dataPost.split("/");
-    if (parts.length !== 2) return;
+    if (parts.length !== 2) {
+      return;
+    }
 
     const messageID = parts[1];
 
@@ -221,7 +242,9 @@ export function parseSearchResults(
     const timeStr = messageDiv
       .find(".tgme_widget_message_date time")
       .attr("datetime");
-    if (!timeStr) return;
+    if (!timeStr) {
+      return;
+    }
 
     // 获取消息文本元素
     const messageTextElem = messageDiv.find(".tgme_widget_message_text");
@@ -251,7 +274,9 @@ export function parseSearchResults(
     // 2. 从a标签中提取链接
     messageTextElem.find("a").each((_, aElem) => {
       const href = $(aElem).attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       // 使用更精确的方式匹配网盘链接
       if (isSupportedLink(href)) {

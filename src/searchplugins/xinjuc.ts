@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -63,7 +64,9 @@ class XinjucPlugin extends BasePlugin {
     // 3. Extract search results
     const results: XinjucSearchResult[] = [];
     const postList = $("div.row-xs.post-list article.post-item");
-    if (postList.length === 0) return [];
+    if (postList.length === 0) {
+      return [];
+    }
 
     postList.each((i: number, el: cheerio.Element) => {
       const result = this.parseSearchItem($, $(el), keyword);
@@ -86,10 +89,14 @@ class XinjucPlugin extends BasePlugin {
   ): XinjucSearchResult | null {
     // Extract detail page link
     const linkElem = s.find("div.post-image a");
-    if (linkElem.length === 0) return null;
+    if (linkElem.length === 0) {
+      return null;
+    }
 
     let detailLink = linkElem.attr("href") || "";
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     // Handle relative path
     if (!detailLink.startsWith("http")) {
@@ -102,7 +109,9 @@ class XinjucPlugin extends BasePlugin {
 
     // Extract ID
     const idMatch = detailLink.match(DETAIL_ID_REGEX);
-    if (!idMatch) return null;
+    if (!idMatch) {
+      return null;
+    }
     const itemID = idMatch[1];
 
     // Extract title
@@ -114,7 +123,9 @@ class XinjucPlugin extends BasePlugin {
     const markElem = s.find("div.mark span");
     if (markElem.length > 0) {
       const mark = markElem.text().trim();
-      if (mark) tags.push(mark);
+      if (mark) {
+        tags.push(mark);
+      }
     }
 
     // Extract update time
@@ -201,14 +212,18 @@ class XinjucPlugin extends BasePlugin {
         25000,
       );
 
-      if (!resp.ok) return { links: [], content: "" };
+      if (!resp.ok) {
+        return { links: [], content: "" };
+      }
 
       const html = await resp.text();
       const $ = cheerio.load(html);
 
       // Find article content area
       const articleContent = $("div.article-content");
-      if (articleContent.length === 0) return { links: [], content: "" };
+      if (articleContent.length === 0) {
+        return { links: [], content: "" };
+      }
 
       // Extract Baidu links from the entire document
       const links = this.extractLinksFromDoc($, html);
@@ -229,20 +244,28 @@ class XinjucPlugin extends BasePlugin {
     // Extract password from text
     let password = "";
     const pwdMatch = htmlContent.match(PWD_REGEX);
-    if (pwdMatch) password = pwdMatch[1];
+    if (pwdMatch) {
+      password = pwdMatch[1];
+    }
 
     // Method 1: Regex extract all Baidu links from HTML
     const baiduLinks = htmlContent.match(BAIDU_LINK_REGEX) || [];
     for (let baiduURL of baiduLinks) {
       baiduURL = baiduURL.trim();
-      if (!this.isValidBaiduLink(baiduURL)) continue;
-      if (linkMap.has(baiduURL)) continue;
+      if (!this.isValidBaiduLink(baiduURL)) {
+        continue;
+      }
+      if (linkMap.has(baiduURL)) {
+        continue;
+      }
       linkMap.add(baiduURL);
 
       // Extract password from URL if present
       let urlPassword = password;
       const urlPwdMatch = baiduURL.match(PWD_URL_REGEX);
-      if (urlPwdMatch) urlPassword = urlPwdMatch[1];
+      if (urlPwdMatch) {
+        urlPassword = urlPwdMatch[1];
+      }
 
       links.push({ type: "baidu", url: baiduURL, password: urlPassword });
     }
@@ -250,20 +273,29 @@ class XinjucPlugin extends BasePlugin {
     // Method 2: Extract from <a> tags as supplement
     $("a").each((i: number, el: cheerio.Element) => {
       const href = ($(el).attr("href") || "").trim();
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       if (
         !href.startsWith("http://pan.baidu.com") &&
         !href.startsWith("https://pan.baidu.com")
-      )
+      ) {
         return;
-      if (!this.isValidBaiduLink(href)) return;
-      if (linkMap.has(href)) return;
+      }
+      if (!this.isValidBaiduLink(href)) {
+        return;
+      }
+      if (linkMap.has(href)) {
+        return;
+      }
       linkMap.add(href);
 
       let urlPassword = password;
       const urlPwdMatch = href.match(PWD_URL_REGEX);
-      if (urlPwdMatch) urlPassword = urlPwdMatch[1];
+      if (urlPwdMatch) {
+        urlPassword = urlPwdMatch[1];
+      }
 
       links.push({ type: "baidu", url: href, password: urlPassword });
     });
@@ -275,9 +307,12 @@ class XinjucPlugin extends BasePlugin {
     if (
       !link.startsWith("http://pan.baidu.com") &&
       !link.startsWith("https://pan.baidu.com")
-    )
+    ) {
       return false;
-    if (!link.includes("/s/")) return false;
+    }
+    if (!link.includes("/s/")) {
+      return false;
+    }
     return /https?:\/\/pan\.baidu\.com\/s\/[0-9a-zA-Z_-]{10,}/.test(link);
   }
 

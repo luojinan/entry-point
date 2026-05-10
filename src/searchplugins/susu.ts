@@ -3,7 +3,8 @@
  * 翻译自 Go 插件: plugin/susu/susu.go
  */
 
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, getRandomUA } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -45,7 +46,9 @@ export default class SusuPlugin extends BasePlugin {
     const href = $(s).find(".post-info h2 a").attr("href");
     if (href) {
       const m = href.match(/\/(\d+)\.html/);
-      if (m) return m[1];
+      if (m) {
+        return m[1];
+      }
     }
 
     return "";
@@ -53,11 +56,15 @@ export default class SusuPlugin extends BasePlugin {
 
   private _decodeJWTURL(jwtToken: string): string {
     const parts = jwtToken.split(".");
-    if (parts.length !== 3) throw new Error("无效的JWT格式");
+    if (parts.length !== 3) {
+      throw new Error("无效的JWT格式");
+    }
 
     let payload = parts[1];
     payload = payload.replace(/-/g, "+").replace(/_/g, "/");
-    while (payload.length % 4 !== 0) payload += "=";
+    while (payload.length % 4 !== 0) {
+      payload += "=";
+    }
 
     const decoded = Buffer.from(payload, "base64").toString("utf8");
     const data: JWTPayload = JSON.parse(decoded);
@@ -68,29 +75,70 @@ export default class SusuPlugin extends BasePlugin {
     const lowerURL = (url || "").toLowerCase();
     const lowerName = (name || "").toLowerCase();
 
-    if (lowerURL.includes("pan.baidu.com")) return "baidu";
-    if (lowerURL.includes("alipan.com") || lowerURL.includes("aliyundrive.com"))
+    if (lowerURL.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (
+      lowerURL.includes("alipan.com") ||
+      lowerURL.includes("aliyundrive.com")
+    ) {
       return "aliyun";
-    if (lowerURL.includes("pan.xunlei.com")) return "xunlei";
-    if (lowerURL.includes("pan.quark.cn")) return "quark";
-    if (lowerURL.includes("cloud.189.cn")) return "tianyi";
-    if (lowerURL.includes("115.com")) return "115";
-    if (lowerURL.includes("drive.uc.cn")) return "uc";
-    if (lowerURL.includes("caiyun.139.com")) return "mobile";
-    if (lowerURL.includes("123pan.com")) return "123";
-    if (lowerURL.includes("mypikpak.com")) return "pikpak";
-
-    if (lowerName.includes("百度")) return "baidu";
-    if (lowerName.includes("阿里")) return "aliyun";
-    if (lowerName.includes("迅雷")) return "xunlei";
-    if (lowerName.includes("夸克")) return "quark";
-    if (lowerName.includes("天翼")) return "tianyi";
-    if (lowerName.includes("115")) return "115";
-    if (lowerName.includes("uc")) return "uc";
-    if (lowerName.includes("移动") || lowerName.includes("彩云"))
+    }
+    if (lowerURL.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (lowerURL.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (lowerURL.includes("cloud.189.cn")) {
+      return "tianyi";
+    }
+    if (lowerURL.includes("115.com")) {
+      return "115";
+    }
+    if (lowerURL.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (lowerURL.includes("caiyun.139.com")) {
       return "mobile";
-    if (lowerName.includes("123")) return "123";
-    if (lowerName.includes("pikpak")) return "pikpak";
+    }
+    if (lowerURL.includes("123pan.com")) {
+      return "123";
+    }
+    if (lowerURL.includes("mypikpak.com")) {
+      return "pikpak";
+    }
+
+    if (lowerName.includes("百度")) {
+      return "baidu";
+    }
+    if (lowerName.includes("阿里")) {
+      return "aliyun";
+    }
+    if (lowerName.includes("迅雷")) {
+      return "xunlei";
+    }
+    if (lowerName.includes("夸克")) {
+      return "quark";
+    }
+    if (lowerName.includes("天翼")) {
+      return "tianyi";
+    }
+    if (lowerName.includes("115")) {
+      return "115";
+    }
+    if (lowerName.includes("uc")) {
+      return "uc";
+    }
+    if (lowerName.includes("移动") || lowerName.includes("彩云")) {
+      return "mobile";
+    }
+    if (lowerName.includes("123")) {
+      return "123";
+    }
+    if (lowerName.includes("pikpak")) {
+      return "pikpak";
+    }
 
     return "others";
   }
@@ -120,10 +168,14 @@ export default class SusuPlugin extends BasePlugin {
 
       const data: ButtonData = await resp.json();
 
-      if (!data.button?.url) return null;
+      if (!data.button?.url) {
+        return null;
+      }
 
       const realURL = this._decodeJWTURL(data.button.url);
-      if (!realURL) return null;
+      if (!realURL) {
+        return null;
+      }
 
       return {
         type: this._determineLinkType(realURL, data.button.name || ""),
@@ -175,13 +227,17 @@ export default class SusuPlugin extends BasePlugin {
       const lowerTitle = title.toLowerCase();
 
       const matched = keywords.every((kw) => lowerTitle.includes(kw));
-      if (matched) items.push(s);
+      if (matched) {
+        items.push(s);
+      }
     });
 
     const resultPromises = items.map(
       async (s): Promise<SearchResult | null> => {
         const postID = this._extractPostID($, s);
-        if (!postID) return null;
+        if (!postID) {
+          return null;
+        }
 
         const title = $(s).find(".post-info h2 a").text().trim();
         const content = $(s).find(".post-excerpt").text().trim();
@@ -195,7 +251,9 @@ export default class SusuPlugin extends BasePlugin {
           .find(".post-list-cat-item")
           .each((i, t) => {
             const tag = $(t).text().trim();
-            if (tag) tags.push(tag);
+            if (tag) {
+              tags.push(tag);
+            }
           });
 
         let links: Link[] = [];

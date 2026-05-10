@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -46,11 +47,15 @@ class QingYingPlugin extends BasePlugin {
 
     // Step 1: Fetch search results
     const items = await this.fetchSearchResults(searchURL);
-    if (items.length === 0) return [];
+    if (items.length === 0) {
+      return [];
+    }
 
     // Step 2: Filter by keyword
     const filteredItems = this.filterItemsByKeyword(items, keyword);
-    if (filteredItems.length === 0) return [];
+    if (filteredItems.length === 0) {
+      return [];
+    }
 
     // Step 3: Limit results
     const limitedItems = filteredItems.slice(0, MAX_RESULTS);
@@ -78,16 +83,22 @@ class QingYingPlugin extends BasePlugin {
       const s = $(el);
       const link = s.find(".video-info .video-info-header h3 a");
       const href = link.attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       let title = link.text().trim();
       if (!title) {
         title = (link.attr("title") || "").trim();
       }
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       const matches = href.match(idRegex);
-      if (!matches || matches.length < 2) return;
+      if (!matches || matches.length < 2) {
+        return;
+      }
 
       items.push({
         id: matches[1],
@@ -147,7 +158,9 @@ class QingYingPlugin extends BasePlugin {
     let title = $(".video-info .video-info-header h1.page-title a")
       .text()
       .trim();
-    if (!title) title = item.title;
+    if (!title) {
+      title = item.title;
+    }
 
     // Extract description and update time from .video-info-items
     let description = "";
@@ -178,7 +191,9 @@ class QingYingPlugin extends BasePlugin {
 
     // Extract 123pan link
     const panLink = this.extract123PanLink($);
-    if (!panLink) return null;
+    if (!panLink) {
+      return null;
+    }
 
     return {
       uniqueId: `${PLUGIN_NAME}-${item.id}`,
@@ -201,15 +216,21 @@ class QingYingPlugin extends BasePlugin {
       }
     });
 
-    if (!found) return null;
+    if (!found) {
+      return null;
+    }
 
     // Find the 123pan URL from download list
     let panURL = "";
     $(".module-downlist .module-row-text").each((i, el) => {
-      if (panURL) return;
+      if (panURL) {
+        return;
+      }
 
       const clipboardText = $(el).attr("data-clipboard-text");
-      if (!clipboardText) return;
+      if (!clipboardText) {
+        return;
+      }
 
       const url = clipboardText.trim();
       for (const domain of PAN_123_DOMAINS) {
@@ -220,7 +241,9 @@ class QingYingPlugin extends BasePlugin {
       }
     });
 
-    if (!panURL) return null;
+    if (!panURL) {
+      return null;
+    }
 
     const password = this.extractPassword(panURL);
 
@@ -234,11 +257,15 @@ class QingYingPlugin extends BasePlugin {
   private parseUpdateTimeFromHTML(timeText: string): string {
     const re = /(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/;
     const matches = timeText.match(re);
-    if (!matches || matches.length < 2) return "";
+    if (!matches || matches.length < 2) {
+      return "";
+    }
 
     const timeStr = matches[1].trim();
     const parsed = new Date(timeStr.replace(" ", "T"));
-    if (isNaN(parsed.getTime())) return "";
+    if (isNaN(parsed.getTime())) {
+      return "";
+    }
 
     return parsed.toISOString();
   }
@@ -248,14 +275,18 @@ class QingYingPlugin extends BasePlugin {
     try {
       const urlObj = new URL(panURL);
       const pwd = urlObj.searchParams.get("pwd");
-      if (pwd && pwd.length === 4) return pwd;
+      if (pwd && pwd.length === 4) {
+        return pwd;
+      }
     } catch (e) {
       // URL parse failed, fall through to regex
     }
 
     // Fallback to regex
     const pwdMatch = panURL.match(/pwd=([a-zA-Z0-9]{4})/);
-    if (pwdMatch) return pwdMatch[1];
+    if (pwdMatch) {
+      return pwdMatch[1];
+    }
 
     return "";
   }

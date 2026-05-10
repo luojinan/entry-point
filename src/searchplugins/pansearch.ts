@@ -29,17 +29,22 @@ function formatBaseURL(buildId: string): string {
 }
 
 function extractBuildIdFromHTML(html: string): string {
-  if (!html) return "";
+  if (!html) {
+    return "";
+  }
 
   const m = BUILD_ID_REGEX.exec(html);
-  if (m && m[1]) return m[1];
+  if (m && m[1]) {
+    return m[1];
+  }
 
   const m2 = NEXT_DATA_REGEX.exec(html);
   if (m2 && m2[1]) {
     try {
       const obj = JSON.parse(m2[1]);
-      if (obj && typeof obj.buildId === "string" && obj.buildId)
+      if (obj && typeof obj.buildId === "string" && obj.buildId) {
         return obj.buildId;
+      }
     } catch {
       // ignore
     }
@@ -55,14 +60,20 @@ interface LinkInfo {
 
 function extractLinkAndPasswordFromContent(content: string): LinkInfo {
   const out: LinkInfo = { url: "", password: "" };
-  if (!content) return out;
+  if (!content) {
+    return out;
+  }
 
   const hrefM = content.match(/href\s*=\s*"([^"]+)"/i);
-  if (hrefM && hrefM[1]) out.url = hrefM[1];
+  if (hrefM && hrefM[1]) {
+    out.url = hrefM[1];
+  }
 
   if (!out.url) {
     const urlM = content.match(/https?:\/\/[^\s"'<>]+/);
-    if (urlM) out.url = urlM[0];
+    if (urlM) {
+      out.url = urlM[0];
+    }
   }
 
   if (out.url) {
@@ -76,7 +87,9 @@ function extractLinkAndPasswordFromContent(content: string): LinkInfo {
     }
   }
 
-  if (!out.password) out.password = extractPassword(cleanHTML(content));
+  if (!out.password) {
+    out.password = extractPassword(cleanHTML(content));
+  }
   return out;
 }
 
@@ -86,7 +99,9 @@ function extractTitleFromContent(content: string, keyword: string): string {
   if (idx >= 0) {
     const rest = text.slice(idx + "名称：".length);
     const line = rest.split(/\r?\n/)[0].trim();
-    if (line) return line;
+    if (line) {
+      return line;
+    }
   }
   return keyword;
 }
@@ -120,8 +135,9 @@ class PansearchPlugin extends BasePlugin {
 
   async _getBuildId(): Promise<string> {
     const now = Date.now();
-    if (buildIdCache && now - buildIdCacheAt < BUILD_ID_TTL_MS)
+    if (buildIdCache && now - buildIdCacheAt < BUILD_ID_TTL_MS) {
       return buildIdCache;
+    }
 
     const resp = await fetchWithRetry(
       WEBSITE_URL,
@@ -190,7 +206,9 @@ class PansearchPlugin extends BasePlugin {
       : DEFAULT_MAX_PAGES;
 
     let buildId = await this._getBuildId();
-    if (!buildId) return [];
+    if (!buildId) {
+      return [];
+    }
 
     let baseURL = formatBaseURL(buildId);
 
@@ -206,7 +224,9 @@ class PansearchPlugin extends BasePlugin {
         buildIdCache = "";
         buildIdCacheAt = 0;
         buildId = await this._getBuildId();
-        if (!buildId) return [];
+        if (!buildId) {
+          return [];
+        }
         baseURL = formatBaseURL(buildId);
         first = await this._fetchPage(keyword, 0, baseURL);
       } else {
@@ -223,7 +243,9 @@ class PansearchPlugin extends BasePlugin {
     const needPages = Math.min(maxPages, Math.max(1, totalPages));
 
     const offsets: number[] = [];
-    for (let p = 1; p < needPages; p++) offsets.push(p * PAGE_SIZE);
+    for (let p = 1; p < needPages; p++) {
+      offsets.push(p * PAGE_SIZE);
+    }
 
     const morePages = await Promise.all(
       offsets.map(async (offset) => {
@@ -237,7 +259,9 @@ class PansearchPlugin extends BasePlugin {
     );
 
     for (const arr of morePages) {
-      if (Array.isArray(arr)) items.push(...arr);
+      if (Array.isArray(arr)) {
+        items.push(...arr);
+      }
     }
 
     const itemMap = new Map<string, APIItem>();
@@ -256,15 +280,22 @@ class PansearchPlugin extends BasePlugin {
       const time = it?.time || "";
 
       const linkInfo = extractLinkAndPasswordFromContent(content);
-      if (!linkInfo.url) continue;
+      if (!linkInfo.url) {
+        continue;
+      }
 
       let linkType = pan;
-      if (linkType === "aliyundrive") linkType = "aliyun";
-      if (!linkType || linkType === "unknown")
+      if (linkType === "aliyundrive") {
+        linkType = "aliyun";
+      }
+      if (!linkType || linkType === "unknown") {
         linkType = determineCloudType(linkInfo.url);
+      }
 
       const type = linkType || determineCloudType(linkInfo.url);
-      if (type === "others") continue;
+      if (type === "others") {
+        continue;
+      }
 
       results.push({
         uniqueId: `pansearch-${id}`,

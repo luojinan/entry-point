@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   determineCloudType,
@@ -30,7 +31,9 @@ class Ddys extends BasePlugin {
   ): Promise<SearchResult[]> {
     // Step 1: Execute search
     const searchResults = await this._executeSearch(keyword);
-    if (searchResults.length === 0) return [];
+    if (searchResults.length === 0) {
+      return [];
+    }
 
     // Step 2: Fetch detail page links concurrently
     const finalResults = await this._fetchDetailLinks(searchResults);
@@ -78,7 +81,9 @@ class Ddys extends BasePlugin {
     const results: Array<SearchResult & { _detailURL?: string }> = [];
 
     $("article[class*='post-']").each((i, el) => {
-      if (results.length >= MAX_RESULTS) return false;
+      if (results.length >= MAX_RESULTS) {
+        return false;
+      }
 
       const result = this._parseResultItem($, el, i + 1);
       if (result) {
@@ -103,13 +108,19 @@ class Ddys extends BasePlugin {
 
     // Extract title and link
     const $linkEl = $el.find(".post-title a");
-    if ($linkEl.length === 0) return null;
+    if ($linkEl.length === 0) {
+      return null;
+    }
 
     const title = ($linkEl.text() || "").trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     const detailURL = $linkEl.attr("href");
-    if (!detailURL) return null;
+    if (!detailURL) {
+      return null;
+    }
 
     // Extract publish time
     const $timeEl = $el.find(".meta_date time.entry-date");
@@ -159,7 +170,9 @@ class Ddys extends BasePlugin {
       const batchResults = await Promise.allSettled(
         batch.map(async (result) => {
           const detailURL = result._detailURL;
-          if (!detailURL) return null;
+          if (!detailURL) {
+            return null;
+          }
 
           const links = await this._fetchDetailPageLinks(detailURL);
           if (links.length > 0) {
@@ -287,7 +300,9 @@ class Ddys extends BasePlugin {
     ];
 
     const urlIndex = content.indexOf(panURL);
-    if (urlIndex === -1) return "";
+    if (urlIndex === -1) {
+      return "";
+    }
 
     const start = Math.max(0, urlIndex - 200);
     const end = Math.min(content.length, urlIndex + panURL.length + 200);
@@ -295,7 +310,9 @@ class Ddys extends BasePlugin {
 
     for (const p of patterns) {
       const m = searchArea.match(p);
-      if (m) return m[1];
+      if (m) {
+        return m[1];
+      }
     }
 
     return "";

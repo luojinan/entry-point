@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { Link, SearchResult } from "./types";
 
@@ -57,10 +58,14 @@ class Djgou extends BasePlugin {
     const items: SearchItem[] = [];
     mainListSection.find("ul.erx-list li.item").each((i, el) => {
       const item = this._parseSearchItem($, el, keyword);
-      if (item) items.push(item);
+      if (item) {
+        items.push(item);
+      }
     });
 
-    if (items.length === 0) return [];
+    if (items.length === 0) {
+      return [];
+    }
 
     // 5. Fetch detail pages concurrently
     const enhancedResults = await this._enhanceWithDetails(items);
@@ -99,15 +104,21 @@ class Djgou extends BasePlugin {
 
     // Extract title area
     const $aDiv = $el.find("div.a");
-    if ($aDiv.length === 0) return null;
+    if ($aDiv.length === 0) {
+      return null;
+    }
 
     // Extract link and title
     const $linkElem = $aDiv.find("a.main");
-    if ($linkElem.length === 0) return null;
+    if ($linkElem.length === 0) {
+      return null;
+    }
 
     const title = ($linkElem.text() || "").trim();
     let link = $linkElem.attr("href");
-    if (!link) return null;
+    if (!link) {
+      return null;
+    }
 
     // Handle relative paths
     if (!link.startsWith("http")) {
@@ -199,7 +210,9 @@ class Djgou extends BasePlugin {
       const $ = cheerio.load(html);
 
       const mainContent = $("div.erx-wrap");
-      if (mainContent.length === 0) return { links: [], content: "" };
+      if (mainContent.length === 0) {
+        return { links: [], content: "" };
+      }
 
       // Extract links from entire page HTML
       const links = this._extractLinksFromDoc($, html);
@@ -239,7 +252,9 @@ class Djgou extends BasePlugin {
     // Method 2: From <a> tags
     $("a").each((i, el) => {
       const href = $(el).attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
       if (href.includes("pan.quark.cn") && !linkMap.has(href)) {
         linkMap.add(href);
         links.push({ type: "quark", url: href, password });

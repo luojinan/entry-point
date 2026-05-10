@@ -2,6 +2,7 @@ import { Action, ActionPanel, Color, List } from "@raycast/api";
 import CryptoJS from "crypto-js";
 import fetch from "node-fetch";
 import { useEffect, useState } from "react";
+
 import QiemanDetail from "./QiemanDetail";
 import type { CompListItem, FundInfo } from "./types";
 

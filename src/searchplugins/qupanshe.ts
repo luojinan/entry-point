@@ -4,6 +4,7 @@
  */
 
 import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   extractPassword,
@@ -55,7 +56,9 @@ class QupanshePlugin extends BasePlugin {
       45000,
     );
 
-    if (!resp.ok) throw new Error(`首页请求返回状态码: ${resp.status}`);
+    if (!resp.ok) {
+      throw new Error(`首页请求返回状态码: ${resp.status}`);
+    }
 
     // 收集cookies
     const setCookies = resp.headers.getSetCookie
@@ -72,10 +75,14 @@ class QupanshePlugin extends BasePlugin {
     let formhash = "";
     $("input[name='formhash']").each((i, el) => {
       const value = $(el).attr("value");
-      if (value) formhash = value;
+      if (value) {
+        formhash = value;
+      }
     });
 
-    if (!formhash) throw new Error("未找到formhash值");
+    if (!formhash) {
+      throw new Error("未找到formhash值");
+    }
     return formhash;
   }
 
@@ -154,7 +161,9 @@ class QupanshePlugin extends BasePlugin {
     };
 
     for (const [pattern, type] of Object.entries(patterns)) {
-      if (new RegExp(pattern).test(urlStr)) return type;
+      if (new RegExp(pattern).test(urlStr)) {
+        return type;
+      }
     }
     return "";
   }
@@ -206,13 +215,17 @@ class QupanshePlugin extends BasePlugin {
     try {
       const parsed = new URL(linkURL);
       const pwd = parsed.searchParams.get("pwd");
-      if (pwd) return pwd;
+      if (pwd) {
+        return pwd;
+      }
     } catch (e) {
       /* ignore */
     }
 
     const linkIndex = content.indexOf(linkURL);
-    if (linkIndex === -1) return "";
+    if (linkIndex === -1) {
+      return "";
+    }
 
     const start = Math.max(0, linkIndex - 20);
     const end = Math.min(content.length, linkIndex + linkURL.length + 100);
@@ -227,7 +240,9 @@ class QupanshePlugin extends BasePlugin {
 
     for (const pattern of passwordPatterns) {
       const m = surroundingText.match(pattern);
-      if (m) return m[1];
+      if (m) {
+        return m[1];
+      }
     }
     return "";
   }
@@ -285,11 +300,15 @@ class QupanshePlugin extends BasePlugin {
    * 解析时间字符串
    */
   private _parseTime(timeStr: string): string {
-    if (!timeStr) return "";
+    if (!timeStr) {
+      return "";
+    }
     timeStr = timeStr.trim();
     // 尝试直接解析
     const d = new Date(timeStr);
-    if (!isNaN(d.getTime())) return d.toISOString();
+    if (!isNaN(d.getTime())) {
+      return d.toISOString();
+    }
     return "";
   }
 
@@ -313,7 +332,9 @@ class QupanshePlugin extends BasePlugin {
       45000,
     );
 
-    if (!resp.ok) throw new Error(`请求返回状态码: ${resp.status}`);
+    if (!resp.ok) {
+      throw new Error(`请求返回状态码: ${resp.status}`);
+    }
 
     const html = await resp.text();
     const $ = cheerio.load(html);
@@ -327,7 +348,9 @@ class QupanshePlugin extends BasePlugin {
       const titleLink = s.find("h3.xs3 a").first();
       const titleHTML = titleLink.html() || "";
       const title = this._cleanTitle(titleHTML);
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       // 提取详情页链接
       const detailPath = titleLink.attr("href") || "";
@@ -341,7 +364,9 @@ class QupanshePlugin extends BasePlugin {
       // 提取内容摘要（第二个p标签）
       let content = "";
       s.find("p").each((j, p) => {
-        if (j === 1) content = $(p).text().trim();
+        if (j === 1) {
+          content = $(p).text().trim();
+        }
       });
 
       // 从<a>标签提取链接
@@ -351,7 +376,9 @@ class QupanshePlugin extends BasePlugin {
         .find("a")
         .each((j, a) => {
           const href = $(a).attr("href");
-          if (!href) return;
+          if (!href) {
+            return;
+          }
           const linkType = this._determineLinkType(href);
           if (linkType) {
             const password = this._extractPasswordFromContent(content, href);

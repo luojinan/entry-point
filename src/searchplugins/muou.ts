@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -116,11 +117,15 @@ class MuouPlugin extends BasePlugin {
   ): SearchResultWithID | null {
     // Extract detail link
     const detailLink = s.find(".video-info-header h3 a").first().attr("href");
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     // Extract ID
     const matches = detailIDRegex.exec(detailLink);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
 
     const itemID = matches[1];
     const uniqueId = `${this.name}-${itemID}`;
@@ -135,7 +140,9 @@ class MuouPlugin extends BasePlugin {
     const tags: string[] = [];
     s.find(".video-info-aux .tag-link a").each((i, tag) => {
       const tagText = $(tag).text().trim();
-      if (tagText) tags.push(tagText);
+      if (tagText) {
+        tags.push(tagText);
+      }
     });
 
     // Extract director
@@ -156,7 +163,9 @@ class MuouPlugin extends BasePlugin {
           .find(".video-info-actor a")
           .each((j, actor) => {
             const actorName = $(actor).text().trim();
-            if (actorName) actors.push(actorName);
+            if (actorName) {
+              actors.push(actorName);
+            }
           });
       }
     });
@@ -172,14 +181,22 @@ class MuouPlugin extends BasePlugin {
 
     // Build content description
     const contentParts: string[] = [];
-    if (quality) contentParts.push(`【${quality}】`);
-    if (director) contentParts.push(`导演：${director}`);
+    if (quality) {
+      contentParts.push(`【${quality}】`);
+    }
+    if (director) {
+      contentParts.push(`导演：${director}`);
+    }
     if (actors.length > 0) {
       let actorStr = actors.slice(0, 3).join("、");
-      if (actors.length > 3) actorStr += "等";
+      if (actors.length > 3) {
+        actorStr += "等";
+      }
       contentParts.push(`主演：${actorStr}`);
     }
-    if (plot) contentParts.push(plot);
+    if (plot) {
+      contentParts.push(plot);
+    }
 
     return {
       uniqueId,
@@ -277,23 +294,30 @@ class MuouPlugin extends BasePlugin {
   }
 
   _isValidURL(url: string): boolean {
-    if (!url || url.includes("javascript:") || url.includes("#")) return false;
+    if (!url || url.includes("javascript:") || url.includes("#")) {
+      return false;
+    }
     if (
       !url.startsWith("http") &&
       !url.startsWith("magnet:") &&
       !url.startsWith("ed2k:")
-    )
+    ) {
       return false;
+    }
 
     for (const { reg } of linkRegexMap) {
-      if (reg.test(url)) return true;
+      if (reg.test(url)) {
+        return true;
+      }
     }
     return false;
   }
 
   _determineLinkType(url: string): string {
     for (const { reg, type } of linkRegexMap) {
-      if (reg.test(url)) return type;
+      if (reg.test(url)) {
+        return type;
+      }
     }
     return "";
   }

@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,6 +25,7 @@ import {
   MAX_CHAT_IMAGE_SIZE_BYTES,
 } from "@/lib/chat-message";
 import { cn } from "@/lib/utils";
+
 import { ChatSkillsViewer } from "./chat-skills-viewer";
 
 interface ChatComposerProps {

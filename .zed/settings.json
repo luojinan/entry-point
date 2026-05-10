@@ -5,7 +5,7 @@
     "!eslint",
     "!unocss-language-server",
     "!typescript-language-server",
-    "...",
+    "..."
   ],
   "formatter": { "language_server": { "name": "biome" } },
   "code_actions_on_format": {

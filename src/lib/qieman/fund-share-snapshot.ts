@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { HoldingAsset } from "./types";
 
 export const QIEMAN_FUND_SHARE_SNAPSHOT_TABLE = "qieman_fund_share_snapshots";

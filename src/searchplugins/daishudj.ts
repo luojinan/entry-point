@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -96,16 +97,22 @@ class DaishudjPlugin extends BasePlugin {
       const titleSel = $(el).find(".subtitle h5 a");
       const title = titleSel.text().trim();
       const detailURL = titleSel.attr("href");
-      if (!title || !detailURL) return;
+      if (!title || !detailURL) {
+        return;
+      }
 
       const postID = this._extractPostID(detailURL);
-      if (!postID) return;
+      if (!postID) {
+        return;
+      }
 
       const summary = $(el).find(".subtitle p.pdesc").text().trim();
 
       const tags: string[] = [];
       const cat = $(el).find(".sortbox a.sort").text().trim();
-      if (cat) tags.push(cat);
+      if (cat) {
+        tags.push(cat);
+      }
 
       const dateText = $(el).find(".pmbox .time").text().trim();
       const publishTime = this._parseChineseDate(dateText);
@@ -129,7 +136,9 @@ class DaishudjPlugin extends BasePlugin {
     const results: SearchResult[] = [];
     for (let i = 0; i < articleItems.length; i++) {
       const links = detailResults[i];
-      if (links.length === 0) continue;
+      if (links.length === 0) {
+        continue;
+      }
 
       const item = articleItems[i];
       results.push({
@@ -143,7 +152,9 @@ class DaishudjPlugin extends BasePlugin {
       });
     }
 
-    if (results.length === 0) return [];
+    if (results.length === 0) {
+      return [];
+    }
 
     return filterByKeyword(results, keyword);
   }
@@ -155,7 +166,9 @@ class DaishudjPlugin extends BasePlugin {
 
   private _parseChineseDate(value: string): string {
     value = (value || "").trim();
-    if (!value) return "";
+    if (!value) {
+      return "";
+    }
     value = value.replace(/年/g, "-").replace(/月/g, "-").replace(/日/g, "");
     return value;
   }
@@ -183,8 +196,12 @@ class DaishudjPlugin extends BasePlugin {
     // Try different containers
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let container: any = $(".article-body");
-    if (container.length === 0) container = $("article.post");
-    if (container.length === 0) container = $.root();
+    if (container.length === 0) {
+      container = $("article.post");
+    }
+    if (container.length === 0) {
+      container = $.root();
+    }
 
     return this._extractLinks($, container);
   }
@@ -200,10 +217,14 @@ class DaishudjPlugin extends BasePlugin {
     // Method 1: from <a> href attributes
     selection.find("a[href]").each((_: unknown, node: cheerio.Element) => {
       const href = ($(node).attr("href") || "").trim();
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       const { type: linkType, normalized } = this._classifyLink(href);
-      if (!linkType || seen.has(normalized)) return;
+      if (!linkType || seen.has(normalized)) {
+        return;
+      }
       seen.add(normalized);
 
       const password = this._extractPasswordFromNode($, node);
@@ -256,25 +277,35 @@ class DaishudjPlugin extends BasePlugin {
     if (parent.length) {
       candidates.push(parent.text());
       const parentNext = parent.next();
-      if (parentNext.length) candidates.push(parentNext.text());
+      if (parentNext.length) {
+        candidates.push(parentNext.text());
+      }
     }
 
     const sibling = $(node).next();
-    if (sibling.length) candidates.push(sibling.text());
+    if (sibling.length) {
+      candidates.push(sibling.text());
+    }
 
     for (const text of candidates) {
       const pwd = this._matchPassword(text);
-      if (pwd) return pwd;
+      if (pwd) {
+        return pwd;
+      }
     }
     return "";
   }
 
   private _matchPassword(text: string): string {
     text = (text || "").trim();
-    if (!text) return "";
+    if (!text) {
+      return "";
+    }
     for (const pattern of this.passwordPatterns) {
       const matches = pattern.exec(text);
-      if (matches) return matches[1].trim();
+      if (matches) {
+        return matches[1].trim();
+      }
     }
     return "";
   }

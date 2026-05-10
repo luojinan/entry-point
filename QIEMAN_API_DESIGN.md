@@ -36,10 +36,12 @@ src/
 **原始路径**: `/pmdj/v2/long-win`
 
 **查询参数**:
+
 - `userPropertyId` (必填): 用户持仓ID
 - `extClassify` (可选): 是否扩展分类，默认 true
 
 **响应示例**:
+
 ```json
 {
   "code": 0,
@@ -62,6 +64,7 @@ src/
 ```
 
 **核心字段说明**:
+
 - `status`: 跟车状态 (FOLLOW=跟随中)
 - `followedAdjustments`: 历史调仓记录列表
 - `extUnitInfo`: 持仓组合配置（资产类别、基金代码等）
@@ -76,9 +79,11 @@ src/
 **原始路径**: `/pmdj/v2/long-win/plan`
 
 **查询参数**:
+
 - `prodCode` (必填): 产品代码，如 `LONG_WIN`
 
 **响应示例**:
+
 ```json
 {
   "code": 0,
@@ -118,6 +123,7 @@ src/
 ```
 
 **核心字段说明**:
+
 - `composition`: 资产配置组合（A股、债券等）
 - `compList`: 每个资产类别下的具体基金列表
 - `planUnit`: 计划配置单位数
@@ -132,11 +138,13 @@ src/
 **原始路径**: `/pmdj/v2/long-win/ca/assets-summary`
 
 **查询参数**:
+
 - `capitalAccountId` (必填): 资金账户ID
 - `classify` (可选): 是否分类，默认 true
 - `useV2OrderApi` (可选): 是否使用V2订单API，默认 true
 
 **响应示例**:
+
 ```json
 {
   "code": 0,
@@ -176,6 +184,7 @@ src/
 ```
 
 **核心字段说明**:
+
 - `totalAssets`: 总资产
 - `totalProfit`: 累计收益
 - `totalProfitRate`: 总收益率
@@ -187,15 +196,19 @@ src/
 ## 统一响应格式
 
 ### 成功响应 (2xx)
+
 ```json
 {
   "code": 0,
   "message": "success",
-  "data": { /* 实际数据 */ }
+  "data": {
+    /* 实际数据 */
+  }
 }
 ```
 
 ### 错误响应 (4xx/5xx)
+
 ```json
 {
   "code": 400,
@@ -204,7 +217,9 @@ src/
 ```
 
 ### CORS 支持
+
 所有接口自动添加 CORS 头：
+
 ```
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, OPTIONS
@@ -216,16 +231,19 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ## 使用示例
 
 ### 1. 获取长赢计划信息
+
 ```bash
 curl "http://localhost:2190/api/qieman/long-win?userPropertyId=1679634"
 ```
 
 ### 2. 获取投资方案
+
 ```bash
 curl "http://localhost:2190/api/qieman/long-win-plan?prodCode=LONG_WIN"
 ```
 
 ### 3. 获取资产汇总
+
 ```bash
 curl "http://localhost:2190/api/qieman/long-win-assets?capitalAccountId=CAC05B55OCGQ9T&classify=true"
 ```
@@ -247,7 +265,9 @@ curl "http://localhost:2190/api/qieman/long-win-assets?capitalAccountId=CAC05B55
 ## 后续扩展
 
 ### 对接真实 API
+
 1. 在 `wrangler.jsonc` 中添加环境变量：
+
    ```json
    "vars": {
      "QIEMAN_API_BASE": "https://qieman.com",
@@ -264,14 +284,16 @@ curl "http://localhost:2190/api/qieman/long-win-assets?capitalAccountId=CAC05B55
        headers: {
          Authorization: `Bearer ${env.QIEMAN_AUTH_TOKEN}`,
        },
-     }
+     },
    );
    const data = await response.json();
    return jsonResponse(data);
    ```
 
 ### 添加更多接口
+
 参考现有模式，在 `src/routes/api/qieman/` 下创建新文件：
+
 - `asset-detail.ts` - 资金账户详情
 - `dismiss-tag.ts` - 调仓解散标签
 - `dividend-methods.ts` - 分红方式设置
@@ -281,18 +303,21 @@ curl "http://localhost:2190/api/qieman/long-win-assets?capitalAccountId=CAC05B55
 ## 测试与部署
 
 ### 本地开发
+
 ```bash
 pnpm dev
 # 访问 http://localhost:2190/api/qieman/long-win?userPropertyId=1679634
 ```
 
 ### 构建部署
+
 ```bash
 pnpm build
 wrangler deploy
 ```
 
 ### 健康检查
+
 ```bash
 curl http://localhost:2190/api/health
 ```

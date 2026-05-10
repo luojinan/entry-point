@@ -8,10 +8,12 @@
     "preview": "vite preview",
     "deploy": "pnpm build && wrangler deploy",
     "audit:plugin-quark": "tsx scripts/audit-plugin-quark.ts",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
     "aidebug": "npx @ai-sdk/devtools",
-    "check": "biome check --write ."
+    "check": "pnpm lint && pnpm format:check"
   },
   "dependencies": {
     "@ai-sdk/devtools": "^0.0.14",
@@ -50,13 +52,14 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.2",
     "@cloudflare/vite-plugin": "^1.18.0",
     "@tanstack/devtools-vite": "^0.3.11",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "oxfmt": "0.48.0",
+    "oxlint": "1.63.0",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vite-plugin-pwa": "^1.2.0",

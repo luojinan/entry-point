@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   fetchWithRetry,
@@ -99,7 +100,9 @@ export default class WujiPlugin extends BasePlugin {
     const titleLink = titleCell.find("a");
 
     const detailPath = titleLink.attr("href");
-    if (!detailPath) return null;
+    if (!detailPath) {
+      return null;
+    }
 
     const detailURL = BASE_URL + detailPath;
 
@@ -113,8 +116,12 @@ export default class WujiPlugin extends BasePlugin {
     const sizeText = s.find("td.td-size").text().trim();
 
     const contentParts: string[] = [];
-    if (sampleText) contentParts.push("文件: " + sampleText);
-    if (sizeText) contentParts.push("大小: " + sizeText);
+    if (sampleText) {
+      contentParts.push("文件: " + sampleText);
+    }
+    if (sizeText) {
+      contentParts.push("大小: " + sizeText);
+    }
     const content = contentParts.join("\n");
 
     return {
@@ -140,11 +147,15 @@ export default class WujiPlugin extends BasePlugin {
   private async enrichWithMagnetLinks(
     results: SearchResultWithDetail[],
   ): Promise<SearchResult[]> {
-    if (results.length === 0) return results;
+    if (results.length === 0) {
+      return results;
+    }
 
     const tasks = results.map(
       async (result, index): Promise<SearchResult | null> => {
-        if (!result._detailURL) return null;
+        if (!result._detailURL) {
+          return null;
+        }
 
         try {
           await new Promise((r) => setTimeout(r, (index % 5) * 100));
@@ -178,7 +189,9 @@ export default class WujiPlugin extends BasePlugin {
     const $ = cheerio.load(html);
 
     const magnetInput = $("input#input-magnet");
-    if (magnetInput.length === 0) return null;
+    if (magnetInput.length === 0) {
+      return null;
+    }
 
     const magnetLink = magnetInput.attr("value");
     return magnetLink || null;

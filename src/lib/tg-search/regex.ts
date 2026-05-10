@@ -42,23 +42,43 @@ export function getLinkType(url: string): LinkType {
     }
   }
 
-  if (cleanUrl.includes("ed2k:")) return "ed2k";
-  if (cleanUrl.startsWith("magnet:")) return "magnet";
-  if (cleanUrl.includes("pan.baidu.com")) return "baidu";
-  if (cleanUrl.includes("pan.quark.cn")) return "quark";
-  if (cleanUrl.includes("alipan.com") || cleanUrl.includes("aliyundrive.com"))
+  if (cleanUrl.includes("ed2k:")) {
+    return "ed2k";
+  }
+  if (cleanUrl.startsWith("magnet:")) {
+    return "magnet";
+  }
+  if (cleanUrl.includes("pan.baidu.com")) {
+    return "baidu";
+  }
+  if (cleanUrl.includes("pan.quark.cn")) {
+    return "quark";
+  }
+  if (cleanUrl.includes("alipan.com") || cleanUrl.includes("aliyundrive.com")) {
     return "aliyun";
-  if (cleanUrl.includes("cloud.189.cn")) return "tianyi";
-  if (cleanUrl.includes("drive.uc.cn")) return "uc";
-  if (cleanUrl.includes("caiyun.139.com")) return "mobile";
+  }
+  if (cleanUrl.includes("cloud.189.cn")) {
+    return "tianyi";
+  }
+  if (cleanUrl.includes("drive.uc.cn")) {
+    return "uc";
+  }
+  if (cleanUrl.includes("caiyun.139.com")) {
+    return "mobile";
+  }
   if (
     cleanUrl.includes("115.com") ||
     cleanUrl.includes("115cdn.com") ||
     cleanUrl.includes("anxia.com")
-  )
+  ) {
     return "115";
-  if (cleanUrl.includes("mypikpak.com")) return "pikpak";
-  if (cleanUrl.includes("pan.xunlei.com")) return "xunlei";
+  }
+  if (cleanUrl.includes("mypikpak.com")) {
+    return "pikpak";
+  }
+  if (cleanUrl.includes("pan.xunlei.com")) {
+    return "xunlei";
+  }
 
   // 123网盘有多个域名
   if (
@@ -92,10 +112,14 @@ export function isValidPassword(password: string): boolean {
 
 /** 清理百度网盘URL */
 export function cleanBaiduPanUrl(url: string): string {
-  if (!url.includes("https://pan.baidu.com/s/")) return url;
+  if (!url.includes("https://pan.baidu.com/s/")) {
+    return url;
+  }
 
   const startIdx = url.indexOf("https://pan.baidu.com/s/");
-  if (startIdx < 0) return url;
+  if (startIdx < 0) {
+    return url;
+  }
 
   url = url.substring(startIdx);
 
@@ -130,10 +154,14 @@ export function cleanBaiduPanUrl(url: string): string {
 
 /** 清理天翼云盘URL */
 export function cleanTianyiPanUrl(url: string): string {
-  if (!url.includes("https://cloud.189.cn/t/")) return url;
+  if (!url.includes("https://cloud.189.cn/t/")) {
+    return url;
+  }
 
   const startIdx = url.indexOf("https://cloud.189.cn/t/");
-  if (startIdx < 0) return url;
+  if (startIdx < 0) {
+    return url;
+  }
 
   url = url.substring(startIdx);
 
@@ -168,10 +196,14 @@ export function cleanTianyiPanUrl(url: string): string {
 
 /** 清理UC网盘URL */
 export function cleanUCPanUrl(url: string): string {
-  if (!url.includes("https://drive.uc.cn/s/")) return url;
+  if (!url.includes("https://drive.uc.cn/s/")) {
+    return url;
+  }
 
   const startIdx = url.indexOf("https://drive.uc.cn/s/");
-  if (startIdx < 0) return url;
+  if (startIdx < 0) {
+    return url;
+  }
 
   url = url.substring(startIdx);
 
@@ -233,7 +265,9 @@ export function clean123PanUrl(url: string): string {
     }
   }
 
-  if (!isDomain123) return url;
+  if (!isDomain123) {
+    return url;
+  }
 
   const hasProtocol = url.startsWith("http://") || url.startsWith("https://");
 
@@ -246,7 +280,9 @@ export function clean123PanUrl(url: string): string {
     }
   }
 
-  if (startIdx < 0) return url;
+  if (startIdx < 0) {
+    return url;
+  }
 
   if (!hasProtocol) {
     url = `https://${url.substring(startIdx)}`;
@@ -311,7 +347,9 @@ export function clean115PanUrl(url: string): string {
     startIdx = url.indexOf("anxia.com/s/");
   }
 
-  if (startIdx < 0) return url;
+  if (startIdx < 0) {
+    return url;
+  }
 
   const hasProtocol = url.startsWith("http://") || url.startsWith("https://");
 
@@ -357,7 +395,9 @@ export function cleanAliyunPanUrl(url: string): string {
     startIdx = url.indexOf("aliyundrive.com/s/");
   }
 
-  if (startIdx < 0) return url;
+  if (startIdx < 0) {
+    return url;
+  }
 
   const hasProtocol = url.startsWith("http://") || url.startsWith("https://");
 
@@ -404,7 +444,9 @@ export function cleanAliyunPanUrl(url: string): string {
 export function normalizeBaiduPanUrl(url: string, password: string): string {
   url = cleanBaiduPanUrl(url);
 
-  if (url.includes("?pwd=")) return url;
+  if (url.includes("?pwd=")) {
+    return url;
+  }
 
   if (password && password.length >= 4) {
     const pwd = password.substring(0, 4);
@@ -421,18 +463,24 @@ export function extractPassword(content: string, url: string): string {
     const tianyiMatch = url.match(
       /(?:（访问码：|%EF%BC%88%E8%AE%BF%E9%97%AE%E7%A0%81%EF%BC%9A)([a-zA-Z0-9]+)(?:）|%EF%BC%89)/,
     );
-    if (tianyiMatch) return tianyiMatch[1];
+    if (tianyiMatch) {
+      return tianyiMatch[1];
+    }
   }
 
   // 特殊处理迅雷网盘URL中的pwd参数
   if (url.includes("pan.xunlei.com") && url.includes("?pwd=")) {
     const pwdMatch = url.match(/\?pwd=([a-zA-Z0-9]{4})/);
-    if (pwdMatch) return pwdMatch[1];
+    if (pwdMatch) {
+      return pwdMatch[1];
+    }
   }
 
   // 先从URL中提取密码
   const urlMatch = URL_PASSWORD_PATTERN.exec(url);
-  if (urlMatch) return urlMatch[1];
+  if (urlMatch) {
+    return urlMatch[1];
+  }
 
   // 特殊处理115网盘URL中的密码
   if (
@@ -442,7 +490,9 @@ export function extractPassword(content: string, url: string): string {
     url.includes("password=")
   ) {
     const passwordMatch = url.match(/password=([a-zA-Z0-9]{4})/);
-    if (passwordMatch) return passwordMatch[1];
+    if (passwordMatch) {
+      return passwordMatch[1];
+    }
   }
 
   // 特殊处理123网盘URL中的提取码
@@ -459,7 +509,9 @@ export function extractPassword(content: string, url: string): string {
     const extractMatch = url.match(
       /(?:提取码|%E6%8F%90%E5%8F%96%E7%A0%81)[:：]([a-zA-Z0-9]+)/,
     );
-    if (extractMatch) return extractMatch[1];
+    if (extractMatch) {
+      return extractMatch[1];
+    }
   }
 
   // 从内容中提取"提取码"
@@ -486,12 +538,16 @@ export function extractPassword(content: string, url: string): string {
   // 对于百度网盘链接，尝试查找特定格式的密码
   if (url.toLowerCase().includes("pan.baidu.com")) {
     const baiduMatch = BAIDU_PASSWORD_PATTERN.exec(content);
-    if (baiduMatch) return baiduMatch[1];
+    if (baiduMatch) {
+      return baiduMatch[1];
+    }
   }
 
   // 通用密码提取
   const passwordMatch = PASSWORD_PATTERN.exec(content);
-  if (passwordMatch) return passwordMatch[1];
+  if (passwordMatch) {
+    return passwordMatch[1];
+  }
 
   return "";
 }
@@ -508,7 +564,9 @@ export function extractNetDiskLinks(text: string): string[] {
   );
   for (let match of baiduMatches) {
     match = cleanBaiduPanUrl(match);
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(match)) {
       foundLinks.add(match);
       links.push(match);
@@ -522,7 +580,9 @@ export function extractNetDiskLinks(text: string): string[] {
   );
   for (let match of tianyiMatches) {
     match = cleanTianyiPanUrl(match);
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(match)) {
       foundLinks.add(match);
       links.push(match);
@@ -533,7 +593,9 @@ export function extractNetDiskLinks(text: string): string[] {
   const ucMatches = Array.from(text.matchAll(UC_PAN_PATTERN), (m) => m[0]);
   for (let match of ucMatches) {
     match = cleanUCPanUrl(match);
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(match)) {
       foundLinks.add(match);
       links.push(match);
@@ -544,7 +606,9 @@ export function extractNetDiskLinks(text: string): string[] {
   const pan123Matches = Array.from(text.matchAll(PAN_123_PATTERN), (m) => m[0]);
   for (let match of pan123Matches) {
     match = clean123PanUrl(match);
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(normalizeUrl(match))) {
       foundLinks.add(normalizeUrl(match));
       links.push(match);
@@ -555,7 +619,9 @@ export function extractNetDiskLinks(text: string): string[] {
   const pan115Matches = Array.from(text.matchAll(PAN_115_PATTERN), (m) => m[0]);
   for (let match of pan115Matches) {
     match = clean115PanUrl(match);
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(normalizeUrl(match))) {
       foundLinks.add(normalizeUrl(match));
       links.push(match);
@@ -569,7 +635,9 @@ export function extractNetDiskLinks(text: string): string[] {
   );
   for (let match of aliyunMatches) {
     match = cleanAliyunPanUrl(match);
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(normalizeUrl(match))) {
       foundLinks.add(normalizeUrl(match));
       links.push(match);
@@ -582,7 +650,9 @@ export function extractNetDiskLinks(text: string): string[] {
     (m) => m[0],
   );
   for (let match of quarkMatches) {
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(match)) {
       foundLinks.add(match);
       links.push(match);
@@ -595,7 +665,9 @@ export function extractNetDiskLinks(text: string): string[] {
     (m) => m[0],
   );
   for (let match of xunleiMatches) {
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
     if (match && !foundLinks.has(match)) {
       foundLinks.add(match);
       links.push(match);
@@ -608,7 +680,9 @@ export function extractNetDiskLinks(text: string): string[] {
     (m) => m[0],
   );
   for (let match of otherMatches) {
-    if (match.endsWith("https")) match = match.substring(0, match.length - 5);
+    if (match.endsWith("https")) {
+      match = match.substring(0, match.length - 5);
+    }
 
     // 跳过已经处理过的链接
     if (

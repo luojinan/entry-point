@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -100,17 +101,23 @@ class HubanPlugin extends BasePlugin {
   ): SearchResultWithItemId | null {
     // Extract detail link and ID
     const detailLink = s.find(".video-info-header h3 a").first().attr("href");
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     const matches = DETAIL_ID_REGEX.exec(detailLink);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
     const itemID = matches[1];
 
     const uniqueId = `${PLUGIN_NAME}-${itemID}`;
 
     // Extract title
     const title = s.find(".video-info-header h3 a").first().text().trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     // Extract category
     const category = s
@@ -165,15 +172,27 @@ class HubanPlugin extends BasePlugin {
 
     // Build content
     const contentParts: string[] = [];
-    if (category) contentParts.push(`\u5206\u7C7B: ${category}`);
-    if (director) contentParts.push(`\u5BFC\u6F14: ${director}`);
-    if (actor) contentParts.push(`\u4E3B\u6F14: ${actor}`);
-    if (quality) contentParts.push(`\u8D28\u91CF: ${quality}`);
-    if (plot) contentParts.push(`\u5267\u60C5: ${plot}`);
+    if (category) {
+      contentParts.push(`\u5206\u7C7B: ${category}`);
+    }
+    if (director) {
+      contentParts.push(`\u5BFC\u6F14: ${director}`);
+    }
+    if (actor) {
+      contentParts.push(`\u4E3B\u6F14: ${actor}`);
+    }
+    if (quality) {
+      contentParts.push(`\u8D28\u91CF: ${quality}`);
+    }
+    if (plot) {
+      contentParts.push(`\u5267\u60C5: ${plot}`);
+    }
 
     // Build tags
     const tags: string[] = [];
-    if (year) tags.push(year);
+    if (year) {
+      tags.push(year);
+    }
 
     return {
       uniqueId,
@@ -192,7 +211,9 @@ class HubanPlugin extends BasePlugin {
   ): Promise<SearchResult[]> {
     const tasks = results.map(async (result) => {
       const itemID = result._itemID;
-      if (!itemID) return result;
+      if (!itemID) {
+        return result;
+      }
 
       try {
         const links = await this.fetchDetailLinks(itemID);
@@ -251,13 +272,16 @@ class HubanPlugin extends BasePlugin {
   }
 
   private isValidNetworkDriveURL(url: string): boolean {
-    if (url.includes("javascript:") || !url) return false;
+    if (url.includes("javascript:") || !url) {
+      return false;
+    }
     if (
       !url.startsWith("http") &&
       !url.startsWith("magnet:") &&
       !url.startsWith("ed2k:")
-    )
+    ) {
       return false;
+    }
 
     return (
       QUARK_LINK_REGEX.test(url) ||
@@ -279,21 +303,51 @@ class HubanPlugin extends BasePlugin {
   }
 
   private determineLinkType(url: string): CloudType {
-    if (QUARK_LINK_REGEX.test(url)) return "quark";
-    if (UC_LINK_REGEX.test(url)) return "uc";
-    if (BAIDU_LINK_REGEX.test(url)) return "baidu";
-    if (ALIYUN_LINK_REGEX.test(url)) return "aliyun";
-    if (XUNLEI_LINK_REGEX.test(url)) return "xunlei";
-    if (TIANYI_LINK_REGEX.test(url)) return "tianyi";
-    if (LINK_115_REGEX.test(url)) return "115";
-    if (MOBILE_LINK_REGEX.test(url)) return "mobile";
-    if (WEIYUN_LINK_REGEX.test(url)) return "weiyun";
-    if (LANZOU_LINK_REGEX.test(url)) return "lanzou";
-    if (JIANGUOYUN_LINK_REGEX.test(url)) return "jianguoyun";
-    if (LINK_123_REGEX.test(url)) return "123";
-    if (PIKPAK_LINK_REGEX.test(url)) return "pikpak";
-    if (MAGNET_LINK_REGEX.test(url)) return "magnet";
-    if (ED2K_LINK_REGEX.test(url)) return "ed2k";
+    if (QUARK_LINK_REGEX.test(url)) {
+      return "quark";
+    }
+    if (UC_LINK_REGEX.test(url)) {
+      return "uc";
+    }
+    if (BAIDU_LINK_REGEX.test(url)) {
+      return "baidu";
+    }
+    if (ALIYUN_LINK_REGEX.test(url)) {
+      return "aliyun";
+    }
+    if (XUNLEI_LINK_REGEX.test(url)) {
+      return "xunlei";
+    }
+    if (TIANYI_LINK_REGEX.test(url)) {
+      return "tianyi";
+    }
+    if (LINK_115_REGEX.test(url)) {
+      return "115";
+    }
+    if (MOBILE_LINK_REGEX.test(url)) {
+      return "mobile";
+    }
+    if (WEIYUN_LINK_REGEX.test(url)) {
+      return "weiyun";
+    }
+    if (LANZOU_LINK_REGEX.test(url)) {
+      return "lanzou";
+    }
+    if (JIANGUOYUN_LINK_REGEX.test(url)) {
+      return "jianguoyun";
+    }
+    if (LINK_123_REGEX.test(url)) {
+      return "123";
+    }
+    if (PIKPAK_LINK_REGEX.test(url)) {
+      return "pikpak";
+    }
+    if (MAGNET_LINK_REGEX.test(url)) {
+      return "magnet";
+    }
+    if (ED2K_LINK_REGEX.test(url)) {
+      return "ed2k";
+    }
     return "others";
   }
 }

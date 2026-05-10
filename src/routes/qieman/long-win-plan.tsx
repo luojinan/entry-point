@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { format, parse, isValid } from "date-fns";
 import { useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,12 +22,16 @@ type ClearedFund = {
 };
 
 function formatPercent(value: number | null, fallback = "-"): string {
-  if (value === null || value === undefined) return fallback;
+  if (value === null || value === undefined) {
+    return fallback;
+  }
   return `${(value * 100).toFixed(2)}%`;
 }
 
 function formatNavDate(value: number | string | null | undefined): string {
-  if (value === null || value === undefined || value === "") return "-";
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
 
   if (typeof value === "string") {
     const matched = value.match(/(\d{1,4})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
@@ -45,7 +50,9 @@ function formatNavDate(value: number | string | null | undefined): string {
   }
 
   const date = new Date(value);
-  if (!isValid(date)) return "-";
+  if (!isValid(date)) {
+    return "-";
+  }
 
   return format(date, "MM-dd");
 }

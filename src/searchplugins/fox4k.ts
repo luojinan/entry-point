@@ -6,6 +6,7 @@
 
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
+
 import {
   BasePlugin,
   fetchWithRetry,
@@ -158,7 +159,9 @@ class Fox4k extends BasePlugin {
     const results: SearchResultWithId[] = [];
     $(".hl-list-item").each((i, el) => {
       const result = this._parseSearchResultItem($, el);
-      if (result) results.push(result);
+      if (result) {
+        results.push(result);
+      }
     });
 
     return { results, totalPages };
@@ -166,10 +169,14 @@ class Fox4k extends BasePlugin {
 
   private _parseTotalPages($: CheerioAPI): number {
     const pageInfo = ($(".hl-page-tips a").text() || "").trim();
-    if (!pageInfo) return 1;
+    if (!pageInfo) {
+      return 1;
+    }
 
     const parts = pageInfo.split("/");
-    if (parts.length !== 2) return 1;
+    if (parts.length !== 2) {
+      return 1;
+    }
 
     const total = parseInt(parts[1].trim(), 10);
     return isNaN(total) || total < 1 ? 1 : total;
@@ -184,18 +191,26 @@ class Fox4k extends BasePlugin {
     // Get detail page link
     const $linkEl = $el.find(".hl-item-pic a").first();
     let href = $linkEl.attr("href");
-    if (!href) return null;
+    if (!href) {
+      return null;
+    }
 
-    if (href.startsWith("/")) href = BASE_URL + href;
+    if (href.startsWith("/")) {
+      href = BASE_URL + href;
+    }
 
     // Extract ID
     const matches = href.match(DETAIL_ID_REGEX);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
     const id = matches[1];
 
     // Get title
     const title = ($el.find(".hl-item-title a").first().text() || "").trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     // Get status
     const status = ($el.find(".hl-pic-text .remarks").text() || "").trim();
@@ -215,7 +230,9 @@ class Fox4k extends BasePlugin {
       const parts = basicInfo.split("·");
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i].trim();
-        if (!part || (score && part.includes(score))) continue;
+        if (!part || (score && part.includes(score))) {
+          continue;
+        }
         if (
           (i === 0 || (i === 1 && parts[0].includes(score))) &&
           YEAR_REGEX.test(part)
@@ -233,15 +250,27 @@ class Fox4k extends BasePlugin {
 
     // Build tags
     const tags: string[] = [];
-    if (status) tags.push(status);
-    if (year) tags.push(year);
-    if (region) tags.push(region);
-    if (category) tags.push(category);
+    if (status) {
+      tags.push(status);
+    }
+    if (year) {
+      tags.push(year);
+    }
+    if (region) {
+      tags.push(region);
+    }
+    if (category) {
+      tags.push(category);
+    }
 
     // Build content
     let content = description;
-    if (basicInfo) content = basicInfo + "\n" + description;
-    if (score) content = "评分: " + score + "\n" + content;
+    if (basicInfo) {
+      content = basicInfo + "\n" + description;
+    }
+    if (score) {
+      content = "评分: " + score + "\n" + content;
+    }
 
     return {
       uniqueId: `fox4k-${id}`,
@@ -258,7 +287,9 @@ class Fox4k extends BasePlugin {
   private async _enrichWithDetailInfo(
     results: SearchResultWithId[],
   ): Promise<SearchResultWithId[]> {
-    if (results.length === 0) return results;
+    if (results.length === 0) {
+      return results;
+    }
 
     const enrichedResults: SearchResultWithId[] = [];
 
@@ -267,17 +298,23 @@ class Fox4k extends BasePlugin {
       const batchResults = await Promise.allSettled(
         batch.map(async (result) => {
           const id = result._id;
-          if (!id) return null;
+          if (!id) {
+            return null;
+          }
 
           const detailInfo = await this._getDetailInfo(id);
           if (detailInfo && detailInfo.links.length > 0) {
             const { _id, ...cleanResult } = result;
             // Update content if detail has content
-            if (detailInfo.content) cleanResult.content = detailInfo.content;
+            if (detailInfo.content) {
+              cleanResult.content = detailInfo.content;
+            }
             // Merge tags
             const existingTags = new Set(cleanResult.tags);
             for (const tag of detailInfo.tags) {
-              if (!existingTags.has(tag)) cleanResult.tags.push(tag);
+              if (!existingTags.has(tag)) {
+                cleanResult.tags.push(tag);
+              }
             }
             return { ...cleanResult, links: detailInfo.links };
           }
@@ -389,13 +426,16 @@ class Fox4k extends BasePlugin {
         const clipboardText = $linkItem
           .find(".down-copy")
           .attr("data-clipboard-text");
-        if (clipboardText)
+        if (clipboardText) {
           this._processFoundLink(detail, clipboardText, pageText);
+        }
 
         // From href attributes
         $linkItem.find("a").each((l, link) => {
           const href = $(link).attr("href");
-          if (href) this._processFoundLink(detail, href, pageText);
+          if (href) {
+            this._processFoundLink(detail, href, pageText);
+          }
         });
 
         // From text content
@@ -416,10 +456,14 @@ class Fox4k extends BasePlugin {
     link: string,
     contextText: string,
   ): void {
-    if (!link) return;
+    if (!link) {
+      return;
+    }
 
     // Exclude quark links
-    if (QUARK_LINK_REGEX.test(link)) return;
+    if (QUARK_LINK_REGEX.test(link)) {
+      return;
+    }
 
     if (/magnet:\?xt=urn:btih:[0-9a-fA-F]{40}/.test(link)) {
       this._addDownloadLink(detail, "magnet", link, "");
@@ -445,8 +489,12 @@ class Fox4k extends BasePlugin {
   }
 
   private _extractLinksFromText(detail: DetailInfo, text: string): void {
-    if (!text) return;
-    if (QUARK_LINK_REGEX.test(text)) return;
+    if (!text) {
+      return;
+    }
+    if (QUARK_LINK_REGEX.test(text)) {
+      return;
+    }
 
     const magnetMatches = text.match(MAGNET_LINK_REGEX) || [];
     for (const link of magnetMatches) {
@@ -470,18 +518,24 @@ class Fox4k extends BasePlugin {
   private _extractPasswordFromLink(link: string): string {
     for (const regex of PASSWORD_REGEXES) {
       const matches = link.match(regex);
-      if (matches && matches[1]) return matches[1];
+      if (matches && matches[1]) {
+        return matches[1];
+      }
     }
     return "";
   }
 
   private _extractPasswordFromText(text: string, link: string): string {
     const fromLink = this._extractPasswordFromLink(link);
-    if (fromLink) return fromLink;
+    if (fromLink) {
+      return fromLink;
+    }
 
     for (const regex of PASSWORD_REGEXES) {
       const matches = text.match(regex);
-      if (matches && matches[1]) return matches[1];
+      if (matches && matches[1]) {
+        return matches[1];
+      }
     }
     return "";
   }
@@ -492,12 +546,18 @@ class Fox4k extends BasePlugin {
     linkURL: string,
     password: string,
   ): void {
-    if (!linkURL) return;
-    if (QUARK_LINK_REGEX.test(linkURL)) return;
+    if (!linkURL) {
+      return;
+    }
+    if (QUARK_LINK_REGEX.test(linkURL)) {
+      return;
+    }
 
     // Check for duplicates
     for (const existing of detail.links) {
-      if (existing.url === linkURL) return;
+      if (existing.url === linkURL) {
+        return;
+      }
     }
 
     detail.links.push({

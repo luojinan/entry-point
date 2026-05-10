@@ -3,6 +3,7 @@ import type {
   BasePluginInterface,
   SearchResult as PluginResult,
 } from "@/searchplugins/types";
+
 import { parseSearchResults } from "./parser";
 import type {
   LinkType,
@@ -24,7 +25,9 @@ const FALLBACK_CHANNELS = [
 
 function getDefaultChannels(env?: RuntimeEnv): string[] {
   const channels = getRuntimeEnvValue(env, "TG_CHANNELS");
-  if (!channels) return FALLBACK_CHANNELS;
+  if (!channels) {
+    return FALLBACK_CHANNELS;
+  }
   return channels
     .split(",")
     .map((c) => c.trim())

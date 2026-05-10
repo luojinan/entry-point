@@ -23,7 +23,6 @@ TODO: 待清除 无夸克搜索结果的 plugin
 
 - gying | Error: Search data not found in page
 
-
 ## 依赖
 
 ### vite + react 相关
@@ -142,14 +141,11 @@ tanstack
 }
 ```
 
-`biome.json`
+`.oxlintrc.json` / `.oxfmtrc.json`
 
 ```json
 {
-  "files": {
-    "ignoreUnknown": false,
-    "includes": ["**/src/**/*", "!**/src/routeTree.gen.ts"]
-  }
+  "ignorePatterns": ["src/routeTree.gen.ts", "src/styles.css"]
 }
 ```
 
@@ -233,8 +229,8 @@ interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async () => {
-    const auth = await getAuthUser();  // 从 Supabase 获取用户信息
-    return { auth };  // 存入路由 context
+    const auth = await getAuthUser(); // 从 Supabase 获取用户信息
+    return { auth }; // 存入路由 context
   },
   // ...
 });
@@ -252,7 +248,7 @@ export const Route = createFileRoute("/supabase")({
     if (!context.auth) {
       throw redirect({
         to: "/login",
-        search: { redirect: location.href },  // 携带原始路径，登录后跳回
+        search: { redirect: location.href }, // 携带原始路径，登录后跳回
       });
     }
   },
@@ -264,10 +260,10 @@ export const Route = createFileRoute("/supabase")({
 
 ### 设计原理
 
-| 步骤 | 位置 | 作用 |
-|------|------|------|
-| 1 | `__root.tsx` beforeLoad | 获取用户信息，存入 `context.auth` |
-| 2 | 子路由 beforeLoad | 检查 `context.auth`，决定是否重定向 |
+| 步骤 | 位置                    | 作用                                |
+| ---- | ----------------------- | ----------------------------------- |
+| 1    | `__root.tsx` beforeLoad | 获取用户信息，存入 `context.auth`   |
+| 2    | 子路由 beforeLoad       | 检查 `context.auth`，决定是否重定向 |
 
 - **灵活**：不是所有页面都需要登录（如首页、登录页）
 - **按需保护**：每个路由自行决定是否拦截
@@ -284,9 +280,7 @@ export const Route = createFileRoute("/supabase")({
 
 ```tsx
 <main className="flex min-h-0 flex-1 overflow-y-auto">
-  <div className="mx-auto w-full max-w-4xl p-6">
-    {/* page content */}
-  </div>
+  <div className="mx-auto w-full max-w-4xl p-6">{/* page content */}</div>
 </main>
 ```
 
@@ -316,11 +310,13 @@ SSR 框架（TanStack Start）的页面加载流程是：
 优缺点
 
 优点：
+
 - 彻底消除 `FOUC`，用户体验最好
 - 不依赖 `React` 生命周期，即使 JS bundle 加载慢也不会闪烁
 - 脚本极小（~200 字节），对性能几乎无影响
 
 缺点：
+
 - 必须用 `dangerouslySetInnerHTML`，触发 `lint` 警告，可读性差
 - 脚本内容是字符串，没有类型检查和编辑器支持
 - 与 React 的声明式模型不一致——主题状态分散在两个地方（内联脚本做初始化，React 组件做后续交互）

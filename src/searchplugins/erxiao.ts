@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -68,10 +69,14 @@ class Erxiao extends BasePlugin {
     const items: SearchItem[] = [];
     $(".module-search-item").each((i, el) => {
       const item = this._parseSearchItem($, el);
-      if (item) items.push(item);
+      if (item) {
+        items.push(item);
+      }
     });
 
-    if (items.length === 0) return [];
+    if (items.length === 0) {
+      return [];
+    }
 
     // 4. Fetch detail pages concurrently
     const enhancedResults = await this._enhanceWithDetails(items);
@@ -110,15 +115,21 @@ class Erxiao extends BasePlugin {
     // Extract detail link and ID
     const $titleLink = $el.find(".video-info-header h3 a").first();
     const detailLink = $titleLink.attr("href");
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     const matches = detailLink.match(DETAIL_ID_REGEX);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
     const itemID = matches[1];
 
     // Extract title
     const title = ($titleLink.text() || "").trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     // Extract category
     const category = (
@@ -180,16 +191,30 @@ class Erxiao extends BasePlugin {
 
     // Build content
     const contentParts: string[] = [];
-    if (quality) contentParts.push("【" + quality + "】");
-    if (director) contentParts.push("导演：" + director);
-    if (actor) contentParts.push("主演：" + actor);
-    if (year) contentParts.push("年份：" + year);
-    if (plot) contentParts.push("剧情：" + plot);
+    if (quality) {
+      contentParts.push("【" + quality + "】");
+    }
+    if (director) {
+      contentParts.push("导演：" + director);
+    }
+    if (actor) {
+      contentParts.push("主演：" + actor);
+    }
+    if (year) {
+      contentParts.push("年份：" + year);
+    }
+    if (plot) {
+      contentParts.push("剧情：" + plot);
+    }
 
     // Build tags
     const tags: string[] = [];
-    if (year) tags.push(year);
-    if (category) tags.push(category);
+    if (year) {
+      tags.push(year);
+    }
+    if (category) {
+      tags.push(category);
+    }
 
     return {
       uniqueId: `erxiao-${itemID}`,
@@ -282,21 +307,27 @@ class Erxiao extends BasePlugin {
   }
 
   private _isValidURL(url: string): boolean {
-    if (!url) return false;
-    if (url.includes("javascript:") || url.includes("#") || url === "")
+    if (!url) {
       return false;
+    }
+    if (url.includes("javascript:") || url.includes("#") || url === "") {
+      return false;
+    }
     if (
       !url.startsWith("http") &&
       !url.startsWith("magnet:") &&
       !url.startsWith("ed2k:")
-    )
+    ) {
       return false;
+    }
     return true;
   }
 
   private _determineLinkType(url: string): CloudType {
     for (const [type, regex] of Object.entries(LINK_REGEXES)) {
-      if (regex.test(url)) return type as CloudType;
+      if (regex.test(url)) {
+        return type as CloudType;
+      }
     }
     return "others";
   }

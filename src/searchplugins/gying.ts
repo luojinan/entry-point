@@ -148,7 +148,9 @@ class Gying extends BasePlugin {
 
     // Filter by title keyword first
     for (let i = 0; i < searchData.l.i.length; i++) {
-      if (i >= (searchData.l.title || []).length) continue;
+      if (i >= (searchData.l.title || []).length) {
+        continue;
+      }
       const title = searchData.l.title[i];
       if (title && title.toLowerCase().includes(keywordLower)) {
         indices.push(i);
@@ -168,7 +170,9 @@ class Gying extends BasePlugin {
             resourceType,
             headers,
           );
-          if (!detail) return null;
+          if (!detail) {
+            return null;
+          }
 
           return this._buildResult(detail, searchData, index);
         }),
@@ -210,13 +214,19 @@ class Gying extends BasePlugin {
         { timeout: 15000, retries: 1 },
       );
 
-      if (resp.status === 403) return null;
-      if (resp.status !== 200) return null;
+      if (resp.status === 403) {
+        return null;
+      }
+      if (resp.status !== 200) {
+        return null;
+      }
 
       const data = await resp.json();
 
       // Check code field
-      if (data.code === 403) return null;
+      if (data.code === 403) {
+        return null;
+      }
 
       return data;
     } catch (err) {
@@ -229,7 +239,9 @@ class Gying extends BasePlugin {
     searchData: SearchData,
     index: number,
   ): SearchResult | null {
-    if (index >= (searchData.l.title || []).length) return null;
+    if (index >= (searchData.l.title || []).length) {
+      return null;
+    }
 
     let title = searchData.l.title[index];
     const resourceType = searchData.l.d[index];
@@ -268,7 +280,9 @@ class Gying extends BasePlugin {
 
     // Build tags
     const tags: string[] = [];
-    if (year > 0) tags.push(`${year}`);
+    if (year > 0) {
+      tags.push(`${year}`);
+    }
 
     // Parse update time
     const datetime = this._parseUpdateTime(
@@ -290,7 +304,9 @@ class Gying extends BasePlugin {
     const links: Link[] = [];
     const seen = new Set<string>();
 
-    if (!detail || !detail.panlist || !detail.panlist.url) return links;
+    if (!detail || !detail.panlist || !detail.panlist.url) {
+      return links;
+    }
 
     const accessCodeRegex = /（访问码：.*?）/g;
     const accessCodeRegex2 = /\(访问码：.*?\)/g;
@@ -304,12 +320,16 @@ class Gying extends BasePlugin {
         .replace(accessCodeRegex2, "")
         .trim();
 
-      if (!linkURL || seen.has(linkURL)) continue;
+      if (!linkURL || seen.has(linkURL)) {
+        continue;
+      }
       seen.add(linkURL);
 
       // Determine link type
       const linkType = this._determineLinkType(linkURL);
-      if (linkType === "others") continue;
+      if (linkType === "others") {
+        continue;
+      }
 
       // Extract password
       let password = "";
@@ -319,7 +339,9 @@ class Gying extends BasePlugin {
 
       // Extract password from URL (takes priority)
       const urlPwd = this._extractPasswordFromURL(linkURL);
-      if (urlPwd) password = urlPwd;
+      if (urlPwd) {
+        password = urlPwd;
+      }
 
       // Parse corresponding time
       let linkDatetime = "";
@@ -338,19 +360,31 @@ class Gying extends BasePlugin {
   }
 
   private _determineLinkType(url: string): string {
-    if (url.includes("pan.quark.cn")) return "quark";
-    if (url.includes("drive.uc.cn")) return "uc";
-    if (url.includes("pan.baidu.com")) return "baidu";
-    if (url.includes("aliyundrive.com") || url.includes("alipan.com"))
+    if (url.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (url.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (url.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (url.includes("aliyundrive.com") || url.includes("alipan.com")) {
       return "aliyun";
-    if (url.includes("pan.xunlei.com")) return "xunlei";
-    if (url.includes("cloud.189.cn")) return "tianyi";
+    }
+    if (url.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (url.includes("cloud.189.cn")) {
+      return "tianyi";
+    }
     if (
       url.includes("115.com") ||
       url.includes("115cdn.com") ||
       url.includes("anxia.com")
-    )
+    ) {
       return "115";
+    }
     if (
       url.includes("123684.com") ||
       url.includes("123685.com") ||
@@ -358,29 +392,38 @@ class Gying extends BasePlugin {
       url.includes("123pan.com") ||
       url.includes("123pan.cn") ||
       url.includes("123592.com")
-    )
+    ) {
       return "123";
+    }
     return "others";
   }
 
   private _extractPasswordFromURL(url: string): string {
     const pwdMatch = url.match(/\?pwd=([a-zA-Z0-9]+)/);
-    if (pwdMatch) return pwdMatch[1];
+    if (pwdMatch) {
+      return pwdMatch[1];
+    }
 
     const passwordMatch = url.match(/\?password=([a-zA-Z0-9]+)/);
-    if (passwordMatch) return passwordMatch[1];
+    if (passwordMatch) {
+      return passwordMatch[1];
+    }
 
     return "";
   }
 
   private _parseUpdateTime(timeStrs: string[] | undefined): string {
-    if (!timeStrs || timeStrs.length === 0) return new Date().toISOString();
+    if (!timeStrs || timeStrs.length === 0) {
+      return new Date().toISOString();
+    }
 
     const now = new Date();
     let latestTime: Date | null = null;
 
     for (const timeStr of timeStrs) {
-      if (!timeStr) continue;
+      if (!timeStr) {
+        continue;
+      }
       const parsed = this._parseRelativeTime(timeStr, now);
       if (parsed && (!latestTime || parsed > latestTime)) {
         latestTime = parsed;
@@ -396,7 +439,9 @@ class Gying extends BasePlugin {
   }
 
   private _parseRelativeTime(timeStr: string, baseTime: Date): Date | null {
-    if (!timeStr) return null;
+    if (!timeStr) {
+      return null;
+    }
     timeStr = timeStr.trim();
 
     if (timeStr === "今天") {
@@ -442,7 +487,9 @@ class Gying extends BasePlugin {
   private _deduplicateResults(results: SearchResult[]): SearchResult[] {
     const seen = new Set<string>();
     return results.filter((r) => {
-      if (seen.has(r.uniqueId)) return false;
+      if (seen.has(r.uniqueId)) {
+        return false;
+      }
       seen.add(r.uniqueId);
       return true;
     });

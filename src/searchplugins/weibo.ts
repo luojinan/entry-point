@@ -106,20 +106,28 @@ export default class WeiboPlugin extends BasePlugin {
           30000,
         );
 
-        if (!resp.ok) break;
+        if (!resp.ok) {
+          break;
+        }
 
         const apiResp: WeiboAPIResponse = await resp.json();
 
         const okValue = apiResp.ok;
         const isOK =
           okValue === 1 || okValue === true || String(okValue) === "1";
-        if (!isOK) break;
+        if (!isOK) {
+          break;
+        }
 
         const data = apiResp.data;
-        if (!data) break;
+        if (!data) {
+          break;
+        }
 
         const list = data.list || [];
-        if (list.length === 0) break;
+        if (list.length === 0) {
+          break;
+        }
 
         for (const weibo of list) {
           const result = this.parseWeibo(weibo, uid);
@@ -154,9 +162,13 @@ export default class WeiboPlugin extends BasePlugin {
 
     const urlStruct = weibo.url_struct || [];
     for (const urlItem of urlStruct) {
-      if (urlItem.url_title !== "网页链接") continue;
+      if (urlItem.url_title !== "网页链接") {
+        continue;
+      }
       const longURL = urlItem.long_url || "";
-      if (!longURL) continue;
+      if (!longURL) {
+        continue;
+      }
 
       const directLinks = this.extractNetworkDriveLinks(longURL);
       links.push(...directLinks);
@@ -227,7 +239,9 @@ export default class WeiboPlugin extends BasePlugin {
   }
 
   private cleanHTMLText(html: string): string {
-    if (!html) return "";
+    if (!html) {
+      return "";
+    }
     let text = html.replace(/<[^>]+>/g, "");
     text = text.trim();
     text = text.replace(/\s+/g, " ");

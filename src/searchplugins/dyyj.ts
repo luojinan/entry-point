@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   determineCloudType,
@@ -85,11 +86,15 @@ class Dyyj extends BasePlugin {
   ): Promise<SearchResult[]> {
     // Step 1: Execute search
     const searchResults = await this._executeSearch(keyword);
-    if (searchResults.length === 0) return [];
+    if (searchResults.length === 0) {
+      return [];
+    }
 
     // Step 2: Filter by title keyword first
     const titleFiltered = this._filterByTitleKeyword(searchResults, keyword);
-    if (titleFiltered.length === 0) return [];
+    if (titleFiltered.length === 0) {
+      return [];
+    }
 
     // Step 3: Fetch detail page links concurrently
     const finalResults = await this._fetchDetailLinks(titleFiltered);
@@ -136,9 +141,13 @@ class Dyyj extends BasePlugin {
 
     if (usedSelector) {
       $(usedSelector).each((i, el) => {
-        if (results.length >= MAX_RESULTS) return false;
+        if (results.length >= MAX_RESULTS) {
+          return false;
+        }
         const result = this._parseResultItem($, el, i + 1);
-        if (result) results.push(result);
+        if (result) {
+          results.push(result);
+        }
       });
     }
 
@@ -170,13 +179,19 @@ class Dyyj extends BasePlugin {
   ): (SearchResult & { _detailURL?: string }) | null {
     const $el = $(el);
     const $linkEl = $el.find("a");
-    if ($linkEl.length === 0) return null;
+    if ($linkEl.length === 0) {
+      return null;
+    }
 
     const title = ($linkEl.text() || "").trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     let detailURL = $linkEl.attr("href");
-    if (!detailURL) return null;
+    if (!detailURL) {
+      return null;
+    }
 
     // Ensure full URL
     if (!detailURL.startsWith("http")) {
@@ -215,7 +230,9 @@ class Dyyj extends BasePlugin {
     let i = 0;
 
     while (match !== null) {
-      if (results.length >= MAX_RESULTS) break;
+      if (results.length >= MAX_RESULTS) {
+        break;
+      }
 
       let href = match[1];
       const title = (match[2] || "").replace(HTML_TAG_REGEX, "").trim();
@@ -256,7 +273,9 @@ class Dyyj extends BasePlugin {
     results: Array<SearchResult & { _detailURL?: string }>,
     keyword: string,
   ): Array<SearchResult & { _detailURL?: string }> {
-    if (!keyword) return results;
+    if (!keyword) {
+      return results;
+    }
     const keywords = keyword.toLowerCase().split(/\s+/).filter(Boolean);
     return results.filter((r) => {
       const lowerTitle = (r.title || "").toLowerCase();
@@ -267,7 +286,9 @@ class Dyyj extends BasePlugin {
   private async _fetchDetailLinks(
     searchResults: Array<SearchResult & { _detailURL?: string }>,
   ): Promise<SearchResult[]> {
-    if (searchResults.length === 0) return [];
+    if (searchResults.length === 0) {
+      return [];
+    }
 
     const finalResults: SearchResult[] = [];
 
@@ -276,7 +297,9 @@ class Dyyj extends BasePlugin {
       const batchResults = await Promise.allSettled(
         batch.map(async (result) => {
           const detailURL = result._detailURL;
-          if (!detailURL) return null;
+          if (!detailURL) {
+            return null;
+          }
 
           const { links, publishTime } =
             await this._fetchDetailPageLinks(detailURL);
@@ -357,10 +380,14 @@ class Dyyj extends BasePlugin {
       $postBody.find("p").each((j, pEl) => {
         const $p = $(pEl);
         const $strong = $p.find("strong");
-        if ($strong.length === 0) return;
+        if ($strong.length === 0) {
+          return;
+        }
 
         const strongText = ($strong.text() || "").trim();
-        if (!this._isNetworkDiskName(strongText)) return;
+        if (!this._isNetworkDiskName(strongText)) {
+          return;
+        }
 
         // Look for link in current or next p
         let $linkEl = $p.find("a");
@@ -410,7 +437,9 @@ class Dyyj extends BasePlugin {
         }
 
         let urlType = this._determineCloudType(linkURL);
-        if (urlType === "others") urlType = pattern.urlType;
+        if (urlType === "others") {
+          urlType = pattern.urlType;
+        }
 
         if (urlType !== "others") {
           seen.add(linkURL);
@@ -440,20 +469,34 @@ class Dyyj extends BasePlugin {
   }
 
   private _determineCloudType(url: string): CloudType {
-    if (url.includes("pan.quark.cn")) return "quark";
-    if (url.includes("drive.uc.cn")) return "uc";
-    if (url.includes("pan.baidu.com")) return "baidu";
-    if (url.includes("aliyundrive.com") || url.includes("alipan.com"))
+    if (url.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (url.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (url.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (url.includes("aliyundrive.com") || url.includes("alipan.com")) {
       return "aliyun";
-    if (url.includes("pan.xunlei.com")) return "xunlei";
-    if (url.includes("cloud.189.cn")) return "tianyi";
-    if (url.includes("caiyun.139.com")) return "mobile";
+    }
+    if (url.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (url.includes("cloud.189.cn")) {
+      return "tianyi";
+    }
+    if (url.includes("caiyun.139.com")) {
+      return "mobile";
+    }
     if (
       url.includes("115.com") ||
       url.includes("115cdn.com") ||
       url.includes("anxia.com")
-    )
+    ) {
       return "115";
+    }
     if (
       url.includes("123684.com") ||
       url.includes("123685.com") ||
@@ -461,11 +504,18 @@ class Dyyj extends BasePlugin {
       url.includes("123pan.com") ||
       url.includes("123pan.cn") ||
       url.includes("123592.com")
-    )
+    ) {
       return "123";
-    if (url.includes("mypikpak.com")) return "pikpak";
-    if (url.includes("magnet:")) return "magnet";
-    if (url.includes("ed2k://")) return "ed2k";
+    }
+    if (url.includes("mypikpak.com")) {
+      return "pikpak";
+    }
+    if (url.includes("magnet:")) {
+      return "magnet";
+    }
+    if (url.includes("ed2k://")) {
+      return "ed2k";
+    }
     return "others";
   }
 
@@ -477,7 +527,9 @@ class Dyyj extends BasePlugin {
     ];
     for (const p of patterns) {
       const m = linkURL.match(p);
-      if (m) return m[1];
+      if (m) {
+        return m[1];
+      }
     }
     return "";
   }

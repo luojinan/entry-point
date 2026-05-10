@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -62,7 +63,9 @@ class XuexizhinanPlugin extends BasePlugin {
       const title = titleElem.text().trim();
       const link = titleElem.attr("href") || "";
 
-      if (!link || !title) return;
+      if (!link || !title) {
+        return;
+      }
 
       // Check if title contains all keywords
       const lowerTitle = title.toLowerCase();
@@ -73,7 +76,9 @@ class XuexizhinanPlugin extends BasePlugin {
       }
     });
 
-    if (validItems.length === 0) return [];
+    if (validItems.length === 0) {
+      return [];
+    }
 
     // Concurrently fetch detail pages
     const tasks = validItems.map((item) =>
@@ -92,7 +97,9 @@ class XuexizhinanPlugin extends BasePlugin {
   async processDetailPage(detailURL: string): Promise<SearchResult | null> {
     // Validate URL format
     const idMatch = detailURL.match(DETAIL_URL_REGEX);
-    if (!idMatch) return null;
+    if (!idMatch) {
+      return null;
+    }
 
     const resp = await fetchWithRetry(
       detailURL,
@@ -121,7 +128,9 @@ class XuexizhinanPlugin extends BasePlugin {
     const tags: string[] = [];
     $(".book-header .my-2 a").each((i: number, el: cheerio.Element) => {
       const tag = $(el).text().trim();
-      if (tag) tags.push(tag);
+      if (tag) {
+        tags.push(tag);
+      }
     });
 
     // 4. Extract content

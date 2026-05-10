@@ -1,6 +1,7 @@
 import { Moon02Icon, Sun02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
+
 import { buttonVariants } from "@/components/ui/button";
 
 export function ThemeToggle() {

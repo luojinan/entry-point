@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -39,11 +40,15 @@ class KkvPlugin extends BasePlugin {
     // Step 1: Fetch search results
     const items = await this.fetchSearchResults(searchURL);
 
-    if (items.length === 0) return [];
+    if (items.length === 0) {
+      return [];
+    }
 
     // Step 2: Filter by keyword
     const filteredItems = this.filterItemsByKeyword(items, keyword);
-    if (filteredItems.length === 0) return [];
+    if (filteredItems.length === 0) {
+      return [];
+    }
 
     // Step 3: Limit results
     const limitedItems = filteredItems.slice(0, MAX_RESULTS);
@@ -80,13 +85,19 @@ class KkvPlugin extends BasePlugin {
       const s = $(el);
       const link = s.find(".entry-header h2.entry-title a");
       const href = link.attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       const title = link.text().trim();
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       const idMatch = href.match(/\?p=(\d+)/);
-      if (!idMatch || idMatch.length < 2) return;
+      if (!idMatch || idMatch.length < 2) {
+        return;
+      }
 
       items.push({
         id: idMatch[1],
@@ -149,7 +160,9 @@ class KkvPlugin extends BasePlugin {
 
     // Extract title
     let title = $(".entry-header h1.entry-title").text().trim();
-    if (!title) title = item.title;
+    if (!title) {
+      title = item.title;
+    }
 
     // Extract description
     let description = "";
@@ -167,7 +180,9 @@ class KkvPlugin extends BasePlugin {
 
     // Extract pan links
     const panLinks = this.extractPanLinks($);
-    if (panLinks.length === 0) return null;
+    if (panLinks.length === 0) {
+      return null;
+    }
 
     return {
       uniqueId: `${PLUGIN_NAME}-${item.id}`,
@@ -182,10 +197,14 @@ class KkvPlugin extends BasePlugin {
 
   extractUpdateTime($: any): string {
     const timeStr = $("time.updated").attr("datetime");
-    if (!timeStr) return new Date().toISOString();
+    if (!timeStr) {
+      return new Date().toISOString();
+    }
 
     const parsed = new Date(timeStr);
-    if (!isNaN(parsed.getTime())) return parsed.toISOString();
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
 
     return new Date().toISOString();
   }
@@ -198,7 +217,9 @@ class KkvPlugin extends BasePlugin {
       s.find("a").each((j: number, aEl: any) => {
         const href = ($(aEl).attr("href") || "").trim();
         const cloudType = this.determinePanType(href);
-        if (!cloudType) return;
+        if (!cloudType) {
+          return;
+        }
 
         const password = this.extractPasswordFromContext(href, s.text());
 
@@ -216,19 +237,31 @@ class KkvPlugin extends BasePlugin {
   determinePanType(panURL: string): CloudType | "" {
     const lower = (panURL || "").toLowerCase();
 
-    if (lower.includes("pan.baidu.com")) return "baidu";
-    if (lower.includes("pan.quark.cn")) return "quark";
-    if (lower.includes("drive.uc.cn")) return "uc";
-    if (lower.includes("pan.xunlei.com")) return "xunlei";
-    if (lower.includes("aliyundrive.com") || lower.includes("alipan.com"))
+    if (lower.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (lower.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (lower.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (lower.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (lower.includes("aliyundrive.com") || lower.includes("alipan.com")) {
       return "aliyun";
-    if (lower.includes("cloud.189.cn")) return "tianyi";
+    }
+    if (lower.includes("cloud.189.cn")) {
+      return "tianyi";
+    }
     if (
       lower.includes("115.com") ||
       lower.includes("115cdn.com") ||
       lower.includes("anxia.com")
-    )
+    ) {
       return "115";
+    }
     if (
       lower.includes("123684.com") ||
       lower.includes("123685.com") ||
@@ -236,10 +269,15 @@ class KkvPlugin extends BasePlugin {
       lower.includes("123pan.com") ||
       lower.includes("123pan.cn") ||
       lower.includes("123592.com")
-    )
+    ) {
       return "123";
-    if (lower.includes("caiyun.139.com")) return "mobile";
-    if (lower.includes("mypikpak.com")) return "pikpak";
+    }
+    if (lower.includes("caiyun.139.com")) {
+      return "mobile";
+    }
+    if (lower.includes("mypikpak.com")) {
+      return "pikpak";
+    }
 
     return "";
   }
@@ -249,17 +287,23 @@ class KkvPlugin extends BasePlugin {
     try {
       const urlObj = new URL(panURL);
       const pwd = urlObj.searchParams.get("pwd");
-      if (pwd && pwd.length === 4) return pwd;
+      if (pwd && pwd.length === 4) {
+        return pwd;
+      }
     } catch (e) {
       // URL parse failed, try regex on URL
       const pwdMatch = panURL.match(/[?&]pwd=([a-zA-Z0-9]{4})/);
-      if (pwdMatch) return pwdMatch[1];
+      if (pwdMatch) {
+        return pwdMatch[1];
+      }
     }
 
     // Try patterns on context text
     for (const pattern of PWD_PATTERNS) {
       const matches = pattern.exec(contextText);
-      if (matches && matches.length > 1) return matches[1];
+      if (matches && matches.length > 1) {
+        return matches[1];
+      }
     }
 
     return "";

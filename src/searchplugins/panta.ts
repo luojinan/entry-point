@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   extractPassword,
@@ -46,17 +47,36 @@ const NET_DISK_PATTERNS = [
 
 function determineLinkType(url: string): string {
   const u = (url || "").toLowerCase();
-  if (u.includes("pan.quark.cn")) return "quark";
-  if (u.includes("drive.uc.cn")) return "uc";
-  if (u.includes("pan.baidu.com")) return "baidu";
-  if (u.includes("aliyundrive.com") || u.includes("alipan.com"))
+  if (u.includes("pan.quark.cn")) {
+    return "quark";
+  }
+  if (u.includes("drive.uc.cn")) {
+    return "uc";
+  }
+  if (u.includes("pan.baidu.com")) {
+    return "baidu";
+  }
+  if (u.includes("aliyundrive.com") || u.includes("alipan.com")) {
     return "aliyun";
-  if (u.includes("pan.xunlei.com")) return "xunlei";
-  if (u.includes("cloud.189.cn")) return "tianyi";
-  if (u.includes("caiyun.139.com")) return "mobile";
-  if (u.includes("115.com")) return "115";
-  if (u.includes("123pan.com")) return "123";
-  if (u.includes("mypikpak.com")) return "pikpak";
+  }
+  if (u.includes("pan.xunlei.com")) {
+    return "xunlei";
+  }
+  if (u.includes("cloud.189.cn")) {
+    return "tianyi";
+  }
+  if (u.includes("caiyun.139.com")) {
+    return "mobile";
+  }
+  if (u.includes("115.com")) {
+    return "115";
+  }
+  if (u.includes("123pan.com")) {
+    return "123";
+  }
+  if (u.includes("mypikpak.com")) {
+    return "pikpak";
+  }
   return "others";
 }
 
@@ -75,7 +95,9 @@ function normalizeURL(raw: string): string {
 }
 
 function extractLinksFromText(text: string, yearFromTitle = ""): Link[] {
-  if (!text || !hasAnyNetDiskDomain(text)) return [];
+  if (!text || !hasAnyNetDiskDomain(text)) {
+    return [];
+  }
 
   const links: Link[] = [];
   const seen = new Set<string>();
@@ -144,14 +166,22 @@ function extractLinksFromCheerio(
     .find('a[href^="http"]')
     .each((_, a) => {
       const href = normalizeURL($(a).attr("href") || "");
-      if (!href) return;
-      if (!hasAnyNetDiskDomain(href)) return;
+      if (!href) {
+        return;
+      }
+      if (!hasAnyNetDiskDomain(href)) {
+        return;
+      }
 
       const type = determineLinkType(href);
-      if (type === "others") return;
+      if (type === "others") {
+        return;
+      }
 
       const key = `${type}|${href}`;
-      if (seen.has(key)) return;
+      if (seen.has(key)) {
+        return;
+      }
       seen.add(key);
 
       let password = extractPwdFromURL(href);
@@ -189,7 +219,9 @@ function extractLinksFromCheerio(
   const more = extractLinksFromText(text, yearFromTitle);
   for (const l of more) {
     const key = `${l.type}|${l.url}`;
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {
+      continue;
+    }
     seen.add(key);
     links.push(l);
   }
@@ -199,10 +231,14 @@ function extractLinksFromCheerio(
 
 function parsePostTime(text: string): string {
   const m = POST_TIME_REGEX.exec(text || "");
-  if (!m || !m[1]) return "";
+  if (!m || !m[1]) {
+    return "";
+  }
   const str = m[1].trim();
   const d = new Date(str.replace(/-/g, "-"));
-  if (!Number.isFinite(d.getTime())) return "";
+  if (!Number.isFinite(d.getTime())) {
+    return "";
+  }
   return d.toISOString();
 }
 
@@ -257,7 +293,9 @@ class PantaPlugin extends BasePlugin {
         const extracted = extractLinksFromCheerio($, el, yearFromTitle);
         for (const l of extracted) {
           const key = `${l.type}|${l.url}`;
-          if (seen.has(key)) continue;
+          if (seen.has(key)) {
+            continue;
+          }
           seen.add(key);
           links.push(l);
         }
@@ -294,7 +332,9 @@ class PantaPlugin extends BasePlugin {
       const a = $(el).find("a[href^='thread?topicId=']").first();
       const href = a.attr("href") || "";
       const m = TOPIC_ID_REGEX.exec(href);
-      if (!m) return;
+      if (!m) {
+        return;
+      }
       const topicId = m[1];
 
       const title = (a.text() || "").trim();
@@ -320,7 +360,9 @@ class PantaPlugin extends BasePlugin {
           );
         }
 
-        if (!links.length) return null;
+        if (!links.length) {
+          return null;
+        }
 
         return {
           uniqueId: `panta-${item.topicId}`,

@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithTimeout, filterByKeyword } from "./base";
 import type { Link, SearchResult } from "./types";
 
@@ -68,9 +69,13 @@ class ClxiongPlugin extends BasePlugin {
           30000,
         );
 
-        if (resp.status === 302 || resp.status === 301) break;
+        if (resp.status === 302 || resp.status === 301) {
+          break;
+        }
       } catch (e) {
-        if (i === this.maxRetries - 1) throw e;
+        if (i === this.maxRetries - 1) {
+          throw e;
+        }
         await new Promise((r) => setTimeout(r, this.retryDelay));
       }
     }
@@ -111,9 +116,13 @@ class ClxiongPlugin extends BasePlugin {
           30000,
         );
 
-        if (resp.ok) break;
+        if (resp.ok) {
+          break;
+        }
       } catch (e) {
-        if (i === this.maxRetries - 1) throw e;
+        if (i === this.maxRetries - 1) {
+          throw e;
+        }
         await new Promise((r) => setTimeout(r, this.retryDelay));
       }
     }
@@ -135,17 +144,25 @@ class ClxiongPlugin extends BasePlugin {
     const results: Array<SearchResult & { _detailURL?: string }> = [];
 
     $(".row.row-cols-2.row-cols-lg-4 .col").each((i, el) => {
-      if (i >= this.maxResults) return;
+      if (i >= this.maxResults) {
+        return;
+      }
 
       const linkEl = $(el).find("a[href*='/drama/'], a[href*='/movie/']");
-      if (linkEl.length === 0) return;
+      if (linkEl.length === 0) {
+        return;
+      }
 
       const detailPath = linkEl.attr("href");
-      if (!detailPath) return;
+      if (!detailPath) {
+        return;
+      }
 
       const detailURL = this.baseURL + detailPath;
       const title = linkEl.find("h2.h4").text().trim();
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       const rating = $(el).find(".rank").text().trim();
       const year = $(el).find(".small").last().text().trim();
@@ -155,14 +172,22 @@ class ClxiongPlugin extends BasePlugin {
       if (cardImg.length > 0) {
         const style = cardImg.attr("style") || "";
         const imgMatch = /url\(['"]?([^'"]+)['"]?\)/.exec(style);
-        if (imgMatch) poster = imgMatch[1];
+        if (imgMatch) {
+          poster = imgMatch[1];
+        }
       }
 
       // Build content
       const contentParts: string[] = [];
-      if (rating) contentParts.push(`评分: ${rating}`);
-      if (year) contentParts.push(`年份: ${year}`);
-      if (poster) contentParts.push(`海报: ${poster}`);
+      if (rating) {
+        contentParts.push(`评分: ${rating}`);
+      }
+      if (year) {
+        contentParts.push(`年份: ${year}`);
+      }
+      if (poster) {
+        contentParts.push(`海报: ${poster}`);
+      }
       contentParts.push(`详情页: ${detailURL}`);
       const content = contentParts.join(" | ");
 
@@ -173,8 +198,12 @@ class ClxiongPlugin extends BasePlugin {
         uniqueId = `clxiong-${idMatch[1]}`;
       } else {
         let hash = 0;
-        for (const ch of detailPath) hash = hash * 31 + ch.charCodeAt(0);
-        if (hash < 0) hash = -hash;
+        for (const ch of detailPath) {
+          hash = hash * 31 + ch.charCodeAt(0);
+        }
+        if (hash < 0) {
+          hash = -hash;
+        }
         uniqueId = `clxiong-${hash}`;
       }
 
@@ -196,18 +225,24 @@ class ClxiongPlugin extends BasePlugin {
   private async _fetchDetailLinks(
     results: Array<SearchResult & { _detailURL?: string }>,
   ): Promise<SearchResult[]> {
-    if (results.length === 0) return results;
+    if (results.length === 0) {
+      return results;
+    }
 
     const enrichPromises = results.map(async (result) => {
       const detailURL = result._detailURL;
-      if (!detailURL) return result;
+      if (!detailURL) {
+        return result;
+      }
 
       try {
         const detailInfo = await this._fetchDetailPageInfo(
           detailURL,
           result.title,
         );
-        if (!detailInfo || detailInfo.magnetLinks.length === 0) return result;
+        if (!detailInfo || detailInfo.magnetLinks.length === 0) {
+          return result;
+        }
 
         // Create results: one per magnet link
         const expandedResults: SearchResult[] = [];
@@ -275,7 +310,9 @@ class ClxiongPlugin extends BasePlugin {
       20000,
     );
 
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      return null;
+    }
 
     const html = await resp.text();
     const $ = cheerio.load(html);

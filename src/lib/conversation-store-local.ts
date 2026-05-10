@@ -1,10 +1,10 @@
 import type { ChatMessage } from "./chat-message";
-import { MAX_SELECTED_SKILLS, skillIdSchema, uniqueSkillIds } from "./skills";
 import type {
   Conversation,
   ConversationStore,
   ConversationWithMessages,
 } from "./conversation-store";
+import { MAX_SELECTED_SKILLS, skillIdSchema, uniqueSkillIds } from "./skills";
 
 const STORAGE_KEY = "chat-conversations";
 
@@ -20,7 +20,9 @@ interface StoredConversation {
 function readAll(): StoredConversation[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      return [];
+    }
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) {
       return [];
@@ -78,7 +80,9 @@ export function createLocalConversationStore(): ConversationStore {
     ) {
       const all = readAll();
       const idx = all.findIndex((c) => c.id === id);
-      if (idx === -1) return;
+      if (idx === -1) {
+        return;
+      }
 
       if (typeof updates.title === "string") {
         all[idx].title = updates.title;
@@ -98,7 +102,9 @@ export function createLocalConversationStore(): ConversationStore {
     saveMessages(id: string, messages: ChatMessage[]) {
       const all = readAll();
       const idx = all.findIndex((c) => c.id === id);
-      if (idx === -1) return;
+      if (idx === -1) {
+        return;
+      }
       all[idx].messages = messages;
       all[idx].updatedAt = Date.now();
       writeAll(all);

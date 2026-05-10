@@ -1,8 +1,10 @@
 import { Menu02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode, useMemo, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import type { Conversation } from "@/lib/conversation-store";
+
 import { ChatSidebar } from "./chat-sidebar";
 
 interface ChatConversationLayoutProps {
@@ -25,7 +27,9 @@ export function ChatConversationLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const activeTitle = useMemo(() => {
-    if (!activeId) return "AI Chat";
+    if (!activeId) {
+      return "AI Chat";
+    }
     return conversations.find((conversation) => conversation.id === activeId)
       ?.title;
   }, [activeId, conversations]);

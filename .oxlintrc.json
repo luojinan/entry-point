@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "off"
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": [
+    "dist",
+    ".output",
+    "src/routeTree.gen.ts",
+    "src/styles.css"
+  ],
+  "rules": {
+    "no-console": "off",
+    "eqeqeq": "off",
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-empty": "error",
+    "no-fallthrough": "error",
+    "curly": "error"
+  }
+}

@@ -108,7 +108,9 @@ class BixinPlugin extends BasePlugin {
           | string
           | undefined;
         const post = postIdValue ? postMap[postIdValue] : undefined;
-        if (!post) continue;
+        if (!post) {
+          continue;
+        }
 
         // Clean HTML content
         const cleanedHTML = this._cleanHTML(
@@ -118,7 +120,9 @@ class BixinPlugin extends BasePlugin {
 
         // Extract mobile cloud links
         const links = this._extractMobileLinksFromText(cleanedHTML);
-        if (links.length === 0) continue;
+        if (links.length === 0) {
+          continue;
+        }
 
         // Parse time
         const datetime =
@@ -166,7 +170,9 @@ class BixinPlugin extends BasePlugin {
         inTag = false;
         continue;
       }
-      if (!inTag) result += ch;
+      if (!inTag) {
+        result += ch;
+      }
     }
 
     // Handle HTML entities
@@ -214,7 +220,9 @@ class BixinPlugin extends BasePlugin {
       for (const keyword of pwKeywords) {
         if (line.includes(keyword)) {
           let colonPos = line.indexOf(":");
-          if (colonPos === -1) colonPos = line.indexOf("\uff1a");
+          if (colonPos === -1) {
+            colonPos = line.indexOf("\uff1a");
+          }
           if (colonPos !== -1 && colonPos + 1 < line.length) {
             const password = line.substring(colonPos + 1).trim();
             if (password.length <= 10) {
@@ -262,7 +270,9 @@ class BixinPlugin extends BasePlugin {
         break;
       }
     }
-    if (start === -1) return "";
+    if (start === -1) {
+      return "";
+    }
 
     let end = text.length;
     const endChars = [
@@ -281,7 +291,9 @@ class BixinPlugin extends BasePlugin {
     ];
     for (const ch of endChars) {
       const pos = text.indexOf(ch, start);
-      if (pos !== -1 && pos < end) end = pos;
+      if (pos !== -1 && pos < end) {
+        end = pos;
+      }
     }
 
     return text.substring(start, end);
@@ -300,7 +312,9 @@ class BixinPlugin extends BasePlugin {
             break;
           }
         }
-        if (start < end) return url.substring(start, end);
+        if (start < end) {
+          return url.substring(start, end);
+        }
       }
     }
     return "";

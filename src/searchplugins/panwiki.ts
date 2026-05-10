@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -136,7 +137,9 @@ function makeHeaders(baseURL: string): Record<string, string> {
 
 function determineLinkType(url: string): string {
   for (const rule of LINK_TYPE_RULES) {
-    if (rule.pattern.test(url)) return rule.type;
+    if (rule.pattern.test(url)) {
+      return rule.type;
+    }
   }
   return "";
 }
@@ -186,7 +189,9 @@ function extractPasswordFromURL(rawURL: string): URLPasswordResult {
 
 function extractPasswordFromContent(content: string, linkURL: string): string {
   const idx = content.indexOf(linkURL);
-  if (idx === -1) return "";
+  if (idx === -1) {
+    return "";
+  }
 
   const start = Math.max(0, idx - 20);
   const end = Math.min(content.length, idx + linkURL.length + 100);
@@ -194,7 +199,9 @@ function extractPasswordFromContent(content: string, linkURL: string): string {
 
   for (const pat of PASSWORD_PATTERNS) {
     const m = surrounding.match(pat);
-    if (m) return m[1];
+    if (m) {
+      return m[1];
+    }
   }
 
   return extractPasswordFromURL(linkURL).password;
@@ -246,20 +253,31 @@ function containsNetworkLink(text: string): boolean {
 
 function isNewWorkTitle(text: string): boolean {
   text = text.trim();
-  if (text.length < 3) return false;
-
-  if (/\(\d{4}\)/.test(text)) return true;
-  if (/\[[^\]]*\]|【[^\]]*】/.test(text)) return true;
-
-  for (const ind of TITLE_INDICATORS) {
-    if (text.includes(ind)) return true;
+  if (text.length < 3) {
+    return false;
   }
 
-  if (/【[全\d]+[集\d]*】|【\d+[全集]】|\[\d+[全集]\]|【完结】/.test(text))
+  if (/\(\d{4}\)/.test(text)) {
     return true;
+  }
+  if (/\[[^\]]*\]|【[^\]]*】/.test(text)) {
+    return true;
+  }
+
+  for (const ind of TITLE_INDICATORS) {
+    if (text.includes(ind)) {
+      return true;
+    }
+  }
+
+  if (/【[全\d]+[集\d]*】|【\d+[全集]】|\[\d+[全集]\]|【完结】/.test(text)) {
+    return true;
+  }
 
   for (const prefix of NON_TITLE_PREFIXES) {
-    if (text.startsWith(prefix)) return false;
+    if (text.startsWith(prefix)) {
+      return false;
+    }
   }
 
   if (!text.includes("http") && !text.includes("<") && !text.includes(">")) {
@@ -270,16 +288,23 @@ function isNewWorkTitle(text: string): boolean {
       let chineseCount = 0;
       for (const ch of chars) {
         const code = ch.codePointAt(0);
-        if (code && code >= 0x4e00 && code <= 0x9fff) chineseCount++;
+        if (code && code >= 0x4e00 && code <= 0x9fff) {
+          chineseCount++;
+        }
       }
-      if (chineseCount / textLength >= 0.8) return true;
+      if (chineseCount / textLength >= 0.8) {
+        return true;
+      }
     }
 
-    if (/^[A-Za-z]*[^\s]*(?:传|剧|版|之|的|与|和|：|丨|\s)+/.test(text))
+    if (/^[A-Za-z]*[^\s]*(?:传|剧|版|之|的|与|和|：|丨|\s)+/.test(text)) {
       return true;
+    }
 
     if (textLength >= 7 && textLength <= 50) {
-      if (/^[\u4e00-\u9fff\w\s\-()（）]+$/.test(text)) return true;
+      if (/^[\u4e00-\u9fff\w\s\-()（）]+$/.test(text)) {
+        return true;
+      }
     }
   }
 
@@ -296,7 +321,9 @@ function isWorkTitleRelevant(title: string, keyword: string): boolean {
     .replace(/ /g, "")
     .replace(/\./g, "");
 
-  if (normalizedTitle.includes(normalizedKeyword)) return true;
+  if (normalizedTitle.includes(normalizedKeyword)) {
+    return true;
+  }
   return false;
 }
 
@@ -305,7 +332,9 @@ function isLineTitleRelevant(line: string, keyword: string): boolean {
   let m: RegExpExecArray | null = workPattern.exec(line);
   while (m !== null) {
     const workTitle = m[1].trim();
-    if (isWorkTitleRelevant(workTitle, keyword)) return true;
+    if (isWorkTitleRelevant(workTitle, keyword)) {
+      return true;
+    }
     m = workPattern.exec(line);
   }
   return false;
@@ -317,7 +346,9 @@ function isSingleLineFormat(lines: string[], keyword: string): boolean {
 
   for (const line of lines) {
     const cleanLine = cleanHtmlText(line);
-    if (cleanLine.trim().length < 10) continue;
+    if (cleanLine.trim().length < 10) {
+      continue;
+    }
 
     if (SINGLE_LINE_PATTERN.test(cleanLine)) {
       validLineCount++;
@@ -531,7 +562,9 @@ class PanwikiPlugin extends BasePlugin {
     let postID = "";
     if (detailURL) {
       const tidMatch = detailURL.match(/tid=(\d+)/);
-      if (tidMatch) postID = tidMatch[1];
+      if (tidMatch) {
+        postID = tidMatch[1];
+      }
     }
     if (!postID) {
       postID = String(Date.now()) + String(Math.floor(Math.random() * 10000));
@@ -552,7 +585,9 @@ class PanwikiPlugin extends BasePlugin {
   }
 
   parseTime(timeStr: string): string {
-    if (!timeStr) return new Date().toISOString();
+    if (!timeStr) {
+      return new Date().toISOString();
+    }
     timeStr = timeStr.trim();
 
     const m = timeStr.match(
@@ -568,7 +603,9 @@ class PanwikiPlugin extends BasePlugin {
         parseInt(minute),
         parseInt(second || "0"),
       );
-      if (!isNaN(d.getTime())) return d.toISOString();
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
     }
 
     return new Date().toISOString();
@@ -578,7 +615,9 @@ class PanwikiPlugin extends BasePlugin {
     results: SearchResultWithDetail[],
     keyword: string,
   ): Promise<void> {
-    if (results.length === 0) return;
+    if (results.length === 0) {
+      return;
+    }
 
     const runTask = (index: number) => {
       return (async () => {
@@ -587,7 +626,9 @@ class PanwikiPlugin extends BasePlugin {
           this.extractDetailURLFromContent(result.content) ||
           result._detailURL ||
           "";
-        if (!detailURL) return;
+        if (!detailURL) {
+          return;
+        }
 
         await new Promise<void>((r) => setTimeout(r, (index % 3) * 50));
 
@@ -628,7 +669,9 @@ class PanwikiPlugin extends BasePlugin {
     detailURL: string,
     keyword: string,
   ): Promise<Link[]> {
-    if (!detailURL) return [];
+    if (!detailURL) {
+      return [];
+    }
 
     const resp = await fetchWithRetry(
       detailURL,
@@ -638,7 +681,9 @@ class PanwikiPlugin extends BasePlugin {
       { timeout: 15000, retries: 1 },
     );
 
-    if (!resp.ok) return [];
+    if (!resp.ok) {
+      return [];
+    }
 
     const html = await resp.text();
     const $ = cheerio.load(html);
@@ -656,7 +701,9 @@ class PanwikiPlugin extends BasePlugin {
         '.t_msgfont, .plhin, .message, [id^="postmessage_"]',
       ).first();
     }
-    if (contentArea.length === 0) return [];
+    if (contentArea.length === 0) {
+      return [];
+    }
 
     const allFoundLinks = this.extractAllLinksDirectly($, contentArea);
 
@@ -682,7 +729,9 @@ class PanwikiPlugin extends BasePlugin {
 
     contentArea.find("a").each((i, el) => {
       const href = $(el).attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       const linkType = determineLinkType(href);
       if (linkType) {
@@ -703,7 +752,9 @@ class PanwikiPlugin extends BasePlugin {
 
     for (const line of lines) {
       const cleanLine = cleanHtmlText(line);
-      if (cleanLine.trim().length < 10) continue;
+      if (cleanLine.trim().length < 10) {
+        continue;
+      }
 
       if (cleanLine.includes("\u4E28") && cleanLine.includes("\uFF1A")) {
         const relevantLinks = this.extractLinksFromSingleLine(
@@ -748,7 +799,9 @@ class PanwikiPlugin extends BasePlugin {
     for (const line of lines) {
       const cleanLine = cleanHtmlText(line);
 
-      if (cleanLine.trim().length < 5) continue;
+      if (cleanLine.trim().length < 5) {
+        continue;
+      }
 
       const isTitle = isNewWorkTitle(cleanLine);
       if (isTitle) {
@@ -781,7 +834,9 @@ class PanwikiPlugin extends BasePlugin {
 
     $("a").each((i, el) => {
       const href = $(el).attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
       const linkType = determineLinkType(href);
       if (linkType) {
         links.push({ url: href, type: linkType as CloudType, password: "" });

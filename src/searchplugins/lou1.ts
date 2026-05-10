@@ -1,5 +1,7 @@
-import * as cheerio from "cheerio";
 import crypto from "crypto";
+
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -68,12 +70,15 @@ class Lou1Plugin extends BasePlugin {
     ext: Record<string, unknown> = {},
   ): Promise<SearchResult[]> {
     const searchKeyword = keyword.trim();
-    if (!searchKeyword)
+    if (!searchKeyword) {
       throw new Error(`[${this.name}] keyword cannot be empty`);
+    }
 
     // 1. Fetch search results page
     const threads = await this._fetchSearchResults(searchKeyword);
-    if (threads.length === 0) return [];
+    if (threads.length === 0) {
+      return [];
+    }
 
     // 2. Fetch detail pages concurrently with limited concurrency
     const results: SearchResult[] = [];
@@ -88,7 +93,9 @@ class Lou1Plugin extends BasePlugin {
 
       try {
         const detail = await this._fetchDetail(thread.url);
-        if (!detail || detail.links.length === 0) return;
+        if (!detail || detail.links.length === 0) {
+          return;
+        }
 
         const content = thread.summary || detail.description;
 
@@ -149,25 +156,35 @@ class Lou1Plugin extends BasePlugin {
       summary: string;
     }> = [];
     $("ul.threadlist li.thread").each((_, el) => {
-      if (threads.length >= SEARCH_LIMIT) return;
+      if (threads.length >= SEARCH_LIMIT) {
+        return;
+      }
 
       const li = $(el);
       const subject = li.find(".subject a").first();
       const href = subject.attr("href");
-      if (!href || !href.trim()) return;
+      if (!href || !href.trim()) {
+        return;
+      }
 
       const title = subject.text().trim();
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       // Only include results containing '夸克'
-      if (!title.includes("夸克")) return;
+      if (!title.includes("夸克")) {
+        return;
+      }
 
       const threadURL = this._toAbsoluteURL(href);
 
       const tags: string[] = [];
       li.find(".subject a.badge").each((_, tagNode) => {
         const tag = $(tagNode).text().trim();
-        if (tag) tags.push(tag);
+        if (tag) {
+          tags.push(tag);
+        }
       });
 
       const summary = li.find("p.note").text().trim();
@@ -207,8 +224,12 @@ class Lou1Plugin extends BasePlugin {
 
     // Find main content
     let content: any = $('div.message[isfirst="1"]');
-    if (content.length === 0) content = $(".message");
-    if (content.length === 0) content = $.root();
+    if (content.length === 0) {
+      content = $(".message");
+    }
+    if (content.length === 0) {
+      content = $.root();
+    }
 
     // Remove script/style
     content.find("script, style").remove();
@@ -244,11 +265,17 @@ class Lou1Plugin extends BasePlugin {
     // From <a> href attributes
     sel.find("a[href]").each((_: unknown, node: cheerio.Element) => {
       const href = $(node).attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       const { type, normalized } = this._classifyLink(href);
-      if (!type || !normalized) return;
-      if (seen.has(normalized)) return;
+      if (!type || !normalized) {
+        return;
+      }
+      if (seen.has(normalized)) {
+        return;
+      }
 
       const password = this._extractPasswordFromNode($, $(node));
       results.push({ type, url: normalized, password });
@@ -289,7 +316,9 @@ class Lou1Plugin extends BasePlugin {
     normalized: string;
   } {
     raw = raw.trim();
-    if (!raw) return { type: "", normalized: "" };
+    if (!raw) {
+      return { type: "", normalized: "" };
+    }
 
     for (const pattern of linkPatterns) {
       const match = pattern.reg.exec(raw);
@@ -310,44 +339,62 @@ class Lou1Plugin extends BasePlugin {
     const candidates = [node.text()];
 
     const title = node.attr("title");
-    if (title) candidates.push(title);
+    if (title) {
+      candidates.push(title);
+    }
 
     const parent = node.parent();
     if (parent && parent.length > 0) {
       candidates.push(parent.text());
       const next = parent.next();
-      if (next.length > 0) candidates.push(next.text());
+      if (next.length > 0) {
+        candidates.push(next.text());
+      }
     }
 
     const sibling = node.next();
-    if (sibling.length > 0) candidates.push(sibling.text());
+    if (sibling.length > 0) {
+      candidates.push(sibling.text());
+    }
 
     for (const text of candidates) {
       const pwd = this._matchPassword(text);
-      if (pwd) return pwd;
+      if (pwd) {
+        return pwd;
+      }
     }
     return "";
   }
 
   _matchPassword(text: string): string {
     text = (text || "").trim();
-    if (!text) return "";
+    if (!text) {
+      return "";
+    }
     for (const pattern of passwordPatterns) {
       const match = pattern.exec(text);
-      if (match && match.length > 1) return match[1].trim();
+      if (match && match.length > 1) {
+        return match[1].trim();
+      }
     }
     return "";
   }
 
   _collectDetailTags($: any): string[] {
     const tagSet = new Set<string>();
-    $(".breadcrumb a, ol.breadcrumb a").each((_: unknown, el: cheerio.Element) => {
-      const text = $(el).text().trim();
-      if (text && text !== "首页") tagSet.add(text);
-    });
+    $(".breadcrumb a, ol.breadcrumb a").each(
+      (_: unknown, el: cheerio.Element) => {
+        const text = $(el).text().trim();
+        if (text && text !== "首页") {
+          tagSet.add(text);
+        }
+      },
+    );
     $("h4 a.badge").each((_: unknown, el: cheerio.Element) => {
       const text = $(el).text().trim();
-      if (text) tagSet.add(text);
+      if (text) {
+        tagSet.add(text);
+      }
     });
     return Array.from(tagSet);
   }
@@ -363,7 +410,9 @@ class Lou1Plugin extends BasePlugin {
    */
   _encodeKeyword(keyword: string): string {
     keyword = keyword.trim();
-    if (!keyword) return "";
+    if (!keyword) {
+      return "";
+    }
 
     const buf = Buffer.from(keyword, "utf8");
     let result = "";
@@ -375,19 +424,29 @@ class Lou1Plugin extends BasePlugin {
 
   _toAbsoluteURL(href: string): string {
     href = (href || "").trim();
-    if (!href) return "";
-    if (href.startsWith("http")) return href;
-    if (href.startsWith("//")) return "https:" + href;
+    if (!href) {
+      return "";
+    }
+    if (href.startsWith("http")) {
+      return href;
+    }
+    if (href.startsWith("//")) {
+      return "https:" + href;
+    }
     return `${BASE_URL}/${href.replace(/^\.\//, "")}`;
   }
 
   _mergeTags(a: string[], b: string[]): string[] {
     const set = new Set<string>();
     (a || []).forEach((t) => {
-      if (t.trim()) set.add(t.trim());
+      if (t.trim()) {
+        set.add(t.trim());
+      }
     });
     (b || []).forEach((t) => {
-      if (t.trim()) set.add(t.trim());
+      if (t.trim()) {
+        set.add(t.trim());
+      }
     });
     return Array.from(set);
   }

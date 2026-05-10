@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -74,19 +75,27 @@ class Ypfxw extends BasePlugin {
       const title = (titleSel.text() || "").trim();
       const detailURL = titleSel.attr("href");
 
-      if (!title || !detailURL) return;
+      if (!title || !detailURL) {
+        return;
+      }
 
       const articleID = this._extractArticleID(detailURL);
-      if (!articleID) return;
+      if (!articleID) {
+        return;
+      }
 
       const summary = (item.find("div.imgr p").first().text() || "").trim();
 
       const tags: string[] = [];
       const category = (item.find(".info span").first().text() || "").trim();
-      if (category) tags.push(category);
+      if (category) {
+        tags.push(category);
+      }
       item.find(".info span.tag a").each((_, tag) => {
         const tagText = ($(tag).text() || "").trim();
-        if (tagText) tags.push(tagText);
+        if (tagText) {
+          tags.push(tagText);
+        }
       });
 
       // Extract time
@@ -148,7 +157,9 @@ class Ypfxw extends BasePlugin {
 
   _extractNetDiskLinks($: cheerio.CheerioAPI): Link[] {
     const container = $(".article_content");
-    if (container.length === 0) return [];
+    if (container.length === 0) {
+      return [];
+    }
 
     const results: Link[] = [];
     const seen = new Set<string>();
@@ -156,11 +167,17 @@ class Ypfxw extends BasePlugin {
     // From <a> tags
     container.find("a[href]").each((_, node) => {
       const href = ($(node).attr("href") || "").trim();
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       const { type, normalized } = this._classifyLink(href);
-      if (!type) return;
-      if (seen.has(normalized)) return;
+      if (!type) {
+        return;
+      }
+      if (seen.has(normalized)) {
+        return;
+      }
 
       const password = this._extractPassword($, $(node));
       results.push({ type, url: normalized, password });
@@ -213,31 +230,43 @@ class Ypfxw extends BasePlugin {
     const candidates: string[] = [link.text() || ""];
 
     const title = link.attr("title");
-    if (title) candidates.push(title);
+    if (title) {
+      candidates.push(title);
+    }
 
     const parent = link.parent();
     if (parent && parent.length > 0) {
       candidates.push(parent.text() || "");
       const next = parent.next();
-      if (next.length > 0) candidates.push(next.text() || "");
+      if (next.length > 0) {
+        candidates.push(next.text() || "");
+      }
     }
 
     const next = link.next();
-    if (next.length > 0) candidates.push(next.text() || "");
+    if (next.length > 0) {
+      candidates.push(next.text() || "");
+    }
 
     for (const text of candidates) {
       const pwd = this._matchPassword(text);
-      if (pwd) return pwd;
+      if (pwd) {
+        return pwd;
+      }
     }
     return "";
   }
 
   _matchPassword(text: string): string {
     text = (text || "").trim();
-    if (!text) return "";
+    if (!text) {
+      return "";
+    }
     for (const pattern of PWD_PATTERNS) {
       const m = text.match(pattern);
-      if (m) return m[1].trim();
+      if (m) {
+        return m[1].trim();
+      }
     }
     return "";
   }
@@ -249,10 +278,14 @@ class Ypfxw extends BasePlugin {
 
   _parsePublishTime(value: string): string {
     value = (value || "").trim();
-    if (!value) return new Date().toISOString();
+    if (!value) {
+      return new Date().toISOString();
+    }
 
     const d = new Date(value);
-    if (!isNaN(d.getTime())) return d.toISOString();
+    if (!isNaN(d.getTime())) {
+      return d.toISOString();
+    }
 
     return new Date().toISOString();
   }

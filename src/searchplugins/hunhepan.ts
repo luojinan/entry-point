@@ -145,8 +145,12 @@ class HunhepanPlugin extends BasePlugin {
       Accept: "application/json, text/plain, */*",
       "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     };
-    if (referer) headers["Referer"] = referer;
-    if (origin) headers["Origin"] = origin;
+    if (referer) {
+      headers["Referer"] = referer;
+    }
+    if (origin) {
+      headers["Origin"] = origin;
+    }
 
     const resp = await fetchWithTimeout(
       apiURL,
@@ -195,8 +199,12 @@ class HunhepanPlugin extends BasePlugin {
         const existingScore = (existing.files || "").length;
         let newScore = (item.files || "").length;
 
-        if (!existing.disk_pass && item.disk_pass) newScore += 5;
-        if (!existing.shared_time && item.shared_time) newScore += 3;
+        if (!existing.disk_pass && item.disk_pass) {
+          newScore += 5;
+        }
+        if (!existing.shared_time && item.shared_time) {
+          newScore += 3;
+        }
 
         if (newScore > existingScore) {
           uniqueMap.set(key, item);
@@ -215,7 +223,9 @@ class HunhepanPlugin extends BasePlugin {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
-      if (!item.link) continue;
+      if (!item.link) {
+        continue;
+      }
 
       const link: Link = {
         url: item.link,

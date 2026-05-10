@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -37,7 +38,9 @@ class Zxzj extends BasePlugin {
 
     // Step 1: Fetch search results
     const items = await this._fetchSearchResults(searchURL);
-    if (items.length === 0) return [];
+    if (items.length === 0) {
+      return [];
+    }
 
     const limited = items.slice(0, MAX_RESULTS);
 
@@ -64,13 +67,19 @@ class Zxzj extends BasePlugin {
     $("ul.stui-vodlist li").each((_, el) => {
       const link = $(el).find(".stui-vodlist__detail h4.title a");
       const href = link.attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
       const title = (link.text() || "").trim();
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       const match = href.match(/\/detail\/(\d+)\.html/);
-      if (!match) return;
+      if (!match) {
+        return;
+      }
 
       items.push({
         id: match[1],
@@ -115,7 +124,9 @@ class Zxzj extends BasePlugin {
     const $ = cheerio.load(html);
 
     let title = ($(".stui-content__detail h1.title").text() || "").trim();
-    if (!title) title = item.title;
+    if (!title) {
+      title = item.title;
+    }
 
     // Extract description and update time
     let description = "";
@@ -123,7 +134,9 @@ class Zxzj extends BasePlugin {
     $(".stui-content__detail p.data").each((_, el) => {
       const text = ($(el).text() || "").trim();
       if (text) {
-        if (description) description += "\n";
+        if (description) {
+          description += "\n";
+        }
         description += text;
 
         if (!updateTime && text.includes("更新")) {
@@ -132,15 +145,21 @@ class Zxzj extends BasePlugin {
       }
     });
 
-    if (!updateTime) updateTime = new Date();
+    if (!updateTime) {
+      updateTime = new Date();
+    }
 
     // Extract play links
     const playLinks = this._extractPlayLinks($);
-    if (playLinks.length === 0) return null;
+    if (playLinks.length === 0) {
+      return null;
+    }
 
     // Fetch pan links from play pages
     const links = await this._fetchPanLinks(playLinks);
-    if (links.length === 0) return null;
+    if (links.length === 0) {
+      return null;
+    }
 
     return {
       uniqueId: `${this.name}-${item.id}`,
@@ -159,10 +178,14 @@ class Zxzj extends BasePlugin {
     $(".stui-vodlist__head").each((_, el) => {
       const head = $(el);
       const lineTitle = (head.find("h3").text() || "").trim();
-      if (!lineTitle) return;
+      if (!lineTitle) {
+        return;
+      }
 
       const panType = this._detectPanType(lineTitle);
-      if (!panType) return;
+      if (!panType) {
+        return;
+      }
 
       // Find the next playlist ul
       let playlist = head.next();
@@ -170,11 +193,15 @@ class Zxzj extends BasePlugin {
         playlist = playlist.next();
       }
 
-      if (playlist.length === 0) return;
+      if (playlist.length === 0) {
+        return;
+      }
 
       playlist.find("li a").each((_, a) => {
         const href = $(a).attr("href");
-        if (!href) return;
+        if (!href) {
+          return;
+        }
 
         const label = ($(a).text() || "").trim();
         links.push({
@@ -190,9 +217,15 @@ class Zxzj extends BasePlugin {
 
   _detectPanType(title: string): string {
     const lower = title.toLowerCase();
-    if (lower.includes("百度")) return "baidu";
-    if (lower.includes("夸克")) return "quark";
-    if (lower.includes("迅雷")) return "xunlei";
+    if (lower.includes("百度")) {
+      return "baidu";
+    }
+    if (lower.includes("夸克")) {
+      return "quark";
+    }
+    if (lower.includes("迅雷")) {
+      return "xunlei";
+    }
     return "";
   }
 
@@ -229,10 +262,14 @@ class Zxzj extends BasePlugin {
       const body = await resp.text();
 
       const { panURL, password } = this._parsePlayerData(body);
-      if (!panURL) return null;
+      if (!panURL) {
+        return null;
+      }
 
       const cloudType = this._determinePanType(panURL, pl.lineType);
-      if (!cloudType) return null;
+      if (!cloudType) {
+        return null;
+      }
 
       return {
         type: cloudType,
@@ -246,12 +283,16 @@ class Zxzj extends BasePlugin {
 
   _parsePlayerData(body: string): PlayerData {
     const match = body.match(/var\s+player_aaaa\s*=\s*(\{[^;]+\})/);
-    if (!match) return { panURL: "", password: "" };
+    if (!match) {
+      return { panURL: "", password: "" };
+    }
 
     try {
       const data = JSON.parse(match[1]) as { url?: string };
       let panURL = (data.url || "").trim();
-      if (!panURL) return { panURL: "", password: "" };
+      if (!panURL) {
+        return { panURL: "", password: "" };
+      }
 
       panURL = panURL.replace(/\\\//g, "/");
       const password = this._extractPassword(panURL);
@@ -266,7 +307,9 @@ class Zxzj extends BasePlugin {
     try {
       const u = new URL(panURL);
       const pwd = u.searchParams.get("pwd");
-      if (pwd && pwd.length === 4) return pwd;
+      if (pwd && pwd.length === 4) {
+        return pwd;
+      }
     } catch (e) {
       // not a valid URL, try other methods
     }
@@ -275,12 +318,16 @@ class Zxzj extends BasePlugin {
       const parts = panURL.split("|");
       if (parts.length >= 2) {
         const pwd = parts[1].trim();
-        if (pwd.length === 4) return pwd;
+        if (pwd.length === 4) {
+          return pwd;
+        }
       }
     }
 
     const pwdMatch = panURL.match(/pwd=([a-zA-Z0-9]{4})/);
-    if (pwdMatch) return pwdMatch[1];
+    if (pwdMatch) {
+      return pwdMatch[1];
+    }
 
     return "";
   }
@@ -288,21 +335,36 @@ class Zxzj extends BasePlugin {
   _determinePanType(panURL: string, lineType: string): CloudType {
     const lower = panURL.toLowerCase();
 
-    if (lower.includes("pan.baidu.com")) return "baidu";
-    if (lower.includes("pan.quark.cn")) return "quark";
-    if (lower.includes("pan.xunlei.com")) return "xunlei";
-    if (lower.includes("aliyundrive.com") || lower.includes("alipan.com"))
+    if (lower.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (lower.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (lower.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (lower.includes("aliyundrive.com") || lower.includes("alipan.com")) {
       return "aliyun";
+    }
 
-    if (lineType) return lineType as CloudType;
+    if (lineType) {
+      return lineType as CloudType;
+    }
 
     return "others";
   }
 
   _buildAbsURL(path: string): string {
-    if (path.startsWith("http://") || path.startsWith("https://")) return path;
-    if (path.startsWith("//")) return "https:" + path;
-    if (!path.startsWith("/")) path = "/" + path;
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
+    }
+    if (path.startsWith("//")) {
+      return "https:" + path;
+    }
+    if (!path.startsWith("/")) {
+      path = "/" + path;
+    }
     return BASE_URL + path;
   }
 
@@ -322,7 +384,9 @@ class Zxzj extends BasePlugin {
     const match = text.match(
       /更新[：:]\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}|\d{4}-\d{2}-\d{2})/,
     );
-    if (!match) return null;
+    if (!match) {
+      return null;
+    }
 
     const d = new Date(match[1].trim());
     return isNaN(d.getTime()) ? null : d;

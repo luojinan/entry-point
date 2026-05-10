@@ -3,7 +3,8 @@
  * 翻译自 Go 插件: plugin/shandian/shandian.go
  */
 
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -46,10 +47,14 @@ class ShandianPlugin extends BasePlugin {
   ): SearchResultWithItemID | null {
     // 提取详情页链接和ID
     const detailLink = $(s).find(".module-item-pic a").first().attr("href");
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     const matches = DETAIL_ID_REGEX.exec(detailLink);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
 
     const itemID = matches[1];
     const uniqueId = `shandian-${itemID}`;
@@ -66,7 +71,9 @@ class ShandianPlugin extends BasePlugin {
       .find(".video-info-aux .tag-link a")
       .each((i, tag) => {
         const tagText = $(tag).text().trim();
-        if (tagText) tags.push(tagText);
+        if (tagText) {
+          tags.push(tagText);
+        }
       });
 
     // 提取导演信息
@@ -91,7 +98,9 @@ class ShandianPlugin extends BasePlugin {
             .find(".video-info-actor a")
             .each((j, actor) => {
               const actorName = $(actor).text().trim();
-              if (actorName) actors.push(actorName);
+              if (actorName) {
+                actors.push(actorName);
+              }
             });
         }
       });
@@ -109,14 +118,22 @@ class ShandianPlugin extends BasePlugin {
 
     // 构建内容描述
     const contentParts: string[] = [];
-    if (quality) contentParts.push(`【${quality}】`);
-    if (director) contentParts.push(`导演：${director}`);
+    if (quality) {
+      contentParts.push(`【${quality}】`);
+    }
+    if (director) {
+      contentParts.push(`导演：${director}`);
+    }
     if (actors.length > 0) {
       let actorStr = actors.slice(0, 3).join("、");
-      if (actors.length > 3) actorStr += "等";
+      if (actors.length > 3) {
+        actorStr += "等";
+      }
       contentParts.push(`主演：${actorStr}`);
     }
-    if (plot) contentParts.push(plot);
+    if (plot) {
+      contentParts.push(plot);
+    }
 
     return {
       uniqueId,

@@ -98,16 +98,28 @@ export default class WanouPlugin extends BasePlugin {
 
   private parseAPIItem(item: APIItem): SearchResult | null {
     const title = (item.vod_name || "").trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     const uniqueId = `${PLUGIN_NAME}-${item.vod_id}`;
 
     const contentParts: string[] = [];
-    if (item.vod_actor) contentParts.push(`主演: ${item.vod_actor}`);
-    if (item.vod_director) contentParts.push(`导演: ${item.vod_director}`);
-    if (item.vod_area) contentParts.push(`地区: ${item.vod_area}`);
-    if (item.vod_year) contentParts.push(`年份: ${item.vod_year}`);
-    if (item.vod_remarks) contentParts.push(`状态: ${item.vod_remarks}`);
+    if (item.vod_actor) {
+      contentParts.push(`主演: ${item.vod_actor}`);
+    }
+    if (item.vod_director) {
+      contentParts.push(`导演: ${item.vod_director}`);
+    }
+    if (item.vod_area) {
+      contentParts.push(`地区: ${item.vod_area}`);
+    }
+    if (item.vod_year) {
+      contentParts.push(`年份: ${item.vod_year}`);
+    }
+    if (item.vod_remarks) {
+      contentParts.push(`状态: ${item.vod_remarks}`);
+    }
     const content = contentParts.join(" | ");
 
     const links = this.parseDownloadLinks(
@@ -116,8 +128,12 @@ export default class WanouPlugin extends BasePlugin {
     );
 
     const tags: string[] = [];
-    if (item.vod_year) tags.push(item.vod_year);
-    if (item.vod_area) tags.push(item.vod_area);
+    if (item.vod_year) {
+      tags.push(item.vod_year);
+    }
+    if (item.vod_area) {
+      tags.push(item.vod_area);
+    }
 
     return {
       uniqueId,
@@ -131,7 +147,9 @@ export default class WanouPlugin extends BasePlugin {
   }
 
   private parseDownloadLinks(vodDownFrom: string, vodDownURL: string): Link[] {
-    if (!vodDownFrom || !vodDownURL) return [];
+    if (!vodDownFrom || !vodDownURL) {
+      return [];
+    }
 
     const fromParts = vodDownFrom.split("$$$");
     const urlParts = vodDownURL.split("$$$");
@@ -141,10 +159,14 @@ export default class WanouPlugin extends BasePlugin {
     for (let i = 0; i < minLen; i++) {
       const fromType = fromParts[i].trim();
       const urlStr = urlParts[i].trim();
-      if (!urlStr) continue;
+      if (!urlStr) {
+        continue;
+      }
 
       const linkType = this.determineLinkTypeOptimized(fromType, urlStr);
-      if (!linkType) continue;
+      if (!linkType) {
+        continue;
+      }
 
       const password = this.extractPwd(urlStr);
       links.push({ type: linkType, url: urlStr, password });
@@ -157,13 +179,16 @@ export default class WanouPlugin extends BasePlugin {
     apiType: string,
     url: string,
   ): CloudType | "" {
-    if (url.includes("javascript:") || url.includes("#") || !url) return "";
+    if (url.includes("javascript:") || url.includes("#") || !url) {
+      return "";
+    }
     if (
       !url.startsWith("http") &&
       !url.startsWith("magnet:") &&
       !url.startsWith("ed2k:")
-    )
+    ) {
       return "";
+    }
 
     const upperType = apiType.toUpperCase();
     const mappedType = API_TYPE_MAP[upperType];

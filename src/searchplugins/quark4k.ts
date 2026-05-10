@@ -48,7 +48,9 @@ class Quark4KPlugin extends BasePlugin {
    * 清理HTML内容 (quark4k专用，保留换行)
    */
   private _cleanHTML(html: string): string {
-    if (!html) return "";
+    if (!html) {
+      return "";
+    }
     // 替换<br>标签为换行
     html = html.replace(/<br\s*\/?>/gi, "\n");
     // 移除其他HTML标签
@@ -80,7 +82,9 @@ class Quark4KPlugin extends BasePlugin {
         break;
       }
     }
-    if (start === -1) return "";
+    if (start === -1) {
+      return "";
+    }
 
     let end = text.length;
     const endChars = [
@@ -159,7 +163,9 @@ class Quark4KPlugin extends BasePlugin {
       for (const keyword of passwordKeywords) {
         if (line.includes(keyword)) {
           let colonPos = line.indexOf(":");
-          if (colonPos === -1) colonPos = line.indexOf("：");
+          if (colonPos === -1) {
+            colonPos = line.indexOf("：");
+          }
           if (colonPos !== -1 && colonPos + 1 < line.length) {
             const password = line.slice(colonPos + 1).trim();
             if (password.length <= 10) {
@@ -249,19 +255,25 @@ class Quark4KPlugin extends BasePlugin {
         // 检查标题是否包含关键词
         const lowerTitle = (discussion.attributes?.title || "").toLowerCase();
         const titleMatched = keywords.every((kw) => lowerTitle.includes(kw));
-        if (!titleMatched) continue;
+        if (!titleMatched) {
+          continue;
+        }
 
         // 获取相关帖子
         const postID = discussion.relationships?.mostRelevantPost?.data?.id;
         const post = postMap[postID];
-        if (!post) continue;
+        if (!post) {
+          continue;
+        }
 
         // 清理HTML内容
         const cleanedHTML = this._cleanHTML(post.attributes?.contentHtml || "");
 
         // 提取链接
         const links = this._extractQuarkLinksFromText(cleanedHTML);
-        if (links.length === 0) continue;
+        if (links.length === 0) {
+          continue;
+        }
 
         // 解析时间
         let datetime = "";
@@ -312,9 +324,15 @@ class Quark4KPlugin extends BasePlugin {
 
     // 按时间降序排序
     allResults.sort((a, b) => {
-      if (!a.datetime && !b.datetime) return 0;
-      if (!a.datetime) return 1;
-      if (!b.datetime) return -1;
+      if (!a.datetime && !b.datetime) {
+        return 0;
+      }
+      if (!a.datetime) {
+        return 1;
+      }
+      if (!b.datetime) {
+        return -1;
+      }
       return new Date(b.datetime).getTime() - new Date(a.datetime).getTime();
     });
 

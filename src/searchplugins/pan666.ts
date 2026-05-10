@@ -23,7 +23,9 @@ function generateRandomIP(): string {
 }
 
 function normalizeTextFromHTML(html: string): string {
-  if (!html) return "";
+  if (!html) {
+    return "";
+  }
   return cleanHTML(
     html
       .replace(/<br\s*\/?>/gi, "\n")
@@ -44,7 +46,9 @@ interface PasswordInfo {
 }
 
 function extractLinksFromText(text: string): Link[] {
-  if (!text) return [];
+  if (!text) {
+    return [];
+  }
 
   const lines = text
     .split(/\r?\n/)
@@ -60,7 +64,9 @@ function extractLinksFromText(text: string): Link[] {
     const urls = line.match(URL_REGEX) || [];
     for (const raw of urls) {
       const type = determineCloudType(raw);
-      if (type === "others") continue;
+      if (type === "others") {
+        continue;
+      }
 
       const normalized = raw.replace(/[),.;\]}>"']+$/g, "");
       linkInfos.push({ url: normalized, type, lineIdx: i });
@@ -71,7 +77,9 @@ function extractLinksFromText(text: string): Link[] {
       passwordInfos.push({ password: pwd, lineIdx: i });
     } else {
       const m = line.match(/访问码[：:]\s*([0-9a-zA-Z]{1,10})/);
-      if (m) passwordInfos.push({ password: m[1], lineIdx: i });
+      if (m) {
+        passwordInfos.push({ password: m[1], lineIdx: i });
+      }
     }
   }
 
@@ -80,7 +88,9 @@ function extractLinksFromText(text: string): Link[] {
 
   for (const info of linkInfos) {
     const key = `${info.type}|${info.url}`;
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {
+      continue;
+    }
     seen.add(key);
 
     let password = "";
@@ -89,7 +99,9 @@ function extractLinksFromText(text: string): Link[] {
       const m = info.url.match(/[?&](?:pwd|password|passcode|code)=([^&#]+)/i);
       return m ? decodeURIComponent(m[1]) : "";
     })();
-    if (urlPwd) password = urlPwd;
+    if (urlPwd) {
+      password = urlPwd;
+    }
 
     if (!password && passwordInfos.length) {
       let best: PasswordInfo | null = null;
@@ -101,7 +113,9 @@ function extractLinksFromText(text: string): Link[] {
           best = pw;
         }
       }
-      if (best && bestDist <= 3) password = best.password;
+      if (best && bestDist <= 3) {
+        password = best.password;
+      }
     }
 
     links.push({ type: info.type as CloudType, url: info.url, password });
@@ -193,12 +207,15 @@ class Pan666Plugin extends BasePlugin {
     const results: SearchResult[] = [];
 
     for (const page of pages) {
-      if (!page || !Array.isArray(page.data) || !Array.isArray(page.included))
+      if (!page || !Array.isArray(page.data) || !Array.isArray(page.included)) {
         continue;
+      }
 
       const postMap = new Map<string, APIPost>();
       for (const post of page.included) {
-        if (post && post.id) postMap.set(String(post.id), post);
+        if (post && post.id) {
+          postMap.set(String(post.id), post);
+        }
       }
 
       for (const discussion of page.data) {
@@ -207,7 +224,9 @@ class Pan666Plugin extends BasePlugin {
         const title = discussion?.attributes?.title || "";
         const createdAt = discussion?.attributes?.createdAt || "";
         const postId = discussion?.relationships?.mostRelevantPost?.data?.id;
-        if (!discussionId || !title || !postId) continue;
+        if (!discussionId || !title || !postId) {
+          continue;
+        }
 
         const post = postMap.get(String(postId));
         const contentHTML =
@@ -215,7 +234,9 @@ class Pan666Plugin extends BasePlugin {
 
         const text = normalizeTextFromHTML(contentHTML);
         const links = extractLinksFromText(text);
-        if (!links.length) continue;
+        if (!links.length) {
+          continue;
+        }
 
         results.push({
           uniqueId: `pan666-${discussionId}`,

@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   determineCloudType,
@@ -76,10 +77,14 @@ class Duoduo extends BasePlugin {
     const items: SearchItem[] = [];
     $(".module-search-item").each((i, el) => {
       const item = this._parseSearchItem($, el, keyword);
-      if (item) items.push(item);
+      if (item) {
+        items.push(item);
+      }
     });
 
-    if (items.length === 0) return [];
+    if (items.length === 0) {
+      return [];
+    }
 
     // 4. Fetch detail pages concurrently
     const enhancedResults = await this._enhanceWithDetails(items);
@@ -121,15 +126,21 @@ class Duoduo extends BasePlugin {
     // Extract detail link and ID
     const $titleLink = $el.find(".video-info-header h3 a").first();
     const detailLink = $titleLink.attr("href");
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     const matches = detailLink.match(DETAIL_ID_REGEX);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
     const itemID = matches[1];
 
     // Extract title
     const title = ($titleLink.text() || "").trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     // Extract quality
     const quality = ($el.find(".video-serial").text() || "").trim();
@@ -138,7 +149,9 @@ class Duoduo extends BasePlugin {
     const tags: string[] = [];
     $el.find(".video-info-aux .tag-link a").each((i, tag) => {
       const tagText = ($(tag).text() || "").trim();
-      if (tagText) tags.push(tagText);
+      if (tagText) {
+        tags.push(tagText);
+      }
     });
 
     // Extract director
@@ -163,7 +176,9 @@ class Duoduo extends BasePlugin {
           .find(".video-info-actor a")
           .each((j, actor) => {
             const name = ($(actor).text() || "").trim();
-            if (name) actors.push(name);
+            if (name) {
+              actors.push(name);
+            }
           });
       }
     });
@@ -179,14 +194,22 @@ class Duoduo extends BasePlugin {
 
     // Build content
     const contentParts: string[] = [];
-    if (quality) contentParts.push("【" + quality + "】");
-    if (director) contentParts.push("导演：" + director);
+    if (quality) {
+      contentParts.push("【" + quality + "】");
+    }
+    if (director) {
+      contentParts.push("导演：" + director);
+    }
     if (actors.length > 0) {
       let actorStr = actors.slice(0, 3).join("、");
-      if (actors.length > 3) actorStr += "等";
+      if (actors.length > 3) {
+        actorStr += "等";
+      }
       contentParts.push("主演：" + actorStr);
     }
-    if (plot) contentParts.push(plot);
+    if (plot) {
+      contentParts.push(plot);
+    }
 
     return {
       uniqueId: `duoduo-${itemID}`,
@@ -301,25 +324,33 @@ class Duoduo extends BasePlugin {
   }
 
   private _isValidURL(url: string): boolean {
-    if (!url) return false;
-    if (url.includes("javascript:") || url.includes("#") || url === "")
+    if (!url) {
       return false;
+    }
+    if (url.includes("javascript:") || url.includes("#") || url === "") {
+      return false;
+    }
     if (
       !url.startsWith("http") &&
       !url.startsWith("magnet:") &&
       !url.startsWith("ed2k:")
-    )
+    ) {
       return false;
+    }
 
     for (const regex of Object.values(LINK_REGEXES)) {
-      if (regex.test(url)) return true;
+      if (regex.test(url)) {
+        return true;
+      }
     }
     return false;
   }
 
   private _determineLinkType(url: string): string {
     for (const [type, regex] of Object.entries(LINK_REGEXES)) {
-      if (regex.test(url)) return type;
+      if (regex.test(url)) {
+        return type;
+      }
     }
     return "";
   }

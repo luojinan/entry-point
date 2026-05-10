@@ -1,4 +1,5 @@
 import { redirect } from "@tanstack/react-router";
+
 import { supabase } from "./supabase-client";
 
 export type AuthUser = { id: string; email: string } | null;

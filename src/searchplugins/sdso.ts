@@ -4,6 +4,7 @@
  */
 
 import crypto from "crypto";
+
 import { BasePlugin, cleanHTML, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -45,13 +46,18 @@ class SDSOPlugin extends BasePlugin {
    * AES-CBC解密URL
    */
   private _decryptURL(encryptedURL: string): string {
-    if (!encryptedURL) throw new Error("加密URL不能为空");
+    if (!encryptedURL) {
+      throw new Error("加密URL不能为空");
+    }
 
     // Base64解码
     const ciphertext = Buffer.from(encryptedURL, "base64");
-    if (ciphertext.length === 0) throw new Error("密文长度为0");
-    if (ciphertext.length % 16 !== 0)
+    if (ciphertext.length === 0) {
+      throw new Error("密文长度为0");
+    }
+    if (ciphertext.length % 16 !== 0) {
       throw new Error("密文长度不是AES块大小的倍数");
+    }
 
     // AES-CBC解密
     const decipher = crypto.createDecipheriv(
@@ -90,7 +96,9 @@ class SDSOPlugin extends BasePlugin {
    * 验证是否为有效的网盘链接
    */
   private _isValidPanURL(url: string): boolean {
-    if (!url) return false;
+    if (!url) {
+      return false;
+    }
     const validDomains = [
       "pan.quark.cn",
       "pan.xunlei.com",
@@ -145,11 +153,15 @@ class SDSOPlugin extends BasePlugin {
         }
 
         // 验证是否为有效的网盘链接
-        if (!this._isValidPanURL(decryptedURL)) continue;
+        if (!this._isValidPanURL(decryptedURL)) {
+          continue;
+        }
 
         // 映射网盘类型
         const panType = this._mapPanType(item.from);
-        if (panType === "others") continue;
+        if (panType === "others") {
+          continue;
+        }
 
         // 清理标题中的HTML标签
         const title = cleanHTML(item.name || "");

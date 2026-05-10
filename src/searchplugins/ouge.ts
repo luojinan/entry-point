@@ -94,7 +94,9 @@ class OugePlugin extends BasePlugin {
     const results: SearchResult[] = [];
     for (const item of data.list || []) {
       const r = this.parseAPIItem(item);
-      if (r) results.push(r);
+      if (r) {
+        results.push(r);
+      }
     }
 
     return filterByKeyword(results, keyword);
@@ -102,27 +104,45 @@ class OugePlugin extends BasePlugin {
 
   parseAPIItem(item: APIItem): SearchResult | null {
     const title = (item.vod_name || "").trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     const uniqueId = `${PLUGIN_NAME}-${item.vod_id}`;
 
     const contentParts: string[] = [];
-    if (item.vod_actor) contentParts.push(`主演: ${item.vod_actor}`);
-    if (item.vod_director) contentParts.push(`导演: ${item.vod_director}`);
-    if (item.vod_area) contentParts.push(`地区: ${item.vod_area}`);
-    if (item.vod_year) contentParts.push(`年份: ${item.vod_year}`);
-    if (item.vod_remarks) contentParts.push(`状态: ${item.vod_remarks}`);
+    if (item.vod_actor) {
+      contentParts.push(`主演: ${item.vod_actor}`);
+    }
+    if (item.vod_director) {
+      contentParts.push(`导演: ${item.vod_director}`);
+    }
+    if (item.vod_area) {
+      contentParts.push(`地区: ${item.vod_area}`);
+    }
+    if (item.vod_year) {
+      contentParts.push(`年份: ${item.vod_year}`);
+    }
+    if (item.vod_remarks) {
+      contentParts.push(`状态: ${item.vod_remarks}`);
+    }
     const content = contentParts.join(" | ");
 
     const links = this.parseDownloadLinks(
       item.vod_down_from || "",
       item.vod_down_url || "",
     );
-    if (links.length === 0) return null;
+    if (links.length === 0) {
+      return null;
+    }
 
     const tags: string[] = [];
-    if (item.vod_year) tags.push(item.vod_year);
-    if (item.vod_area) tags.push(item.vod_area);
+    if (item.vod_year) {
+      tags.push(item.vod_year);
+    }
+    if (item.vod_area) {
+      tags.push(item.vod_area);
+    }
 
     return {
       uniqueId,
@@ -136,7 +156,9 @@ class OugePlugin extends BasePlugin {
   }
 
   parseDownloadLinks(vodDownFrom: string, vodDownURL: string): Link[] {
-    if (!vodDownFrom || !vodDownURL) return [];
+    if (!vodDownFrom || !vodDownURL) {
+      return [];
+    }
 
     const fromParts = vodDownFrom.split("$$$");
     const urlParts = vodDownURL.split("$$$");
@@ -147,10 +169,14 @@ class OugePlugin extends BasePlugin {
       const fromType = (fromParts[i] || "").trim();
       const urlStr = (urlParts[i] || "").trim();
 
-      if (!urlStr || !this.isValidNetworkDriveURL(urlStr)) continue;
+      if (!urlStr || !this.isValidNetworkDriveURL(urlStr)) {
+        continue;
+      }
 
       const linkType = this.mapCloudType(fromType, urlStr);
-      if (!linkType) continue;
+      if (!linkType) {
+        continue;
+      }
 
       const password = this.extractPwd(urlStr);
       links.push({ type: linkType as CloudType, url: urlStr, password });
@@ -164,43 +190,78 @@ class OugePlugin extends BasePlugin {
     const mappedType = API_TYPE_MAP[upperType];
     if (mappedType) {
       const pattern = LINK_PATTERNS[mappedType];
-      if (pattern && pattern.test(url)) return mappedType;
+      if (pattern && pattern.test(url)) {
+        return mappedType;
+      }
     }
 
     return this.determineLinkType(url);
   }
 
   isValidNetworkDriveURL(url: string): boolean {
-    if (!url) return false;
-    if (url.includes("javascript:") || url.includes("#")) return false;
+    if (!url) {
+      return false;
+    }
+    if (url.includes("javascript:") || url.includes("#")) {
+      return false;
+    }
     if (
       !url.startsWith("http") &&
       !url.startsWith("magnet:") &&
       !url.startsWith("ed2k:")
-    )
+    ) {
       return false;
+    }
 
     for (const pattern of Object.values(LINK_PATTERNS)) {
-      if (pattern.test(url)) return true;
+      if (pattern.test(url)) {
+        return true;
+      }
     }
     return false;
   }
 
   determineLinkType(url: string): string {
-    if (!url) return "";
+    if (!url) {
+      return "";
+    }
 
-    if (LINK_PATTERNS.quark.test(url)) return "quark";
-    if (LINK_PATTERNS.uc.test(url)) return "uc";
-    if (LINK_PATTERNS.baidu.test(url)) return "baidu";
-    if (LINK_PATTERNS.aliyun.test(url)) return "aliyun";
-    if (LINK_PATTERNS.xunlei.test(url)) return "xunlei";
-    if (LINK_PATTERNS.tianyi.test(url)) return "tianyi";
-    if (LINK_PATTERNS["115"].test(url)) return "115";
-    if (LINK_PATTERNS.mobile.test(url)) return "mobile";
-    if (LINK_PATTERNS["123"].test(url)) return "123";
-    if (LINK_PATTERNS.pikpak.test(url)) return "pikpak";
-    if (LINK_PATTERNS.magnet.test(url)) return "magnet";
-    if (LINK_PATTERNS.ed2k.test(url)) return "ed2k";
+    if (LINK_PATTERNS.quark.test(url)) {
+      return "quark";
+    }
+    if (LINK_PATTERNS.uc.test(url)) {
+      return "uc";
+    }
+    if (LINK_PATTERNS.baidu.test(url)) {
+      return "baidu";
+    }
+    if (LINK_PATTERNS.aliyun.test(url)) {
+      return "aliyun";
+    }
+    if (LINK_PATTERNS.xunlei.test(url)) {
+      return "xunlei";
+    }
+    if (LINK_PATTERNS.tianyi.test(url)) {
+      return "tianyi";
+    }
+    if (LINK_PATTERNS["115"].test(url)) {
+      return "115";
+    }
+    if (LINK_PATTERNS.mobile.test(url)) {
+      return "mobile";
+    }
+    if (LINK_PATTERNS["123"].test(url)) {
+      return "123";
+    }
+    if (LINK_PATTERNS.pikpak.test(url)) {
+      return "pikpak";
+    }
+    if (LINK_PATTERNS.magnet.test(url)) {
+      return "magnet";
+    }
+    if (LINK_PATTERNS.ed2k.test(url)) {
+      return "ed2k";
+    }
 
     return "";
   }

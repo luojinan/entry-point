@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   fetchWithRetry,
@@ -152,12 +153,18 @@ export default class Xb6vPlugin extends BasePlugin {
     $("ul#post_container li.post").each((i, el) => {
       const li = $(el);
       const linkEl = li.find("a[href*='.html']");
-      if (linkEl.length === 0) return;
+      if (linkEl.length === 0) {
+        return;
+      }
 
       const href = linkEl.attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
 
-      if (!this.isValidContentURL(href)) return;
+      if (!this.isValidContentURL(href)) {
+        return;
+      }
 
       let fullURL: string;
       if (href.startsWith("http://") || href.startsWith("https://")) {
@@ -166,7 +173,9 @@ export default class Xb6vPlugin extends BasePlugin {
         fullURL = this.currentBase + "/" + href.replace(/^\//, "");
       }
 
-      if (urlMap.has(fullURL)) return;
+      if (urlMap.has(fullURL)) {
+        return;
+      }
 
       const dateText = li.find(".info .info_date").text().trim();
       let publishDate = new Date().toISOString();
@@ -186,10 +195,14 @@ export default class Xb6vPlugin extends BasePlugin {
 
   private isValidContentURL(href: string): boolean {
     const parts = href.replace(/^\/+|\/+$/g, "").split("/");
-    if (parts.length < 2) return false;
+    if (parts.length < 2) {
+      return false;
+    }
 
     const lastPart = parts[parts.length - 1];
-    if (!lastPart.endsWith(".html")) return false;
+    if (!lastPart.endsWith(".html")) {
+      return false;
+    }
 
     const nameWithoutExt = lastPart.replace(".html", "");
     return /\d+/.test(nameWithoutExt);
@@ -239,7 +252,9 @@ export default class Xb6vPlugin extends BasePlugin {
 
     const magnetLinksInfo = this.extractMagnetLinks($, title);
 
-    if (magnetLinksInfo.length === 0) return [];
+    if (magnetLinksInfo.length === 0) {
+      return [];
+    }
 
     const results: SearchResult[] = [];
     for (let i = 0; i < magnetLinksInfo.length; i++) {
@@ -274,7 +289,9 @@ export default class Xb6vPlugin extends BasePlugin {
       if (text.includes("磁力：")) {
         s.find("a[href^='magnet:']").each((j, a) => {
           const href = $(a).attr("href");
-          if (!href || linkMap.has(href)) return;
+          if (!href || linkMap.has(href)) {
+            return;
+          }
           linkMap.add(href);
 
           const subTitle = $(a).text().trim() || "磁力链接";
@@ -286,7 +303,9 @@ export default class Xb6vPlugin extends BasePlugin {
     if (linkInfos.length === 0) {
       $("a[href^='magnet:']").each((i, el) => {
         const href = $(el).attr("href");
-        if (!href || linkMap.has(href)) return;
+        if (!href || linkMap.has(href)) {
+          return;
+        }
         linkMap.add(href);
 
         const subTitle = $(el).text().trim() || "磁力链接";

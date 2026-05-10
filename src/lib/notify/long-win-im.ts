@@ -1,22 +1,30 @@
 function formatPercent(val: number | null | undefined): string {
-  if (val == null) return "-";
+  if (val == null) {
+    return "-";
+  }
   return `${(val * 100).toFixed(2)}%`;
 }
 
 function formatProfit(val: number | null | undefined): string {
-  if (val == null) return "-";
+  if (val == null) {
+    return "-";
+  }
   const sign = val >= 0 ? "+" : "";
   return `${sign}${(val * 100).toFixed(2)}%`;
 }
 
 function formatDailyReturn(val: number | null | undefined): string {
-  if (val == null) return "-";
+  if (val == null) {
+    return "-";
+  }
   const sign = val >= 0 ? "+" : "";
   return `${sign}${(val * 100).toFixed(2)}%`;
 }
 
 function formatEstablishDate(ts: number | null | undefined): string {
-  if (!ts) return "-";
+  if (!ts) {
+    return "-";
+  }
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -57,7 +65,9 @@ export function transform(data: any): string {
   const zeroUnitFunds: any[] = [];
 
   for (const cls of compositions) {
-    if (cls.isCash) continue;
+    if (cls.isCash) {
+      continue;
+    }
 
     const className = cls.className || "其他";
     const compList = cls.compList || [];
@@ -70,7 +80,9 @@ export function transform(data: any): string {
       }
     }
 
-    if (hasUnit.length === 0) continue;
+    if (hasUnit.length === 0) {
+      continue;
+    }
 
     const totalUnit = hasUnit.reduce(
       (s: number, c: any) => s + (c.planUnit || 0),

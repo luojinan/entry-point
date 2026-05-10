@@ -3,11 +3,8 @@
  */
 
 import crypto from "crypto";
-import type {
-  BasePluginInterface,
-  CloudType,
-  SearchResult,
-} from "./types";
+
+import type { BasePluginInterface, CloudType, SearchResult } from "./types";
 
 // 通用 UA 列表
 export const USER_AGENTS = [
@@ -39,7 +36,9 @@ export function generateUniqueID(
  * 清理 HTML 标签
  */
 export function cleanHTML(html: string | null | undefined): string {
-  if (!html) return "";
+  if (!html) {
+    return "";
+  }
   return html.replace(/<[^>]+>/g, "").trim();
 }
 
@@ -47,18 +46,39 @@ export function cleanHTML(html: string | null | undefined): string {
  * 判断网盘链接类型
  */
 export function determineCloudType(url: string | null | undefined): CloudType {
-  if (!url) return "others";
-  if (url.includes("pan.quark.cn")) return "quark";
-  if (url.includes("drive.uc.cn")) return "uc";
-  if (url.includes("pan.baidu.com")) return "baidu";
-  if (url.includes("aliyundrive.com") || url.includes("alipan.com"))
+  if (!url) {
+    return "others";
+  }
+  if (url.includes("pan.quark.cn")) {
+    return "quark";
+  }
+  if (url.includes("drive.uc.cn")) {
+    return "uc";
+  }
+  if (url.includes("pan.baidu.com")) {
+    return "baidu";
+  }
+  if (url.includes("aliyundrive.com") || url.includes("alipan.com")) {
     return "aliyun";
-  if (url.includes("pan.xunlei.com")) return "xunlei";
-  if (url.includes("cloud.189.cn")) return "tianyi";
-  if (url.includes("115.com")) return "115";
-  if (url.includes("123pan.com")) return "123";
-  if (url.includes("mypikpak.com")) return "pikpak";
-  if (url.includes("pan.qoark.cn")) return "quark";
+  }
+  if (url.includes("pan.xunlei.com")) {
+    return "xunlei";
+  }
+  if (url.includes("cloud.189.cn")) {
+    return "tianyi";
+  }
+  if (url.includes("115.com")) {
+    return "115";
+  }
+  if (url.includes("123pan.com")) {
+    return "123";
+  }
+  if (url.includes("mypikpak.com")) {
+    return "pikpak";
+  }
+  if (url.includes("pan.qoark.cn")) {
+    return "quark";
+  }
   return "others";
 }
 
@@ -85,7 +105,9 @@ export function convertDiskType(diskType: string): CloudType {
  * 提取提取码
  */
 export function extractPassword(text: string | null | undefined): string {
-  if (!text) return "";
+  if (!text) {
+    return "";
+  }
   const patterns = [
     /提取码[：:]\s*([0-9a-zA-Z]+)/,
     /密码[：:]\s*([0-9a-zA-Z]+)/,
@@ -94,7 +116,9 @@ export function extractPassword(text: string | null | undefined): string {
   ];
   for (const p of patterns) {
     const m = text.match(p);
-    if (m) return m[1];
+    if (m) {
+      return m[1];
+    }
   }
   return "";
 }
@@ -129,7 +153,11 @@ export async function fetchWithTimeout(
 export async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
-  { timeout = 30000, retries = 2, acceptNonOk = false }: { timeout?: number; retries?: number; acceptNonOk?: boolean } = {},
+  {
+    timeout = 30000,
+    retries = 2,
+    acceptNonOk = false,
+  }: { timeout?: number; retries?: number; acceptNonOk?: boolean } = {},
 ): Promise<Response> {
   let lastErr: Error | undefined;
   let lastResp: Response | undefined;
@@ -137,11 +165,17 @@ export async function fetchWithRetry(
     try {
       const resp = await fetchWithTimeout(url, options, timeout);
       // Return immediately for OK responses
-      if (resp.ok) return resp;
+      if (resp.ok) {
+        return resp;
+      }
       // If caller accepts non-OK, return the response as-is (let caller handle status codes)
-      if (acceptNonOk) return resp;
+      if (acceptNonOk) {
+        return resp;
+      }
       // For server errors (5xx), retry; for client errors (4xx), return immediately
-      if (resp.status >= 400 && resp.status < 500) return resp;
+      if (resp.status >= 400 && resp.status < 500) {
+        return resp;
+      }
       lastErr = new Error(`HTTP ${resp.status}`);
       lastResp = resp;
     } catch (err) {
@@ -152,7 +186,9 @@ export async function fetchWithRetry(
     }
   }
   // If we have a response (even non-OK), return it rather than throwing
-  if (lastResp) return lastResp;
+  if (lastResp) {
+    return lastResp;
+  }
   throw lastErr;
 }
 
@@ -163,9 +199,13 @@ export function filterByKeyword(
   results: SearchResult[],
   keyword: string | null | undefined,
 ): SearchResult[] {
-  if (!keyword) return results;
+  if (!keyword) {
+    return results;
+  }
   const words = keyword.toLowerCase().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return results;
+  if (words.length === 0) {
+    return results;
+  }
   return results.filter((r) => {
     const title = (r.title || "").toLowerCase();
     return words.every((w) => title.includes(w));
@@ -178,7 +218,9 @@ export function filterByKeyword(
 export function deduplicateResults(results: SearchResult[]): SearchResult[] {
   const seen = new Set<string>();
   return results.filter((r) => {
-    if (seen.has(r.uniqueId)) return false;
+    if (seen.has(r.uniqueId)) {
+      return false;
+    }
     seen.add(r.uniqueId);
     return true;
   });

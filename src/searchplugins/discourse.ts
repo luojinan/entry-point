@@ -77,7 +77,9 @@ class Discourse extends BasePlugin {
           break;
         }
 
-        if (!data.posts || data.posts.length === 0) break;
+        if (!data.posts || data.posts.length === 0) {
+          break;
+        }
 
         // Build topic map
         const topicMap: Record<
@@ -123,7 +125,9 @@ class Discourse extends BasePlugin {
   /**
    * 获取搜索数据，检测并处理 Cloudflare 挑战页面
    */
-  private async _fetchSearchData(searchURL: string): Promise<SearchData | null> {
+  private async _fetchSearchData(
+    searchURL: string,
+  ): Promise<SearchData | null> {
     try {
       const resp = await fetchWithRetry(
         searchURL,
@@ -182,7 +186,9 @@ class Discourse extends BasePlugin {
 
       // Extract links from blurb
       const links = this._extractNetDiskLinksFromBlurb(post.blurb || "");
-      if (links.length === 0) continue;
+      if (links.length === 0) {
+        continue;
+      }
 
       const datetime = post.created_at || "";
 
@@ -213,12 +219,18 @@ class Discourse extends BasePlugin {
     const baiduRegex = new RegExp(BAIDU_REGEX.source, "g");
     let baiduMatch: RegExpExecArray | null = baiduRegex.exec(blurb);
     while (baiduMatch !== null) {
-      const link: Link = { type: "baidu" as CloudType, url: baiduMatch[0], password: "" };
+      const link: Link = {
+        type: "baidu" as CloudType,
+        url: baiduMatch[0],
+        password: "",
+      };
       if (baiduMatch[1]) {
         link.password = baiduMatch[1];
       } else {
         const pwdMatch = blurb.match(BAIDU_PWD_REGEX);
-        if (pwdMatch) link.password = pwdMatch[1];
+        if (pwdMatch) {
+          link.password = pwdMatch[1];
+        }
       }
       links.push(link);
       baiduMatch = baiduRegex.exec(blurb);
@@ -234,8 +246,14 @@ class Discourse extends BasePlugin {
     const xunleiRegex = new RegExp(XUNLEI_REGEX.source, "g");
     let xunleiMatch: RegExpExecArray | null = xunleiRegex.exec(blurb);
     while (xunleiMatch !== null) {
-      const link: Link = { type: "xunlei" as CloudType, url: xunleiMatch[0], password: "" };
-      if (xunleiMatch[1]) link.password = xunleiMatch[1];
+      const link: Link = {
+        type: "xunlei" as CloudType,
+        url: xunleiMatch[0],
+        password: "",
+      };
+      if (xunleiMatch[1]) {
+        link.password = xunleiMatch[1];
+      }
       links.push(link);
       xunleiMatch = xunleiRegex.exec(blurb);
     }

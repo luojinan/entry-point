@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -77,7 +78,9 @@ class MikuclubPlugin extends BasePlugin {
       }
     }
 
-    if (allPosts.length === 0) return [];
+    if (allPosts.length === 0) {
+      return [];
+    }
 
     // Fetch detail pages concurrently with limited concurrency
     const results: SearchResult[] = [];
@@ -91,7 +94,9 @@ class MikuclubPlugin extends BasePlugin {
 
       try {
         const links = await this._fetchDetailLinks(post.post_href);
-        if (links.length === 0) return;
+        if (links.length === 0) {
+          return;
+        }
 
         // Build summary
         let content = "";
@@ -105,15 +110,21 @@ class MikuclubPlugin extends BasePlugin {
 
         // Build tags
         const tags: string[] = [];
-        if (post.post_main_cat_name) tags.push(post.post_main_cat_name);
-        if (post.post_cat_name) tags.push(post.post_cat_name);
+        if (post.post_main_cat_name) {
+          tags.push(post.post_main_cat_name);
+        }
+        if (post.post_cat_name) {
+          tags.push(post.post_cat_name);
+        }
 
         // Parse datetime
         let datetime = "";
         if (post.post_date) {
           try {
             const d = new Date(post.post_date);
-            if (!isNaN(d.getTime())) datetime = d.toISOString();
+            if (!isNaN(d.getTime())) {
+              datetime = d.toISOString();
+            }
           } catch (e) {
             /* ignore */
           }
@@ -200,8 +211,12 @@ class MikuclubPlugin extends BasePlugin {
 
     // Find content container
     let container: any = $(".article_content");
-    if (container.length === 0) container = $("article.post, .entry-content");
-    if (container.length === 0) container = $.root();
+    if (container.length === 0) {
+      container = $("article.post, .entry-content");
+    }
+    if (container.length === 0) {
+      container = $.root();
+    }
 
     return this._extractLinksFromSelection($, container);
   }
@@ -216,13 +231,21 @@ class MikuclubPlugin extends BasePlugin {
     // From <a> href attributes
     sel.find("a[href]").each((_, node) => {
       const href = $(node).attr("href");
-      if (!href) return;
+      if (!href) {
+        return;
+      }
       const trimmed = href.trim();
-      if (!trimmed) return;
+      if (!trimmed) {
+        return;
+      }
 
       const { type, normalized } = this._classifyLink(trimmed);
-      if (!type) return;
-      if (seen.has(normalized)) return;
+      if (!type) {
+        return;
+      }
+      if (seen.has(normalized)) {
+        return;
+      }
 
       const password = this._extractPasswordFromNode($, $(node));
       results.push({ type, url: normalized, password });
@@ -281,31 +304,43 @@ class MikuclubPlugin extends BasePlugin {
     const candidates = [node.text()];
 
     const title = node.attr("title");
-    if (title) candidates.push(title);
+    if (title) {
+      candidates.push(title);
+    }
 
     const parent = node.parent();
     if (parent && parent.length > 0) {
       candidates.push(parent.text());
       const next = parent.next();
-      if (next.length > 0) candidates.push(next.text());
+      if (next.length > 0) {
+        candidates.push(next.text());
+      }
     }
 
     const sibling = node.next();
-    if (sibling.length > 0) candidates.push(sibling.text());
+    if (sibling.length > 0) {
+      candidates.push(sibling.text());
+    }
 
     for (const text of candidates) {
       const pwd = this._matchPassword(text);
-      if (pwd) return pwd;
+      if (pwd) {
+        return pwd;
+      }
     }
     return "";
   }
 
   _matchPassword(text: string): string {
     text = (text || "").trim();
-    if (!text) return "";
+    if (!text) {
+      return "";
+    }
     for (const pattern of passwordPatterns) {
       const match = pattern.exec(text);
-      if (match && match.length >= 2) return match[1].trim();
+      if (match && match.length >= 2) {
+        return match[1].trim();
+      }
     }
     return "";
   }

@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -106,10 +107,14 @@ class Zhizhen extends BasePlugin {
     s: cheerio.Cheerio<cheerio.Element>,
   ): ZhizhenSearchItem | null {
     const detailLink = s.find(".video-info-header h3 a").first().attr("href");
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     const matches = detailLink.match(DETAIL_ID_REGEX);
-    if (!matches) return null;
+    if (!matches) {
+      return null;
+    }
 
     const itemID = matches[1];
     const title = (s.find(".video-info-header h3 a").text() || "").trim();
@@ -121,7 +126,9 @@ class Zhizhen extends BasePlugin {
     const tags: string[] = [];
     s.find(".video-info-aux .tag-link a").each((_, tag) => {
       const tagText = ($(tag).text() || "").trim();
-      if (tagText) tags.push(tagText);
+      if (tagText) {
+        tags.push(tagText);
+      }
     });
 
     // Extract director
@@ -146,7 +153,9 @@ class Zhizhen extends BasePlugin {
           .find(".video-info-actor a")
           .each((_, actor) => {
             const actorName = ($(actor).text() || "").trim();
-            if (actorName) actors.push(actorName);
+            if (actorName) {
+              actors.push(actorName);
+            }
           });
       }
     });
@@ -164,14 +173,22 @@ class Zhizhen extends BasePlugin {
 
     // Build content
     const contentParts: string[] = [];
-    if (quality) contentParts.push("【" + quality + "】");
-    if (director) contentParts.push("导演：" + director);
+    if (quality) {
+      contentParts.push("【" + quality + "】");
+    }
+    if (director) {
+      contentParts.push("导演：" + director);
+    }
     if (actors.length > 0) {
       let actorStr = actors.slice(0, 3).join("、");
-      if (actors.length > 3) actorStr += "等";
+      if (actors.length > 3) {
+        actorStr += "等";
+      }
       contentParts.push("主演：" + actorStr);
     }
-    if (plot) contentParts.push(plot);
+    if (plot) {
+      contentParts.push(plot);
+    }
 
     return {
       uniqueId: `${this.name}-${itemID}`,
@@ -269,21 +286,28 @@ class Zhizhen extends BasePlugin {
   }
 
   _isValidNetworkDriveURL(url: string): boolean {
-    if (!url) return false;
-    if (url.includes("javascript:") || url.includes("#")) return false;
+    if (!url) {
+      return false;
+    }
+    if (url.includes("javascript:") || url.includes("#")) {
+      return false;
+    }
     if (
       !url.startsWith("http") &&
       !url.startsWith("magnet:") &&
       !url.startsWith("ed2k:")
-    )
+    ) {
       return false;
+    }
 
     return LINK_REGEXES.some(({ reg }) => reg.test(url));
   }
 
   _determineLinkType(url: string): CloudType {
     for (const { reg, type } of LINK_REGEXES) {
-      if (reg.test(url)) return type as CloudType;
+      if (reg.test(url)) {
+        return type as CloudType;
+      }
     }
     return "others";
   }

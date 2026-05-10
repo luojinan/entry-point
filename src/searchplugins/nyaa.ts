@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, SearchResult } from "./types";
 
@@ -48,7 +49,9 @@ class Nyaa extends BasePlugin {
 
     const results: SearchResult[] = [];
     const table = $("table.torrent-list tbody");
-    if (table.length === 0) return [];
+    if (table.length === 0) {
+      return [];
+    }
 
     table.find("tr").each((_, el) => {
       const s = $(el);
@@ -59,24 +62,36 @@ class Nyaa extends BasePlugin {
 
       // Extract title and detail link
       const titleLink = s.find('td[colspan="2"] a');
-      if (titleLink.length === 0) return;
+      if (titleLink.length === 0) {
+        return;
+      }
 
       let title = (titleLink.text() || "").trim();
-      if (!title) title = titleLink.attr("title") || "";
+      if (!title) {
+        title = titleLink.attr("title") || "";
+      }
 
       const detailHref = titleLink.attr("href");
-      if (!detailHref) return;
+      if (!detailHref) {
+        return;
+      }
 
       // Extract ID from detail link
       const idMatch = detailHref.match(/\/view\/(\d+)/);
-      if (!idMatch) return;
+      if (!idMatch) {
+        return;
+      }
       const itemID = idMatch[1];
 
       // Extract magnet link
       const magnetLink = s.find('td.text-center a[href^="magnet:"]');
-      if (magnetLink.length === 0) return;
+      if (magnetLink.length === 0) {
+        return;
+      }
       const magnetURL = magnetLink.attr("href");
-      if (!magnetURL) return;
+      if (!magnetURL) {
+        return;
+      }
 
       // Extract file size
       const sizeTd = s.find("td.text-center").eq(1);
@@ -89,7 +104,9 @@ class Nyaa extends BasePlugin {
         const ts = dateTd.attr("data-timestamp");
         if (ts) {
           const parsed = parseInt(ts, 10);
-          if (!isNaN(parsed)) datetime = new Date(parsed * 1000).toISOString();
+          if (!isNaN(parsed)) {
+            datetime = new Date(parsed * 1000).toISOString();
+          }
         }
       }
 
@@ -106,15 +123,21 @@ class Nyaa extends BasePlugin {
 
       // Build content
       const contentParts: string[] = [];
-      if (category) contentParts.push(`Category: ${category}`);
-      if (size) contentParts.push(`Size: ${size}`);
+      if (category) {
+        contentParts.push(`Category: ${category}`);
+      }
+      if (size) {
+        contentParts.push(`Size: ${size}`);
+      }
       contentParts.push(`Seeders: ${seeders}`);
       contentParts.push(`Leechers: ${leechers}`);
       contentParts.push(`Completed: ${downloads}`);
 
       // Build tags
       const tags: string[] = [];
-      if (category) tags.push(category);
+      if (category) {
+        tags.push(category);
+      }
       tags.push(`Seeders:${seeders}`);
       tags.push(`Leechers:${leechers}`);
       tags.push(`Completed:${downloads}`);

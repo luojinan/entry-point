@@ -1,6 +1,7 @@
 import { ChatIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link } from "@tanstack/react-router";
+
 import { buttonVariants } from "@/components/ui/button";
 
 export function ChatEntry() {

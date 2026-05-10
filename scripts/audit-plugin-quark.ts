@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+
 import { allPlugins, pluginMap } from "../src/searchplugins/index.ts";
 import type {
   BasePluginInterface,
@@ -171,7 +172,10 @@ function getSelectedPlugins(pluginNames: string[]): BasePluginInterface[] {
 
 function summarizeResults(results: SearchResult[]): PluginSummary {
   const totalResults = results.length;
-  const totalLinks = results.reduce((sum, result) => sum + result.links.length, 0);
+  const totalLinks = results.reduce(
+    (sum, result) => sum + result.links.length,
+    0,
+  );
   const resultsWithQuark = results.filter((result) =>
     result.links.some((link) => link.type === "quark"),
   ).length;

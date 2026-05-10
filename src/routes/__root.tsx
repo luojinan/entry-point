@@ -12,9 +12,9 @@ import { useEffect } from "react";
 import { BackToHome } from "@/components/back-to-home";
 import { ChatEntry } from "@/components/chat-entry";
 import { ThemeToggle } from "@/components/theme-toggle";
-
 import type { AuthUser } from "@/lib/auth";
 import { getAuthUser } from "@/lib/auth";
+
 import appCss from "../styles.css?url";
 
 interface RouterContext {

@@ -3,7 +3,8 @@
  * 翻译自 Go 插件: plugin/u3c3/u3c3.go
  */
 
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { Link, SearchResult } from "./types";
 
@@ -26,7 +27,9 @@ export default class U3c3Plugin extends BasePlugin {
     for (const rawLine of lines) {
       const line = rawLine.trim();
 
-      if (line.startsWith("//")) continue;
+      if (line.startsWith("//")) {
+        continue;
+      }
 
       if (line.includes("nmefafej") && line.includes('"')) {
         const re = /var\s+nmefafej\s*=\s*"([^"]+)"/;
@@ -85,11 +88,15 @@ export default class U3c3Plugin extends BasePlugin {
   }
 
   private _parseDateTime(dateStr: string): string {
-    if (!dateStr) return "";
+    if (!dateStr) {
+      return "";
+    }
     const formats = [dateStr];
     for (const fmt of formats) {
       const d = new Date(fmt);
-      if (!isNaN(d.getTime())) return d.toISOString();
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
     }
     return "";
   }
@@ -100,7 +107,9 @@ export default class U3c3Plugin extends BasePlugin {
     for (let i = 0; i < source.length; i++) {
       hash = (hash * 31 + source.charCodeAt(i)) | 0;
     }
-    if (hash < 0) hash = -hash;
+    if (hash < 0) {
+      hash = -hash;
+    }
     return `u3c3-${hash}`;
   }
 
@@ -111,11 +120,15 @@ export default class U3c3Plugin extends BasePlugin {
     $("tbody tr.default").each((i, s) => {
       const titleCell = $(s).find("td:nth-child(2)");
       const titleText = titleCell.text();
-      if (titleText.includes("[置顶]")) return;
+      if (titleText.includes("[置顶]")) {
+        return;
+      }
 
       const titleLink = titleCell.find("a");
       let title = titleLink.text().trim();
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       title = this._cleanTitle(title);
 
@@ -140,9 +153,15 @@ export default class U3c3Plugin extends BasePlugin {
       const categoryText = $(s).find("td:nth-child(1) a").attr("title") || "";
 
       const contentParts: string[] = [];
-      if (categoryText) contentParts.push(`分类: ${categoryText}`);
-      if (sizeText) contentParts.push(`大小: ${sizeText}`);
-      if (dateText) contentParts.push(`时间: ${dateText}`);
+      if (categoryText) {
+        contentParts.push(`分类: ${categoryText}`);
+      }
+      if (sizeText) {
+        contentParts.push(`大小: ${sizeText}`);
+      }
+      if (dateText) {
+        contentParts.push(`时间: ${dateText}`);
+      }
       const content = contentParts.join(" | ");
 
       const uniqueId = this._generateUniqueID(title, sizeText);

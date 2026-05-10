@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, Link, SearchResult } from "./types";
 
@@ -51,7 +52,9 @@ class Yuhuage extends BasePlugin {
       const title = this._cleanTitle(titleLink.text());
       const detailHref = titleLink.attr("href");
 
-      if (!title || !detailHref) return;
+      if (!title || !detailHref) {
+        return;
+      }
 
       const detailURL = BASE_URL + detailHref;
       detailURLs.push(detailURL);
@@ -99,13 +102,17 @@ class Yuhuage extends BasePlugin {
     detailURLs: string[],
     results: YuhuageSearchResult[],
   ): Promise<void> {
-    if (detailURLs.length === 0) return;
+    if (detailURLs.length === 0) {
+      return;
+    }
 
     for (let i = 0; i < detailURLs.length; i += MAX_CONCURRENCY) {
       const batch = detailURLs.slice(i, i + MAX_CONCURRENCY);
       const batchPromises = batch.map((url, j) => {
         const idx = i + j;
-        if (idx >= results.length) return Promise.resolve();
+        if (idx >= results.length) {
+          return Promise.resolve();
+        }
         return this._fetchDetailLinks(url)
           .then((links) => {
             if (links && links.length > 0) {
@@ -174,7 +181,9 @@ class Yuhuage extends BasePlugin {
   }
 
   _parseDateTime(timeStr: string): string {
-    if (!timeStr) return new Date().toISOString();
+    if (!timeStr) {
+      return new Date().toISOString();
+    }
 
     const formats = [
       // Try direct Date parsing
@@ -183,7 +192,9 @@ class Yuhuage extends BasePlugin {
 
     for (const fmt of formats) {
       const d = new Date(fmt);
-      if (!isNaN(d.getTime())) return d.toISOString();
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
     }
 
     return new Date().toISOString();

@@ -1,4 +1,5 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { CloudType, SearchResult } from "./types";
 
@@ -168,7 +169,9 @@ class CldiPlugin extends BasePlugin {
           }
         } else {
           const text = $(li).text().trim();
-          if (text) fileList.push(text);
+          if (text) {
+            fileList.push(text);
+          }
         }
       });
 

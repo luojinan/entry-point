@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -82,10 +83,14 @@ class Hdr4kPlugin extends BasePlugin {
     $(".slst.mtw ul li.pbw").each((i, el) => {
       const s = $(el);
       const postID = s.attr("id");
-      if (!postID) return;
+      if (!postID) {
+        return;
+      }
 
       const title = this.cleanHTMLText(s.find("h3.xs3 a").text()).trim();
-      if (!title) return;
+      if (!title) {
+        return;
+      }
 
       const content = this.cleanHTMLText(s.find("p").first().text()).trim();
 
@@ -96,7 +101,9 @@ class Hdr4kPlugin extends BasePlugin {
       const matched = keywords.every(
         (kw) => lowerTitle.includes(kw) || lowerContent.includes(kw),
       );
-      if (!matched) return;
+      if (!matched) {
+        return;
+      }
 
       items.push({ el: s, postID, title, content });
     });
@@ -116,7 +123,9 @@ class Hdr4kPlugin extends BasePlugin {
         const categoryEl = item.el.find("p span a.xi1");
         if (categoryEl.length > 0) {
           const cat = categoryEl.text().trim();
-          if (cat) tags.push(cat);
+          if (cat) {
+            tags.push(cat);
+          }
         }
 
         const { links, detailContent } = await this.getLinksFromDetail(
@@ -124,7 +133,9 @@ class Hdr4kPlugin extends BasePlugin {
         );
 
         // Filter empty request posts
-        if (this.isEmptyRequestPost(item.title, links)) return null;
+        if (this.isEmptyRequestPost(item.title, links)) {
+          return null;
+        }
 
         const content = detailContent || item.content;
 
@@ -143,13 +154,17 @@ class Hdr4kPlugin extends BasePlugin {
     });
 
     const settled = await Promise.all(tasks);
-    return (settled.filter((r): r is NonNullable<typeof r> => r !== null) as SearchResult[]);
+    return settled.filter(
+      (r): r is NonNullable<typeof r> => r !== null,
+    ) as SearchResult[];
   }
 
   private isEmptyRequestPost(title: string, links: Link[]): boolean {
     const lowerTitle = title.toLowerCase();
 
-    if (links.length > 0) return false;
+    if (links.length > 0) {
+      return false;
+    }
 
     const emptyRequestKeywords = [
       "\u6C42\u7247",
@@ -159,7 +174,9 @@ class Hdr4kPlugin extends BasePlugin {
       "\u6C42\u8D44\u6E90",
     ];
     for (const kw of emptyRequestKeywords) {
-      if (lowerTitle.includes(kw)) return true;
+      if (lowerTitle.includes(kw)) {
+        return true;
+      }
     }
 
     const cloudRequestKeywords = [
@@ -170,7 +187,9 @@ class Hdr4kPlugin extends BasePlugin {
       "\u6C42\u5929\u7FFC\u4E91\u76D8",
     ];
     for (const kw of cloudRequestKeywords) {
-      if (lowerTitle.includes(kw)) return links.length === 0;
+      if (lowerTitle.includes(kw)) {
+        return links.length === 0;
+      }
     }
 
     if (lowerTitle.startsWith("\u6C42")) {
@@ -225,7 +244,9 @@ class Hdr4kPlugin extends BasePlugin {
             .find("a")
             .each((j, linkEl) => {
               const href = $(linkEl).attr("href");
-              if (!href) return;
+              if (!href) {
+                return;
+              }
 
               const linkType = this.determineLinkType(href);
               if (linkType !== "others") {
@@ -251,28 +272,59 @@ class Hdr4kPlugin extends BasePlugin {
   private determineLinkType(url: string): CloudType {
     const lower = url.toLowerCase();
 
-    if (lower.includes("pan.quark.cn")) return "quark";
-    if (lower.includes("pan.baidu.com")) return "baidu";
-    if (lower.includes("alipan.com") || lower.includes("aliyundrive.com"))
+    if (lower.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (lower.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (lower.includes("alipan.com") || lower.includes("aliyundrive.com")) {
       return "aliyun";
-    if (lower.includes("pan.xunlei.com")) return "xunlei";
-    if (lower.includes("cloud.189.cn")) return "tianyi";
-    if (lower.includes("115.com")) return "115";
-    if (lower.includes("drive.uc.cn")) return "uc";
-    if (lower.includes("caiyun.139.com")) return "mobile";
-    if (lower.includes("share.weiyun.com")) return "weiyun";
-    if (lower.includes("lanzou")) return "lanzou";
-    if (lower.includes("jianguoyun.com")) return "jianguoyun";
-    if (lower.includes("123pan.com")) return "123";
-    if (lower.includes("mypikpak.com")) return "pikpak";
-    if (lower.startsWith("magnet:")) return "magnet";
-    if (lower.startsWith("ed2k:")) return "ed2k";
+    }
+    if (lower.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (lower.includes("cloud.189.cn")) {
+      return "tianyi";
+    }
+    if (lower.includes("115.com")) {
+      return "115";
+    }
+    if (lower.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (lower.includes("caiyun.139.com")) {
+      return "mobile";
+    }
+    if (lower.includes("share.weiyun.com")) {
+      return "weiyun";
+    }
+    if (lower.includes("lanzou")) {
+      return "lanzou";
+    }
+    if (lower.includes("jianguoyun.com")) {
+      return "jianguoyun";
+    }
+    if (lower.includes("123pan.com")) {
+      return "123";
+    }
+    if (lower.includes("mypikpak.com")) {
+      return "pikpak";
+    }
+    if (lower.startsWith("magnet:")) {
+      return "magnet";
+    }
+    if (lower.startsWith("ed2k:")) {
+      return "ed2k";
+    }
 
     return "others" as CloudType;
   }
 
   private cleanHTMLText(html: string): string {
-    if (!html) return "";
+    if (!html) {
+      return "";
+    }
     const replacements: Record<string, string> = {
       "<strong>": "",
       "</strong>": "",

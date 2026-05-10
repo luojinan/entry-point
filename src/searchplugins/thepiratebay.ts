@@ -3,7 +3,8 @@
  * 翻译自 Go 插件: plugin/thepiratebay/thepiratebay.go
  */
 
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
+
 import { BasePlugin, fetchWithRetry, filterByKeyword } from "./base";
 import type { Link, SearchResult } from "./types";
 
@@ -28,7 +29,9 @@ export default class ThePirateBayPlugin extends BasePlugin {
   }
 
   private _parseUploadTime(timeStr: string): string {
-    if (!timeStr) return "";
+    if (!timeStr) {
+      return "";
+    }
     timeStr = timeStr.replace(/&nbsp;/g, " ");
 
     let matches = TIME_FORMAT1_REGEX.exec(timeStr);
@@ -36,14 +39,18 @@ export default class ThePirateBayPlugin extends BasePlugin {
       const currentYear = new Date().getFullYear();
       const fullTimeStr = `${currentYear}-${matches[1]} ${matches[2]}`;
       const d = new Date(fullTimeStr);
-      if (!isNaN(d.getTime())) return d.toISOString();
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
     }
 
     matches = TIME_FORMAT2_REGEX.exec(timeStr);
     if (matches) {
       const dateStr = `${matches[2]}-${matches[1]}`;
       const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) return d.toISOString();
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
     }
 
     return new Date().toISOString();
@@ -57,7 +64,9 @@ export default class ThePirateBayPlugin extends BasePlugin {
       .find("a")
       .each((i, s) => {
         const href = $(s).attr("href");
-        if (!href) return;
+        if (!href) {
+          return;
+        }
         const parts = href.split("/");
         if (parts.length >= 4) {
           const pageNum = parseInt(parts[3], 10);
@@ -75,7 +84,9 @@ export default class ThePirateBayPlugin extends BasePlugin {
       }
     });
 
-    if (maxPage > MAX_PAGES) maxPage = MAX_PAGES;
+    if (maxPage > MAX_PAGES) {
+      maxPage = MAX_PAGES;
+    }
     return maxPage;
   }
 
@@ -84,10 +95,14 @@ export default class ThePirateBayPlugin extends BasePlugin {
     s: cheerio.Element,
   ): SearchResult | null {
     const titleElement = $(s).find(".detName a.detLink").first();
-    if (titleElement.length === 0) return null;
+    if (titleElement.length === 0) {
+      return null;
+    }
 
     let title = titleElement.text().trim();
-    if (!title) return null;
+    if (!title) {
+      return null;
+    }
 
     title = title.replace(/\./g, " ");
 
@@ -97,19 +112,25 @@ export default class ThePirateBayPlugin extends BasePlugin {
     }
 
     const idMatches = TORRENT_ID_REGEX.exec(detailURL);
-    if (!idMatches || idMatches.length < 2) return null;
+    if (!idMatches || idMatches.length < 2) {
+      return null;
+    }
     const torrentID = idMatches[1];
 
     const magnetElement = $(s).find("a[href^='magnet:']").first();
     const magnetURL = magnetElement.attr("href") || "";
-    if (!magnetURL || !MAGNET_LINK_REGEX.test(magnetURL)) return null;
+    if (!magnetURL || !MAGNET_LINK_REGEX.test(magnetURL)) {
+      return null;
+    }
 
     const tags: string[] = [];
     $(s)
       .find(".vertTh a")
       .each((i, elem) => {
         const tag = $(elem).text().trim();
-        if (tag) tags.push(tag);
+        if (tag) {
+          tags.push(tag);
+        }
       });
 
     const detDesc = $(s).find(".detDesc").text();
@@ -122,7 +143,9 @@ export default class ThePirateBayPlugin extends BasePlugin {
       content = `文件大小: ${sizeMatch[1]}${sizeMatch[3]}`;
     }
 
-    if (content) content += ", ";
+    if (content) {
+      content += ", ";
+    }
     content += `上传信息: ${detDesc.trim()}`;
 
     const seeders = $(s).find("td").eq(2).text().trim();
@@ -190,9 +213,13 @@ export default class ThePirateBayPlugin extends BasePlugin {
 
     const results: SearchResult[] = [];
     $("table#searchResult tr").each((i, s) => {
-      if ($(s).hasClass("header")) return;
+      if ($(s).hasClass("header")) {
+        return;
+      }
       const result = this._parseSearchResultItem($, s);
-      if (result) results.push(result);
+      if (result) {
+        results.push(result);
+      }
     });
 
     return { results, totalPages };

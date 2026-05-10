@@ -1,9 +1,11 @@
 import { Add01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import type { Conversation } from "@/lib/conversation-store";
 import { cn } from "@/lib/utils";
+
 import { DeleteConversationDialog } from "./delete-conversation-dialog";
 
 interface ChatSidebarProps {
@@ -88,7 +90,9 @@ export function ChatSidebar({
       <DeleteConversationDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
+          if (!open) {
+            setDeleteTarget(null);
+          }
         }}
         onConfirm={() => {
           if (deleteTarget) {

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { CompListItem, LongWinPlanResponse } from "./types";
 
 export const QIEMAN_PLAN_SNAPSHOT_TABLE = "qieman_plan_snapshots";
@@ -7,12 +8,7 @@ export const DEFAULT_PLAN_SNAPSHOT_SOURCE = "api/qieman/long-win-plan";
 
 const PLAN_UNIT_EPSILON = 0.00000001;
 
-export type PlanDiffAction =
-  | "UNCHANGED"
-  | "BUY"
-  | "SELL"
-  | "NEW"
-  | "CLEAR";
+export type PlanDiffAction = "UNCHANGED" | "BUY" | "SELL" | "NEW" | "CLEAR";
 
 export interface QiemanPlanSnapshotRow {
   id: number;
@@ -82,7 +78,11 @@ function normalizeNullableNumber(value: number | null | undefined) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function toPlanSnapshotRecord(item: CompListItem, classCode: string | null, className: string | null): PlanSnapshotRecord {
+function toPlanSnapshotRecord(
+  item: CompListItem,
+  classCode: string | null,
+  className: string | null,
+): PlanSnapshotRecord {
   const fund = item.fund;
   return {
     fundCode: fund?.fundCode ?? "",
@@ -94,9 +94,10 @@ function toPlanSnapshotRecord(item: CompListItem, classCode: string | null, clas
     unitValue: normalizeNullableNumber(item.unitValue),
     percent: normalizeNullableNumber(item.percent),
     nav: normalizeNullableNumber(item.nav),
-    navDate: item.navDate != null && item.navDate > 0
-      ? new Date(item.navDate).toISOString().slice(0, 10)
-      : (fund?.navDate ?? null),
+    navDate:
+      item.navDate != null && item.navDate > 0
+        ? new Date(item.navDate).toISOString().slice(0, 10)
+        : (fund?.navDate ?? null),
     dailyReturn: normalizeNullableNumber(item.dailyReturn),
     accProfit: normalizeNullableNumber(item.accProfit),
   };
@@ -167,7 +168,9 @@ export function flattenPlanComposition(
     .flatMap((comp) =>
       comp.compList
         .filter((item) => item.variety !== "现金")
-        .map((item) => toPlanSnapshotRecord(item, comp.classCode, comp.className)),
+        .map((item) =>
+          toPlanSnapshotRecord(item, comp.classCode, comp.className),
+        ),
     );
 }
 
@@ -177,12 +180,13 @@ export function computePlanDiff(params: {
   includeUnchanged?: boolean;
 }): PlanDiffResult {
   const baselineMap = new Map(
-    params.baselineRows.map((row) => [row.fund_code, normalizeSnapshotRow(row)]),
+    params.baselineRows.map((row) => [
+      row.fund_code,
+      normalizeSnapshotRow(row),
+    ]),
   );
   const currentItems = flattenPlanComposition(params.currentPlanData);
-  const currentMap = new Map(
-    currentItems.map((item) => [item.fundCode, item]),
-  );
+  const currentMap = new Map(currentItems.map((item) => [item.fundCode, item]));
 
   const fundCodes = Array.from(
     new Set([...baselineMap.keys(), ...currentMap.keys()]),
@@ -287,8 +291,7 @@ export async function syncPlanSnapshots(
   input: SyncPlanSnapshotInput,
 ) {
   const existingRows =
-    input.existingRows ??
-    (await listPlanSnapshots(supabase, input.prodCode));
+    input.existingRows ?? (await listPlanSnapshots(supabase, input.prodCode));
   const snapshotAt = new Date().toISOString();
 
   const currentItems = flattenPlanComposition(input.planData);
@@ -318,9 +321,7 @@ export async function syncPlanSnapshots(
       });
 
     if (error) {
-      throw new Error(
-        `Failed to upsert plan snapshots: ${error.message}`,
-      );
+      throw new Error(`Failed to upsert plan snapshots: ${error.message}`);
     }
   }
 

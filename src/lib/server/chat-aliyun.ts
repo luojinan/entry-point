@@ -1,10 +1,12 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { posix as pathPosix } from "node:path";
+
 import * as Credentials from "@alicloud/credentials";
 import type CredentialClient from "@alicloud/credentials/dist/src/client.js";
 import * as OCRApi from "@alicloud/ocr-api20210707";
 import type OCRClientInstance from "@alicloud/ocr-api20210707/dist/client.js";
 import { $OpenApiUtil } from "@alicloud/openapi-core";
+
 import {
   type ChatAttachmentOCRResult,
   type ChatOCRResponse,

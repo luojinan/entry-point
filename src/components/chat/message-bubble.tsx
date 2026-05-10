@@ -1,5 +1,6 @@
 import type { DynamicToolUIPart } from "ai";
 import { useEffect, useState } from "react";
+
 import { ChatMarkdown } from "@/components/chat/chat-markdown";
 import { DynamicToolCard } from "@/components/chat/dynamic-tool-card";
 import { ReasoningBlock } from "@/components/chat/reasoning-block";
@@ -138,7 +139,9 @@ function AttachmentCard({ attachment }: { attachment: ChatImageAttachment }) {
  * can handle both uniformly.
  */
 function asToolPart(part: { type: string }): DynamicToolUIPart | null {
-  if (part.type === "dynamic-tool") return part as DynamicToolUIPart;
+  if (part.type === "dynamic-tool") {
+    return part as DynamicToolUIPart;
+  }
   if (part.type.startsWith("tool-")) {
     const toolName = part.type.slice("tool-".length);
     return { ...part, type: "dynamic-tool", toolName } as DynamicToolUIPart;

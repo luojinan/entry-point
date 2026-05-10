@@ -4,6 +4,7 @@ import {
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+
 import type { AIModelId } from "@/lib/ai-models";
 import {
   type ChatImageAttachment,
@@ -69,7 +70,9 @@ export function useChatSession({
 
   const autoTitle = useCallback(
     (text: string) => {
-      if (titleUpdatedRef.current) return;
+      if (titleUpdatedRef.current) {
+        return;
+      }
       titleUpdatedRef.current = true;
       const title = text.length > 50 ? `${text.slice(0, 50)}…` : text;
       updateTitleRef.current(conversationId, title);

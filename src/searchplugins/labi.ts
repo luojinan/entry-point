@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -84,11 +85,15 @@ class LabiPlugin extends BasePlugin {
     // Extract detail link
     const detailLinkEl = s.find(".module-item-pic a").first();
     const detailLink = detailLinkEl.attr("href");
-    if (!detailLink) return null;
+    if (!detailLink) {
+      return null;
+    }
 
     // Extract ID
     const matches = detailIDRegex.exec(detailLink);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
 
     const itemID = matches[1];
     const uniqueId = `${this.name}-${itemID}`;
@@ -101,12 +106,12 @@ class LabiPlugin extends BasePlugin {
 
     // Extract tags
     const tags: string[] = [];
-    s.find(".video-info-aux .tag-link a").each(
-      (i: number, tag: any) => {
-        const tagText = $(tag).text().trim();
-        if (tagText) tags.push(tagText);
-      },
-    );
+    s.find(".video-info-aux .tag-link a").each((i: number, tag: any) => {
+      const tagText = $(tag).text().trim();
+      if (tagText) {
+        tags.push(tagText);
+      }
+    });
 
     // Extract director
     let director = "";
@@ -126,7 +131,9 @@ class LabiPlugin extends BasePlugin {
           .find(".video-info-actor a")
           .each((j: number, actor: any) => {
             const actorName = $(actor).text().trim();
-            if (actorName) actors.push(actorName);
+            if (actorName) {
+              actors.push(actorName);
+            }
           });
       }
     });
@@ -142,14 +149,22 @@ class LabiPlugin extends BasePlugin {
 
     // Build content description
     const contentParts: string[] = [];
-    if (quality) contentParts.push(`【${quality}】`);
-    if (director) contentParts.push(`导演：${director}`);
+    if (quality) {
+      contentParts.push(`【${quality}】`);
+    }
+    if (director) {
+      contentParts.push(`导演：${director}`);
+    }
     if (actors.length > 0) {
       let actorStr = actors.slice(0, 3).join("、");
-      if (actors.length > 3) actorStr += "等";
+      if (actors.length > 3) {
+        actorStr += "等";
+      }
       contentParts.push(`主演：${actorStr}`);
     }
-    if (plot) contentParts.push(plot);
+    if (plot) {
+      contentParts.push(plot);
+    }
 
     return {
       uniqueId,
@@ -211,37 +226,35 @@ class LabiPlugin extends BasePlugin {
     const links: Link[] = [];
     const seen = new Set<string>();
 
-    $("#download-list .module-row-one").each(
-      (i: number, el: any) => {
-        const s = $(el);
+    $("#download-list .module-row-one").each((i: number, el: any) => {
+      const s = $(el);
 
-        // Extract from data-clipboard-text attribute
-        const clipboardText = s
-          .find("[data-clipboard-text]")
-          .attr("data-clipboard-text");
-        if (
-          clipboardText &&
-          this._isValidURL(clipboardText) &&
-          quarkLinkRegex.test(clipboardText)
-        ) {
-          if (!seen.has(clipboardText)) {
-            seen.add(clipboardText);
-            links.push({ type: "quark", url: clipboardText, password: "" });
+      // Extract from data-clipboard-text attribute
+      const clipboardText = s
+        .find("[data-clipboard-text]")
+        .attr("data-clipboard-text");
+      if (
+        clipboardText &&
+        this._isValidURL(clipboardText) &&
+        quarkLinkRegex.test(clipboardText)
+      ) {
+        if (!seen.has(clipboardText)) {
+          seen.add(clipboardText);
+          links.push({ type: "quark", url: clipboardText, password: "" });
+        }
+      }
+
+      // Also check direct href attributes
+      s.find("a[href]").each((j: number, a: any) => {
+        const href = $(a).attr("href");
+        if (href && this._isValidURL(href) && quarkLinkRegex.test(href)) {
+          if (!seen.has(href)) {
+            seen.add(href);
+            links.push({ type: "quark", url: href, password: "" });
           }
         }
-
-        // Also check direct href attributes
-        s.find("a[href]").each((j: number, a: any) => {
-          const href = $(a).attr("href");
-          if (href && this._isValidURL(href) && quarkLinkRegex.test(href)) {
-            if (!seen.has(href)) {
-              seen.add(href);
-              links.push({ type: "quark", url: href, password: "" });
-            }
-          }
-        });
-      },
-    );
+      });
+    });
 
     return links;
   }

@@ -45,7 +45,9 @@ class AshPlugin extends BasePlugin {
 
     // Extract JSON data from HTML
     const matches = this.jsonDataRegex.exec(html);
-    if (!matches || !matches[1]) return [];
+    if (!matches || !matches[1]) {
+      return [];
+    }
 
     let jsonStr = matches[1];
 
@@ -69,7 +71,9 @@ class AshPlugin extends BasePlugin {
       throw new Error(`JSON parse failed: ${(e as Error).message}`);
     }
 
-    if (!ashResults || ashResults.length === 0) return [];
+    if (!ashResults || ashResults.length === 0) {
+      return [];
+    }
 
     const results: SearchResult[] = [];
     const categoryNames = [
@@ -82,11 +86,15 @@ class AshPlugin extends BasePlugin {
     ];
 
     for (const item of ashResults) {
-      if (!item.url) continue;
+      if (!item.url) {
+        continue;
+      }
 
       // Fix pan URL
       const panURL = this._fixPanURL(item.url as string);
-      if (!panURL) continue;
+      if (!panURL) {
+        continue;
+      }
 
       // Determine pan type by is_type field
       let panType: CloudType;
@@ -142,8 +150,12 @@ class AshPlugin extends BasePlugin {
   }
 
   private _fixPanURL(url: string): string {
-    if (!url || url.length < 8) return "";
-    if (!url.startsWith("http")) return "";
+    if (!url || url.length < 8) {
+      return "";
+    }
+    if (!url.startsWith("http")) {
+      return "";
+    }
 
     if (url.includes(this.wrongQuarkDomain)) {
       return url.replace(this.wrongQuarkDomain, this.correctQuarkDomain);

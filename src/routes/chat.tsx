@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatConversationLayout } from "@/components/chat/chat-conversation-layout";
 import { MessageBubble } from "@/components/chat/message-bubble";
@@ -186,7 +187,6 @@ function ChatSessionInner({
   const lastMessage = messages[messages.length - 1];
   const lastMessagePartsLength = lastMessage?.parts.length ?? 0;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on message changes
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;

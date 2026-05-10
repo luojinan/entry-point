@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -42,7 +43,9 @@ function LoginPage() {
         options: emailRedirectTo ? { emailRedirectTo } : undefined,
       });
 
-      if (err) throw err;
+      if (err) {
+        throw err;
+      }
     },
     onMutate: () => {
       setHint(null);
@@ -59,7 +62,9 @@ function LoginPage() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = email.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      return;
+    }
     sendMagicLink.mutate(trimmed);
   };
 

@@ -33,7 +33,9 @@ interface UnicodeReplacement extends Array<RegExp | string> {
 }
 
 function cleanEscapedHTML(text: string): string {
-  if (!text) return "";
+  if (!text) {
+    return "";
+  }
   let result = text;
 
   const unicodeReplacements: UnicodeReplacement[] = [
@@ -71,10 +73,14 @@ function extractTitle(desc: string): string {
   const cleanDesc = cleanEscapedHTML(desc);
 
   const bookMatch = cleanDesc.match(/《([^》]+)》/);
-  if (bookMatch) return bookMatch[1];
+  if (bookMatch) {
+    return bookMatch[1];
+  }
 
   const bracketMatch = cleanDesc.match(/【([^】]+)】/);
-  if (bracketMatch) return bracketMatch[1];
+  if (bracketMatch) {
+    return bracketMatch[1];
+  }
 
   const parts = cleanDesc.split("✔");
   if (parts.length > 0 && parts[0].trim().length > 0) {
@@ -89,30 +95,60 @@ function extractTitle(desc: string): string {
 }
 
 function determineLinkType(url: string): string {
-  if (!url) return "others";
+  if (!url) {
+    return "others";
+  }
   const lower = url.toLowerCase();
 
-  if (lower.includes("pan.baidu.com")) return "baidu";
-  if (lower.includes("alipan.com") || lower.includes("aliyundrive.com"))
+  if (lower.includes("pan.baidu.com")) {
+    return "baidu";
+  }
+  if (lower.includes("alipan.com") || lower.includes("aliyundrive.com")) {
     return "aliyun";
-  if (lower.includes("pan.xunlei.com")) return "xunlei";
-  if (lower.includes("cloud.189.cn")) return "tianyi";
-  if (lower.includes("caiyun.139.com") || lower.includes("yun.139.com"))
+  }
+  if (lower.includes("pan.xunlei.com")) {
+    return "xunlei";
+  }
+  if (lower.includes("cloud.189.cn")) {
+    return "tianyi";
+  }
+  if (lower.includes("caiyun.139.com") || lower.includes("yun.139.com")) {
     return "mobile";
-  if (lower.includes("pan.quark.cn")) return "quark";
-  if (lower.includes("115.com")) return "115";
-  if (lower.includes("weiyun.com")) return "weiyun";
-  if (lower.includes("lanzou")) return "lanzou";
-  if (lower.includes("123pan.com")) return "123";
-  if (lower.includes("drive.uc.cn")) return "uc";
-  if (lower.includes("mypikpak.com")) return "pikpak";
-  if (lower.startsWith("magnet:")) return "magnet";
-  if (lower.startsWith("ed2k:")) return "ed2k";
+  }
+  if (lower.includes("pan.quark.cn")) {
+    return "quark";
+  }
+  if (lower.includes("115.com")) {
+    return "115";
+  }
+  if (lower.includes("weiyun.com")) {
+    return "weiyun";
+  }
+  if (lower.includes("lanzou")) {
+    return "lanzou";
+  }
+  if (lower.includes("123pan.com")) {
+    return "123";
+  }
+  if (lower.includes("drive.uc.cn")) {
+    return "uc";
+  }
+  if (lower.includes("mypikpak.com")) {
+    return "pikpak";
+  }
+  if (lower.startsWith("magnet:")) {
+    return "magnet";
+  }
+  if (lower.startsWith("ed2k:")) {
+    return "ed2k";
+  }
   return "others";
 }
 
 function extractLinkPassword(url: string, linkType: string): string {
-  if (!url) return "";
+  if (!url) {
+    return "";
+  }
 
   if (linkType === "baidu") {
     const m = url.match(/[?&]pwd=([^&#]+)/);
@@ -124,7 +160,9 @@ function extractLinkPassword(url: string, linkType: string): string {
 
   if (linkType === "aliyun") {
     const m = url.match(/[?&]password=([^&#]+)/);
-    if (m) return m[1];
+    if (m) {
+      return m[1];
+    }
   }
 
   return "";
@@ -170,7 +208,9 @@ class PanyqPlugin extends BasePlugin {
   async getOrDiscoverActionIDs(): Promise<ActionIDs> {
     if (Object.keys(actionIDCache).length >= ACTION_ID_KEYS.length) {
       const allPresent = ACTION_ID_KEYS.every((k) => actionIDCache[k]);
-      if (allPresent) return { ...actionIDCache };
+      if (allPresent) {
+        return { ...actionIDCache };
+      }
     }
 
     return this.discoverActionIDs();
@@ -408,7 +448,9 @@ class PanyqPlugin extends BasePlugin {
     const lines = responseText.split("\n");
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (!line) continue;
+      if (!line) {
+        continue;
+      }
       try {
         const parsed = JSON.parse(line);
         if (Array.isArray(parsed) && parsed.length > 1) {
@@ -473,7 +515,9 @@ class PanyqPlugin extends BasePlugin {
       );
       const keywords = ["http", "magnet", "aliyundrive", '"url"'];
       for (const kw of keywords) {
-        if (responseText.includes(kw)) return true;
+        if (responseText.includes(kw)) {
+          return true;
+        }
       }
       return false;
     } catch {
@@ -492,7 +536,9 @@ class PanyqPlugin extends BasePlugin {
     const credResults = await Promise.allSettled(
       potentialIDs.map(async (id) => {
         const valid = await this.validateCredentialID(id);
-        if (valid) return id;
+        if (valid) {
+          return id;
+        }
         throw new Error("invalid");
       }),
     );
@@ -635,7 +681,9 @@ class PanyqPlugin extends BasePlugin {
       return [];
     }
 
-    if (allHits.length === 0) return [];
+    if (allHits.length === 0) {
+      return [];
+    }
 
     if (maxPageNum > 1) {
       const pagesToFetch = Math.min(maxPageNum, MAX_PAGES);
@@ -659,7 +707,9 @@ class PanyqPlugin extends BasePlugin {
     const processResults = await Promise.allSettled(
       allHits.map(async (hit, index) => {
         const { eid, desc, size_str } = hit;
-        if (!eid) return null;
+        if (!eid) {
+          return null;
+        }
 
         try {
           await this.performIntermediateStep(
@@ -682,7 +732,9 @@ class PanyqPlugin extends BasePlugin {
           return null;
         }
 
-        if (!finalLink) return null;
+        if (!finalLink) {
+          return null;
+        }
 
         const linkType = determineLinkType(finalLink);
         const password = extractLinkPassword(finalLink, linkType);

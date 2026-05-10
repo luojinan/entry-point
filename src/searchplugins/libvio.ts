@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+
 import {
   BasePlugin,
   cleanHTML,
@@ -61,14 +62,18 @@ class LibvioPlugin extends BasePlugin {
       // Extract title and detail link
       const titleElem = s.find(".stui-vodlist__detail h4 a");
       let title = titleElem.text().trim();
-      if (!title) title = titleElem.attr("title") || "";
+      if (!title) {
+        title = titleElem.attr("title") || "";
+      }
 
       let detailPath = titleElem.attr("href") || "";
       if (!detailPath) {
         detailPath = s.find("a.stui-vodlist__thumb").attr("href") || "";
       }
 
-      if (!title || !detailPath) return;
+      if (!title || !detailPath) {
+        return;
+      }
 
       const detailURL = BASE_URL + detailPath;
 
@@ -82,9 +87,13 @@ class LibvioPlugin extends BasePlugin {
 
       // Build content
       let content = "";
-      if (episodeInfo) content = episodeInfo;
+      if (episodeInfo) {
+        content = episodeInfo;
+      }
       if (rating) {
-        if (content) content += " | ";
+        if (content) {
+          content += " | ";
+        }
         content += "评分: " + rating;
       }
 
@@ -169,16 +178,22 @@ class LibvioPlugin extends BasePlugin {
       const title = s.find("h3").text().trim();
 
       // Only process sources that contain "下载"
-      if (!title.includes("下载")) return;
+      if (!title.includes("下载")) {
+        return;
+      }
 
       // Extract pan type from title
       let panType = "";
-      if (title.includes("夸克") || title.toLowerCase().includes("quark"))
+      if (title.includes("夸克") || title.toLowerCase().includes("quark")) {
         panType = "quark";
-      else if (title.includes("UC") || title.toLowerCase().includes("uc"))
+      } else if (title.includes("UC") || title.toLowerCase().includes("uc")) {
         panType = "uc";
-      else if (title.includes("百度") || title.toLowerCase().includes("baidu"))
+      } else if (
+        title.includes("百度") ||
+        title.toLowerCase().includes("baidu")
+      ) {
         panType = "baidu";
+      }
 
       // Get first playlist link
       const firstLink = s.find(".stui-content__playlist li a").first();
@@ -193,7 +208,9 @@ class LibvioPlugin extends BasePlugin {
       }
     });
 
-    if (playLinks.length === 0) return [];
+    if (playLinks.length === 0) {
+      return [];
+    }
 
     // Fetch actual pan links from play pages
     const links: Link[] = [];
@@ -204,7 +221,9 @@ class LibvioPlugin extends BasePlugin {
           detailURL,
           headers,
         );
-        if (panLink) links.push(panLink);
+        if (panLink) {
+          links.push(panLink);
+        }
       } catch (e) {
         // ignore errors
       }
@@ -234,7 +253,9 @@ class LibvioPlugin extends BasePlugin {
     // Extract player_aaaa object
     const playerDataRegex = /var\s+player_aaaa\s*=\s*(\{[^}]+\})/;
     const matches = playerDataRegex.exec(body);
-    if (!matches || matches.length < 2) return null;
+    if (!matches || matches.length < 2) {
+      return null;
+    }
 
     // Parse JSON (handle escaped slashes)
     const playerJSON = matches[1].replace(/\\\//g, "/");
@@ -246,7 +267,9 @@ class LibvioPlugin extends BasePlugin {
     }
 
     const panURL = playerData.url;
-    if (!panURL) return null;
+    if (!panURL) {
+      return null;
+    }
 
     const from = playerData.from || "";
     const linkType = this._mapPanType(from, panURL);
@@ -281,16 +304,33 @@ class LibvioPlugin extends BasePlugin {
 
     // Then check URL
     const lowerURL = url.toLowerCase();
-    if (lowerURL.includes("drive.uc.cn")) return "uc";
-    if (lowerURL.includes("pan.quark.cn")) return "quark";
-    if (lowerURL.includes("pan.baidu.com")) return "baidu";
-    if (lowerURL.includes("alipan.com") || lowerURL.includes("aliyundrive.com"))
+    if (lowerURL.includes("drive.uc.cn")) {
+      return "uc";
+    }
+    if (lowerURL.includes("pan.quark.cn")) {
+      return "quark";
+    }
+    if (lowerURL.includes("pan.baidu.com")) {
+      return "baidu";
+    }
+    if (
+      lowerURL.includes("alipan.com") ||
+      lowerURL.includes("aliyundrive.com")
+    ) {
       return "aliyun";
-    if (lowerURL.includes("pan.xunlei.com")) return "xunlei";
-    if (lowerURL.includes("115.com")) return "115";
-    if (lowerURL.includes("123pan.com") || lowerURL.includes("123684.com"))
+    }
+    if (lowerURL.includes("pan.xunlei.com")) {
+      return "xunlei";
+    }
+    if (lowerURL.includes("115.com")) {
+      return "115";
+    }
+    if (lowerURL.includes("123pan.com") || lowerURL.includes("123684.com")) {
       return "123";
-    if (lowerURL.includes("cloud.189.cn")) return "tianyi";
+    }
+    if (lowerURL.includes("cloud.189.cn")) {
+      return "tianyi";
+    }
 
     return "others";
   }
