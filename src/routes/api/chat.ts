@@ -37,7 +37,7 @@ import {
   statJianguoyunPath,
   writeJianguoyunText,
 } from "@/lib/server/jianguoyun";
-import { listSkills } from "@/lib/server/skill-loader";
+import { listSkillsSafely } from "@/lib/server/skill-loader";
 import { buildSkillsMetadataPrompt } from "@/lib/skills";
 import { search } from "@/lib/tg-search/search";
 
@@ -198,7 +198,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const { messages, model: modelId } = parsedBody.data;
         const env = getRequestEnv(context);
-        const skills = await listSkills(env);
+        const { skills } = await listSkillsSafely(env);
         const systemPrompt = [
           BASE_SYSTEM_PROMPT,
           buildSkillsMetadataPrompt(skills),

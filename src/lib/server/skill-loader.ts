@@ -24,6 +24,11 @@ interface CacheEntry<T> {
   value: T;
 }
 
+export interface SafeSkillsResult {
+  skills: SkillSummary[];
+  error: string | null;
+}
+
 const skillSummaryCache: { current: CacheEntry<SkillSummary[]> | null } = {
   current: null,
 };
@@ -86,6 +91,25 @@ export async function listSkills(env?: RuntimeEnv): Promise<SkillSummary[]> {
   };
 
   return summaries;
+}
+
+export async function listSkillsSafely(
+  env?: RuntimeEnv,
+): Promise<SafeSkillsResult> {
+  try {
+    return {
+      skills: await listSkills(env),
+      error: null,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to load skills";
+    console.warn("Failed to load skills, continuing without skills:", error);
+    return {
+      skills: [],
+      error: message,
+    };
+  }
 }
 
 export async function getSkillsByIds(

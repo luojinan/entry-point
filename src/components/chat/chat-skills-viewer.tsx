@@ -40,6 +40,11 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
+interface SkillsLoadResult {
+  skills: SkillSummary[];
+  error: string | null;
+}
+
 const SKILLS_QUERY_KEY = ["skills", "viewer", "list"] as const;
 const EMPTY_DOCUMENT_QUERY_KEY = [
   "skills",
@@ -57,7 +62,17 @@ function getSkillDocumentQueryKey(skillId: string) {
   return ["skills", "viewer", "document", skillId] as const;
 }
 
-async function loadSkillOptions(signal?: AbortSignal): Promise<SkillSummary[]> {
+function decodeHeaderValue(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+async function loadSkillOptions(
+  signal?: AbortSignal,
+): Promise<SkillsLoadResult> {
   const response = await fetch("/api/skills", { signal });
   const payload = (await response.json()) as ApiEnvelope<SkillSummary[]>;
 
@@ -65,7 +80,11 @@ async function loadSkillOptions(signal?: AbortSignal): Promise<SkillSummary[]> {
     throw new Error(payload.message || "加载 skills 失败");
   }
 
-  return payload.data;
+  const loadError = response.headers.get("X-Skills-Load-Error");
+  return {
+    skills: payload.data,
+    error: loadError ? decodeHeaderValue(loadError) : null,
+  };
 }
 
 async function loadSkillDocument(
@@ -142,14 +161,16 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
     queryKey: SKILLS_QUERY_KEY,
     queryFn: ({ signal }) => loadSkillOptions(signal),
     enabled: open && !hasCachedSkills,
-    initialData: browserCache.skills ?? undefined,
+    initialData: browserCache.skills
+      ? { skills: browserCache.skills, error: null }
+      : undefined,
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
 
-  const skills = skillsData ?? cachedSkills;
+  const skills = skillsData?.skills ?? cachedSkills;
 
   const {
     data: selectedDocumentData,
@@ -179,13 +200,13 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
     }
 
     updateBrowserCache(setBrowserCache, (current) => {
-      if (current.skills === skillsData) {
+      if (current.skills === skillsData.skills) {
         return current;
       }
 
       return {
         ...current,
-        skills: skillsData,
+        skills: skillsData.skills,
       };
     });
   }, [skillsData]);
@@ -242,7 +263,9 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
   );
   const selectedDocument = selectedDocumentData ?? cachedSelectedDocument;
 
-  const skillsErrorMessage = getErrorMessage(skillsError);
+  const skillsLoadErrorMessage = skillsData?.error ?? null;
+  const skillsErrorMessage =
+    skillsLoadErrorMessage ?? getErrorMessage(skillsError);
   const documentErrorMessage = selectedDocument
     ? null
     : getErrorMessage(selectedDocumentQueryError);
@@ -271,14 +294,22 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
   return (
     <div className="min-w-0">
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogTrigger
-          render={<Button variant="outline" size="icon-sm" />}
-          disabled={disabled}
-          aria-label="查看 Skills"
-          title={`查看 Skills${helperText ? `：${helperText}` : ""}`}
-        >
-          <HugeiconsIcon icon={File01Icon} strokeWidth={2} />
-        </AlertDialogTrigger>
+        <div className="relative inline-flex">
+          <AlertDialogTrigger
+            render={<Button variant="outline" size="icon-sm" />}
+            disabled={disabled}
+            aria-label="查看 Skills"
+            title={`查看 Skills${helperText ? `：${helperText}` : ""}`}
+          >
+            <HugeiconsIcon icon={File01Icon} strokeWidth={2} />
+          </AlertDialogTrigger>
+          {skillsLoadErrorMessage ? (
+            <span
+              aria-hidden="true"
+              className="border-background bg-destructive absolute -top-1 -right-1 size-2.5 rounded-full border"
+            />
+          ) : null}
+        </div>
 
         <AlertDialogContent
           className="h-[min(88vh,42rem)] w-[min(96vw,56rem)] max-w-[56rem] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0"
