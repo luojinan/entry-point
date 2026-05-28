@@ -37,10 +37,15 @@ import {
   statRemotePath,
   writeRemoteText,
 } from "@/lib/server/remote-files";
-import { getSkillsByIds, listSkillsSafely } from "@/lib/server/skill-loader";
+import {
+  getSkillById,
+  getSkillsByIds,
+  listSkillsSafely,
+} from "@/lib/server/skill-loader";
 import {
   buildSkillsMetadataPrompt,
   buildSkillsPrompt,
+  SKILLS_ROOT_PATH,
   skillSelectionSchema,
 } from "@/lib/skills";
 import { search } from "@/lib/tg-search/search";
@@ -186,6 +191,17 @@ const chatRequestSchema = z.object({
 const BASE_SYSTEM_PROMPT =
   "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用 Supabase 远程文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程文件系统。远程文件系统对应的是共享的远端文件系统，不是本地磁盘。处理远程文件系统中的文件时，优先先用 statRemotePath 或 listRemoteFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。当用户消息包含图片 OCR 内容时，请优先结合用户问题和 OCR 文本回答，并明确提醒 OCR 可能存在误差；如果 OCR 文本明显缺失、错乱或不完整，要建议用户重新上传更清晰的图片。对于其他一般问题，直接用自身知识回答即可。";
 
+function buildCurrentTimePrompt(now = new Date()) {
+  const beijingTime = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    dateStyle: "full",
+    timeStyle: "long",
+    hour12: false,
+  }).format(now);
+
+  return `当前时间：${beijingTime}（Asia/Shanghai）；UTC：${now.toISOString()}。回答涉及“今天、昨天、最近、当前、最新”等相对时间时，请以此时间为准。`;
+}
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
@@ -202,11 +218,19 @@ export const Route = createFileRoute("/api/chat")({
 
         const { messages, model: modelId, skillIds = [] } = parsedBody.data;
         const env = getRequestEnv(context);
+        const skillLoadOptions = {
+          preferFresh: true,
+          allowStaleOnError: true,
+        };
         const [{ skills: availableSkills }, selectedSkills] = await Promise.all(
-          [listSkillsSafely(env), getSkillsByIds(skillIds, env)],
+          [
+            listSkillsSafely(env, skillLoadOptions),
+            getSkillsByIds(skillIds, env, skillLoadOptions),
+          ],
         );
         const systemPrompt = [
           BASE_SYSTEM_PROMPT,
+          buildCurrentTimePrompt(),
           buildSkillsMetadataPrompt(availableSkills),
           buildSkillsPrompt(selectedSkills),
         ]
@@ -334,6 +358,61 @@ export const Route = createFileRoute("/api/chat")({
         } catch (e) {
           console.error("Failed to connect to Supabase MCP:", e);
         }
+
+        allTools.loadSkill = withApproval(
+          tool({
+            description:
+              "加载一个 Skill 的完整 SKILL.md 指令内容。当用户需求匹配 Available Skills Metadata 中某个 skill 的描述时，先调用此工具获取专门工作流说明。",
+            inputSchema: z.object({
+              name: z
+                .string()
+                .describe(
+                  "要加载的 skill ID/name，例如 Available Skills Metadata 中的 ID。",
+                ),
+            }),
+            execute: async ({ name }) => {
+              const normalizedName = name.trim().toLowerCase();
+              const matchedSkill = availableSkills.find((skill) => {
+                return (
+                  skill.id.toLowerCase() === normalizedName ||
+                  skill.title.toLowerCase() === normalizedName
+                );
+              });
+
+              if (!matchedSkill) {
+                return {
+                  error: `Skill '${name}' not found`,
+                  availableSkills: availableSkills.map((skill) => ({
+                    id: skill.id,
+                    title: skill.title,
+                    description: skill.description,
+                  })),
+                };
+              }
+
+              const skill = await getSkillById(
+                matchedSkill.id,
+                env,
+                skillLoadOptions,
+              );
+              if (!skill?.enabled) {
+                return { error: `Skill '${matchedSkill.id}' not found` };
+              }
+
+              return {
+                skillId: skill.id,
+                title: skill.title,
+                description: skill.description,
+                runtime: skill.runtime,
+                skillDirectory: `${SKILLS_ROOT_PATH}/${skill.id}`,
+                content: skill.instructions,
+                entry: skill.entry,
+                permissions: skill.permissions,
+              };
+            },
+          }),
+          false,
+        );
 
         allTools.searchTG = tool({
           description:

@@ -9,9 +9,17 @@ export const Route = createFileRoute("/api/skills")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      GET: async ({ context }) => {
+      GET: async ({ request, context }) => {
         const env = getRequestEnv(context);
-        return jsonResponse(await listSkillsSafely(env));
+        const refresh =
+          new URL(request.url).searchParams.get("refresh") === "1";
+
+        return jsonResponse(
+          await listSkillsSafely(env, {
+            preferFresh: refresh,
+            allowStaleOnError: refresh,
+          }),
+        );
       },
     },
   },

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/skills/$skillId")({
     handlers: {
       OPTIONS: async ({ request }) => handleCorsPreflightRequest(request),
 
-      GET: async ({ params, context }) => {
+      GET: async ({ request, params, context }) => {
         const parsedSkillId = skillIdSchema.safeParse(params.skillId);
         if (!parsedSkillId.success) {
           return errorResponse(
@@ -24,9 +24,15 @@ export const Route = createFileRoute("/api/skills/$skillId")({
           );
         }
 
+        const refresh =
+          new URL(request.url).searchParams.get("refresh") === "1";
         const skill = await getSkillById(
           parsedSkillId.data,
           getRequestEnv(context),
+          {
+            preferFresh: refresh,
+            allowStaleOnError: refresh,
+          },
         );
         if (!skill?.enabled) {
           return errorResponse("Skill not found", 404);

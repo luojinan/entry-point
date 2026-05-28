@@ -29,15 +29,23 @@ export interface SafeSkillsResult {
   error: string | null;
 }
 
+interface SkillLoadOptions {
+  preferFresh?: boolean;
+  allowStaleOnError?: boolean;
+}
+
 const skillSummaryCache: { current: CacheEntry<SkillSummary[]> | null } = {
   current: null,
 };
 const skillContentCache = new Map<string, CacheEntry<SkillDefinition | null>>();
 
-export async function listSkills(env?: RuntimeEnv): Promise<SkillSummary[]> {
+export async function listSkills(
+  env?: RuntimeEnv,
+  options: SkillLoadOptions = {},
+): Promise<SkillSummary[]> {
   const now = Date.now();
   const cached = skillSummaryCache.current;
-  if (cached && cached.expiresAt > now) {
+  if (!options.preferFresh && cached && cached.expiresAt > now) {
     return cached.value;
   }
 
@@ -46,6 +54,10 @@ export async function listSkills(env?: RuntimeEnv): Promise<SkillSummary[]> {
     const result = await listRemoteFiles(SKILLS_ROOT_PATH, env);
     directoryEntries = result.entries;
   } catch (error) {
+    if (options.allowStaleOnError && cached) {
+      return cached.value;
+    }
+
     if (isMissingPath(error)) {
       skillSummaryCache.current = {
         value: [],
@@ -65,7 +77,7 @@ export async function listSkills(env?: RuntimeEnv): Promise<SkillSummary[]> {
     await Promise.all(
       skillIds.map(async (skillId) => {
         try {
-          const skill = await getSkillById(skillId, env);
+          const skill = await getSkillById(skillId, env, options);
           if (!skill?.enabled) {
             return null;
           }
@@ -93,10 +105,11 @@ export async function listSkills(env?: RuntimeEnv): Promise<SkillSummary[]> {
 
 export async function listSkillsSafely(
   env?: RuntimeEnv,
+  options: SkillLoadOptions = {},
 ): Promise<SafeSkillsResult> {
   try {
     return {
-      skills: await listSkills(env),
+      skills: await listSkills(env, options),
       error: null,
     };
   } catch (error) {
@@ -113,11 +126,12 @@ export async function listSkillsSafely(
 export async function getSkillsByIds(
   skillIds: string[],
   env?: RuntimeEnv,
+  options: SkillLoadOptions = {},
 ): Promise<SkillDefinition[]> {
   const skills = await Promise.all(
     skillIds.map(async (skillId) => {
       try {
-        return await getSkillById(skillId, env);
+        return await getSkillById(skillId, env, options);
       } catch (error) {
         if (error instanceof SkillDocumentError) {
           console.warn(
@@ -139,6 +153,7 @@ export async function getSkillsByIds(
 export async function getSkillById(
   skillId: string,
   env?: RuntimeEnv,
+  options: SkillLoadOptions = {},
 ): Promise<SkillDefinition | null> {
   const parsedId = skillIdSchema.safeParse(skillId);
   if (!parsedId.success) {
@@ -147,7 +162,7 @@ export async function getSkillById(
 
   const now = Date.now();
   const cached = skillContentCache.get(parsedId.data);
-  if (cached && cached.expiresAt > now) {
+  if (!options.preferFresh && cached && cached.expiresAt > now) {
     return cached.value;
   }
 
@@ -166,6 +181,10 @@ export async function getSkillById(
     });
     return skill;
   } catch (error) {
+    if (options.allowStaleOnError && cached) {
+      return cached.value;
+    }
+
     if (isMissingPath(error)) {
       skillContentCache.set(parsedId.data, {
         value: null,

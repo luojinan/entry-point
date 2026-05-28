@@ -160,13 +160,17 @@ export function buildSkillsMetadataPrompt(skills: SkillSummary[]): string {
     }
 
     lines.push(
-      "Metadata only. Skill instructions are not preloaded into context unless a later mechanism explicitly expands them.",
+      "Metadata only. Use the loadSkill tool with this ID to load full instructions when relevant.",
     );
 
     return lines.join("\n");
   });
 
-  return ["[Available Skills Metadata]", ...sections].join("\n\n");
+  return [
+    "[Available Skills Metadata]",
+    "Use the loadSkill tool to load a skill when the user's request would benefit from its specialized instructions. The list below contains only discovery metadata.",
+    ...sections,
+  ].join("\n\n");
 }
 
 export function splitSkillFrontmatter(source: string): {

@@ -4,7 +4,7 @@ import {
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 
@@ -61,8 +61,14 @@ function getSkillDocumentQueryKey(skillId: string) {
 
 async function loadSkillOptions(
   signal?: AbortSignal,
+  refresh = false,
 ): Promise<SkillsLoadResult> {
-  const response = await fetch("/api/skills", { signal });
+  const response = await fetch(
+    refresh ? "/api/skills?refresh=1" : "/api/skills",
+    {
+      signal,
+    },
+  );
   const payload = (await response.json()) as {
     code: number;
     message: string;
@@ -77,10 +83,14 @@ async function loadSkillOptions(
 async function loadSkillDocument(
   skillId: string,
   signal?: AbortSignal,
+  refresh = false,
 ): Promise<SkillDocumentView> {
-  const response = await fetch(`/api/skills/${encodeURIComponent(skillId)}`, {
-    signal,
-  });
+  const response = await fetch(
+    `/api/skills/${encodeURIComponent(skillId)}${refresh ? "?refresh=1" : ""}`,
+    {
+      signal,
+    },
+  );
   const payload = (await response.json()) as {
     code: number;
     message: string;
@@ -132,9 +142,14 @@ export function ChatSkillsViewer({
   selectedSkillIds = [],
   onSelectedSkillIdsChange,
 }: ChatSkillsViewerProps) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "detail">("list");
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [manualRefreshError, setManualRefreshError] = useState<string | null>(
+    null,
+  );
   const [browserCache, setBrowserCache] = useState<SkillsViewerCache>(() =>
     readSkillsViewerCache(),
   );
@@ -149,7 +164,6 @@ export function ChatSkillsViewer({
     data: skillsData,
     error: skillsError,
     isFetching: isFetchingSkills,
-    refetch: refetchSkills,
   } = useQuery({
     queryKey: SKILLS_QUERY_KEY,
     queryFn: ({ signal }) => loadSkillOptions(signal),
@@ -173,7 +187,6 @@ export function ChatSkillsViewer({
     data: selectedDocumentData,
     error: selectedDocumentQueryError,
     isFetching: isFetchingDocument,
-    refetch: refetchSelectedDocument,
   } = useQuery({
     queryKey: selectedSkillId
       ? getSkillDocumentQueryKey(selectedSkillId)
@@ -259,11 +272,14 @@ export function ChatSkillsViewer({
 
   const skillsLoadErrorMessage = skillsData?.error ?? null;
   const skillsErrorMessage =
-    skillsLoadErrorMessage ?? getErrorMessage(skillsError);
+    manualRefreshError ??
+    skillsLoadErrorMessage ??
+    getErrorMessage(skillsError);
   const documentErrorMessage = selectedDocument
     ? null
     : getErrorMessage(selectedDocumentQueryError);
-  const isRefreshing = isFetchingSkills || isFetchingDocument;
+  const isRefreshing =
+    isManualRefreshing || isFetchingSkills || isFetchingDocument;
 
   const helperText = skillsErrorMessage
     ? skillsErrorMessage
@@ -278,10 +294,28 @@ export function ChatSkillsViewer({
         : "首次打开后会自动加载 Skills 元数据";
 
   async function handleRefresh() {
-    await refetchSkills();
+    setIsManualRefreshing(true);
+    setManualRefreshError(null);
 
-    if (view === "detail" && selectedSkillId) {
-      await refetchSelectedDocument();
+    try {
+      const refreshedSkills = await loadSkillOptions(undefined, true);
+      queryClient.setQueryData(SKILLS_QUERY_KEY, refreshedSkills);
+
+      if (view === "detail" && selectedSkillId) {
+        const refreshedDocument = await loadSkillDocument(
+          selectedSkillId,
+          undefined,
+          true,
+        );
+        queryClient.setQueryData(
+          getSkillDocumentQueryKey(selectedSkillId),
+          refreshedDocument,
+        );
+      }
+    } catch (error) {
+      setManualRefreshError(getErrorMessage(error) ?? "刷新 Skills 失败");
+    } finally {
+      setIsManualRefreshing(false);
     }
   }
 
@@ -314,7 +348,7 @@ export function ChatSkillsViewer({
           >
             <HugeiconsIcon icon={File01Icon} strokeWidth={2} />
           </AlertDialogTrigger>
-          {skillsLoadErrorMessage ? (
+          {skillsErrorMessage ? (
             <span
               aria-hidden="true"
               className="border-background bg-destructive absolute -top-1 -right-1 size-2.5 rounded-full border"
