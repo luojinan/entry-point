@@ -282,12 +282,7 @@ export function MessageBubble({
               return <ReasoningBlock key={key} part={part} />;
             }
             if (part.type === "step-start") {
-              return (
-                <div
-                  key={key}
-                  className="my-2 border-t border-dashed border-border"
-                />
-              );
+              return null;
             }
             if (part.type === "source-url") {
               return (
@@ -321,7 +316,7 @@ export function MessageBubble({
             const toolPart = asToolPart(part);
             if (toolPart) {
               return (
-                <div key={key} className="mt-2 first:mt-0">
+                <div key={key} className="my-2 first:mt-0">
                   <DynamicToolCard
                     part={toolPart}
                     onApproval={onToolApproval}

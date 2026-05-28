@@ -1,15 +1,9 @@
+import { AiSettingIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { DynamicToolUIPart } from "ai";
+import type { ReactNode } from "react";
 
-import { TGSearchResultCard } from "@/components/chat/tg-search-result-card";
-import { ToolLoadingCard } from "@/components/chat/tool-loading-card";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 type ToolApprovalHandler = (opts: {
   id: string;
@@ -19,6 +13,31 @@ type ToolApprovalHandler = (opts: {
 
 const TOOL_DENIED_REASON =
   "The user explicitly denied this tool execution request. 用户明确拒绝执行该工具调用。Treat this as a user refusal, not a tool error. Do not retry unless the user later clearly approves it.";
+
+function ToolStatusLine({
+  toolName,
+  status,
+  children,
+}: {
+  toolName: string;
+  status: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2 text-muted-foreground text-sm">
+      <HugeiconsIcon
+        icon={AiSettingIcon}
+        size={16}
+        strokeWidth={2}
+        className="shrink-0"
+      />
+      <span className="min-w-0 truncate">
+        {status} · {toolName}
+      </span>
+      {children}
+    </div>
+  );
+}
 
 export function DynamicToolCard({
   part,
@@ -32,94 +51,46 @@ export function DynamicToolCard({
     part.state === "input-available" ||
     part.state === "call-streaming"
   ) {
-    return <ToolLoadingCard label={`调用 ${part.toolName}...`} />;
+    return <ToolStatusLine toolName={part.toolName} status="调用中" />;
   }
 
   if (part.state === "approval-requested") {
     return (
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>{part.toolName}</CardTitle>
-          <CardDescription>需要确认执行</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <pre className="max-h-40 overflow-auto rounded bg-muted p-2 text-xs">
-            {JSON.stringify(part.input, null, 2)}
-          </pre>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                onApproval({
-                  id: part.approval.id,
-                  approved: false,
-                  reason: TOOL_DENIED_REASON,
-                });
-              }}
-            >
-              拒绝
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                onApproval({ id: part.approval.id, approved: true });
-              }}
-            >
-              同意执行
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ToolStatusLine toolName={part.toolName} status="需要确认执行">
+        <div className="ml-auto flex shrink-0 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              onApproval({
+                id: part.approval.id,
+                approved: false,
+                reason: TOOL_DENIED_REASON,
+              });
+            }}
+          >
+            拒绝
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              onApproval({ id: part.approval.id, approved: true });
+            }}
+          >
+            同意执行
+          </Button>
+        </div>
+      </ToolStatusLine>
     );
   }
 
   if (part.state === "output-denied") {
-    return (
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>{part.toolName}</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            已拒绝执行
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    return <ToolStatusLine toolName={part.toolName} status="已拒绝执行" />;
   }
 
   if (part.state === "output-error") {
-    return (
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>{part.toolName}</CardTitle>
-          <CardDescription className="text-destructive">
-            工具调用失败
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-destructive text-sm">
-            {String(part.error ?? "未知错误")}
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return <ToolStatusLine toolName={part.toolName} status="工具调用失败" />;
   }
 
-  if (part.toolName === "searchTG") {
-    return <TGSearchResultCard output={part.output} />;
-  }
-
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>{part.toolName}</CardTitle>
-        <CardDescription>工具调用结果</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <pre className="max-h-40 overflow-auto text-xs">
-          {JSON.stringify(part.output, null, 2)}
-        </pre>
-      </CardContent>
-    </Card>
-  );
+  return <ToolStatusLine toolName={part.toolName} status="工具调用完成" />;
 }
