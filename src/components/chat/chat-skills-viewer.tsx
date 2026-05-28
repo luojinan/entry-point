@@ -35,6 +35,7 @@ interface ChatSkillsViewerProps {
   disabled?: boolean;
   selectedSkillIds?: string[];
   onSelectedSkillIdsChange?: (skillIds: string[]) => void;
+  triggerClassName?: string;
 }
 
 interface SkillsLoadResult {
@@ -141,6 +142,7 @@ export function ChatSkillsViewer({
   disabled = false,
   selectedSkillIds = [],
   onSelectedSkillIdsChange,
+  triggerClassName,
 }: ChatSkillsViewerProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -341,7 +343,13 @@ export function ChatSkillsViewer({
       <AlertDialog open={open} onOpenChange={setOpen}>
         <div className="relative inline-flex">
           <AlertDialogTrigger
-            render={<Button variant="outline" size="icon-sm" />}
+            render={
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className={triggerClassName}
+              />
+            }
             disabled={disabled}
             aria-label="查看 Skills"
             title={`查看 Skills${helperText ? `：${helperText}` : ""}`}

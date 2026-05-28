@@ -1,3 +1,5 @@
+import { Add01Icon, ArrowUp02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type ChangeEvent,
   type KeyboardEvent,
@@ -177,7 +179,7 @@ export function ChatComposer({
   selectedSkillIds = [],
   onSelectedSkillIdsChange,
   disabled = false,
-  placeholder = "输入消息... (Enter 发送, Shift+Enter 换行)",
+  placeholder = "Ask anything",
 }: ChatComposerProps) {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<ChatImageAttachment[]>([]);
@@ -412,73 +414,6 @@ export function ChatComposer({
 
   return (
     <div className="mt-3 space-y-2">
-      <div className="flex flex-wrap items-start gap-2">
-        <Select
-          value={modelId}
-          onValueChange={(val) => {
-            onModelChange(val as AIModelId);
-          }}
-        >
-          <SelectTrigger
-            size="sm"
-            className="w-fit min-w-44"
-            disabled={modelOptions.length === 0}
-          >
-            <SelectValue
-              placeholder={
-                modelOptions.length > 0 ? "选择模型" : "暂无可用模型"
-              }
-            >
-              {selectedModel
-                ? `${selectedModel.label} · ${selectedModel.providerLabel}`
-                : undefined}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {modelOptions.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
-                {model.label} · {model.providerLabel}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <ChatSkillsViewer
-          selectedSkillIds={selectedSkillIds}
-          onSelectedSkillIdsChange={onSelectedSkillIdsChange}
-        />
-
-        <label className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center gap-2 rounded-md border px-3 text-sm transition-colors">
-          <Switch
-            checked={thinkingEnabled}
-            disabled={disabled}
-            onCheckedChange={(checked) => {
-              onThinkingEnabledChange?.(checked);
-            }}
-          />
-          思考模式
-        </label>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_IMAGE_TYPES}
-          multiple
-          className="hidden"
-          onChange={handleFilesSelected}
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          onClick={() => {
-            fileInputRef.current?.click();
-          }}
-        >
-          上传图片
-        </Button>
-      </div>
-
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {attachments.map((attachment) => (
@@ -533,7 +468,7 @@ export function ChatComposer({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
+      <div className="border-input bg-background shadow-xs rounded-2xl border px-4 pt-4 pb-3">
         <textarea
           ref={inputRef}
           value={input}
@@ -545,13 +480,98 @@ export function ChatComposer({
           disabled={disabled}
           rows={1}
           className={cn(
-            "border-input dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-[color,border-color,box-shadow] placeholder:text-muted-foreground flex-1 resize-none overflow-y-auto outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            "placeholder:text-muted-foreground w-full resize-none overflow-y-auto bg-transparent px-0 text-[1.05rem] leading-6 outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             "[field-sizing:content] min-h-9 max-h-48",
           )}
         />
-        <Button onClick={handleSubmit} disabled={!canSend} size="default">
-          发送
-        </Button>
+        <div className="flex min-h-10 items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_IMAGE_TYPES}
+            multiple
+            className="hidden"
+            onChange={handleFilesSelected}
+          />
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            disabled={disabled}
+            className="-ml-1 rounded-full text-foreground hover:bg-muted"
+            onClick={() => {
+              fileInputRef.current?.click();
+            }}
+            aria-label="上传图片"
+            title="上传图片"
+          >
+            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
+          </Button>
+
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+            <Select
+              value={modelId}
+              onValueChange={(val) => {
+                onModelChange(val as AIModelId);
+              }}
+            >
+              <SelectTrigger
+                size="sm"
+                className="border-transparent px-2 text-base font-medium hover:bg-muted data-[size=sm]:h-9 md:text-sm"
+                disabled={modelOptions.length === 0}
+              >
+                <SelectValue
+                  placeholder={
+                    modelOptions.length > 0 ? "选择模型" : "暂无可用模型"
+                  }
+                >
+                  {selectedModel ? selectedModel.label : undefined}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {modelOptions.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.label} · {model.providerLabel}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <ChatSkillsViewer
+              selectedSkillIds={selectedSkillIds}
+              onSelectedSkillIdsChange={onSelectedSkillIdsChange}
+              disabled={disabled}
+              triggerClassName="rounded-full border-transparent bg-transparent hover:bg-muted"
+            />
+
+            <label
+              className="hover:bg-muted inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2 text-sm transition-colors"
+              title="思考模式"
+            >
+              <span className="text-muted-foreground text-xs font-medium">
+                思考
+              </span>
+              <Switch
+                checked={thinkingEnabled}
+                disabled={disabled}
+                aria-label="思考模式"
+                onCheckedChange={(checked) => {
+                  onThinkingEnabledChange?.(checked);
+                }}
+              />
+            </label>
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!canSend}
+            size="icon-lg"
+            className="size-12 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-500"
+            aria-label="发送"
+            title="发送"
+          >
+            <HugeiconsIcon icon={ArrowUp02Icon} strokeWidth={2.4} />
+          </Button>
+        </div>
       </div>
     </div>
   );

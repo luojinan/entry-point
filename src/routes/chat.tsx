@@ -277,7 +277,7 @@ function ChatSessionInner({
         )}
       </div>
 
-      <div className="sticky bottom-0 z-10 -mx-2 border-t bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky bottom-0 z-10 -mx-2 bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:-mx-6 sm:px-6">
         <ChatComposer
           conversationId={conversationId}
           modelId={modelId}
