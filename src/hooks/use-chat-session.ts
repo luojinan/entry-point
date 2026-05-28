@@ -27,6 +27,7 @@ interface UseChatSessionOptions {
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
   selectedSkillIds?: string[];
+  thinkingEnabled?: boolean;
 }
 
 export function useChatSession({
@@ -36,15 +37,18 @@ export function useChatSession({
   updateTitle,
   modelId,
   selectedSkillIds = [],
+  thinkingEnabled = false,
 }: UseChatSessionOptions) {
   const titleUpdatedRef = useRef(initialMessages.length > 0);
   const modelIdRef = useRef(modelId);
   const selectedSkillIdsRef = useRef(selectedSkillIds);
+  const thinkingEnabledRef = useRef(thinkingEnabled);
   const addToolApprovalResponseRef = useRef<
     ((opts: { id: string; approved: boolean; reason?: string }) => void) | null
   >(null);
   modelIdRef.current = modelId;
   selectedSkillIdsRef.current = selectedSkillIds;
+  thinkingEnabledRef.current = thinkingEnabled;
 
   const transport = useMemo(
     () =>
@@ -53,6 +57,7 @@ export function useChatSession({
         body: () => ({
           model: modelIdRef.current,
           skillIds: selectedSkillIdsRef.current,
+          thinkingEnabled: thinkingEnabledRef.current,
         }),
       }),
     [],

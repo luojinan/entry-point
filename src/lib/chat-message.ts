@@ -37,6 +37,8 @@ export interface ChatImageAttachment {
   objectKey?: string;
   previewUrl?: string;
   previewUrlExpiresAt?: number;
+  llmImageUrl?: string;
+  llmImageUrlExpiresAt?: number;
   error?: string;
   uploadedAt?: number;
   ocr?: ChatAttachmentOCRResult;

@@ -4,6 +4,7 @@ export interface AIModelOption {
   providerLabel: string;
   modelId: string;
   isDefault: boolean;
+  supportsMultimodal: boolean;
 }
 
 export type AIModelId = string;

@@ -143,6 +143,7 @@ function ChatSession({
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>(() =>
     loadSelectedSkillIds(conversationId),
   );
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
 
   function handleSelectedSkillIdsChange(nextSkillIds: string[]) {
     setSelectedSkillIds(nextSkillIds);
@@ -155,6 +156,8 @@ function ChatSession({
       initialMessages={initialMessages}
       selectedSkillIds={selectedSkillIds}
       onSelectedSkillIdsChange={handleSelectedSkillIdsChange}
+      thinkingEnabled={thinkingEnabled}
+      onThinkingEnabledChange={setThinkingEnabled}
       saveMessages={saveMessages}
       updateTitle={updateTitle}
       modelId={modelId}
@@ -170,6 +173,8 @@ function ChatSessionInner({
   initialMessages,
   selectedSkillIds,
   onSelectedSkillIdsChange,
+  thinkingEnabled,
+  onThinkingEnabledChange,
   saveMessages,
   updateTitle,
   modelId,
@@ -181,6 +186,8 @@ function ChatSessionInner({
   initialMessages: ChatMessage[];
   selectedSkillIds: string[];
   onSelectedSkillIdsChange: (skillIds: string[]) => void;
+  thinkingEnabled: boolean;
+  onThinkingEnabledChange: (enabled: boolean) => void;
   saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
@@ -203,6 +210,7 @@ function ChatSessionInner({
     updateTitle,
     modelId,
     selectedSkillIds,
+    thinkingEnabled,
   });
 
   const lastMessage = messages[messages.length - 1];
@@ -276,6 +284,8 @@ function ChatSessionInner({
           modelOptions={modelOptions}
           onModelChange={onModelChange}
           onSubmit={submitText}
+          thinkingEnabled={thinkingEnabled}
+          onThinkingEnabledChange={onThinkingEnabledChange}
           selectedSkillIds={selectedSkillIds}
           onSelectedSkillIdsChange={onSelectedSkillIdsChange}
           disabled={isStreaming || isLoading}

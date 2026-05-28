@@ -28,6 +28,8 @@ import {
   remoteFileWriteSchema,
 } from "@/lib/remote-files";
 import { getRequestEnv, getRuntimeEnvValue } from "@/lib/runtime-env";
+import { signChatObjectUrl } from "@/lib/server/chat-aliyun";
+import { getChatModelConfig } from "@/lib/server/llm-config";
 import {
   createRemoteDirectory,
   deleteRemotePath,
@@ -163,6 +165,34 @@ function attachmentToPromptText(attachment: ChatImageAttachment): string {
   return lines.join("\n");
 }
 
+function attachmentToImagePromptPart(
+  attachment: ChatImageAttachment,
+  env: ReturnType<typeof getRequestEnv>,
+) {
+  if (!attachment.bucket || !attachment.region || !attachment.objectKey) {
+    return {
+      type: "text" as const,
+      text: attachmentToPromptText(attachment),
+    };
+  }
+
+  const signedUrl = signChatObjectUrl(
+    {
+      bucket: attachment.bucket,
+      region: attachment.region,
+      objectKey: attachment.objectKey,
+    },
+    env,
+  );
+
+  return {
+    type: "file" as const,
+    data: new URL(signedUrl.url),
+    filename: attachment.fileName,
+    mediaType: attachment.mimeType,
+  };
+}
+
 function withApproval<T extends ToolSet[keyof ToolSet]>(
   toolDefinition: T,
   needsApproval: boolean,
@@ -186,6 +216,7 @@ const chatRequestSchema = z.object({
   messages: z.array(z.custom<ChatMessage>()),
   model: z.string().optional(),
   skillIds: skillSelectionSchema.optional(),
+  thinkingEnabled: z.boolean().optional(),
 });
 
 const BASE_SYSTEM_PROMPT =
@@ -216,8 +247,14 @@ export const Route = createFileRoute("/api/chat")({
           );
         }
 
-        const { messages, model: modelId, skillIds = [] } = parsedBody.data;
+        const {
+          messages,
+          model: modelId,
+          skillIds = [],
+          thinkingEnabled = false,
+        } = parsedBody.data;
         const env = getRequestEnv(context);
+        const modelConfig = await getChatModelConfig(env, modelId);
         const skillLoadOptions = {
           preferFresh: true,
           allowStaleOnError: true,
@@ -502,16 +539,25 @@ export const Route = createFileRoute("/api/chat")({
           messages: await convertToModelMessages(messages, {
             convertDataPart: (part) => {
               if (isImageAttachmentPart(part)) {
-                return {
-                  type: "text",
-                  text: attachmentToPromptText(part.data),
-                };
+                return modelConfig.supportsMultimodal
+                  ? attachmentToImagePromptPart(part.data, env)
+                  : {
+                      type: "text",
+                      text: attachmentToPromptText(part.data),
+                    };
               }
 
               return undefined;
             },
           }),
           tools: allTools,
+          providerOptions: thinkingEnabled
+            ? undefined
+            : {
+                [modelConfig.providerCode.split(".")[0].trim()]: {
+                  thinking: { type: "disabled" },
+                },
+              },
           stopWhen: stepCountIs(5),
           onFinish: async () => {
             if (mcpClient) {

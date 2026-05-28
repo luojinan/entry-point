@@ -17,6 +17,7 @@ interface LLMModelConfigRow {
   api_key: string;
   enabled: boolean;
   is_default: boolean;
+  supports_multimodal: boolean | null;
   sort_order: number | null;
   created_at?: string;
 }
@@ -32,6 +33,7 @@ export interface ResolvedLLMConfig {
   apiKey: string;
   enabled: boolean;
   isDefault: boolean;
+  supportsMultimodal: boolean;
 }
 
 function mapRowToResolvedConfig(row: LLMModelConfigRow): ResolvedLLMConfig {
@@ -46,6 +48,7 @@ function mapRowToResolvedConfig(row: LLMModelConfigRow): ResolvedLLMConfig {
     apiKey: row.api_key,
     enabled: row.enabled,
     isDefault: row.is_default,
+    supportsMultimodal: row.supports_multimodal ?? false,
   };
 }
 
@@ -56,6 +59,7 @@ function mapResolvedConfigToOption(config: ResolvedLLMConfig): AIModelOption {
     providerLabel: config.providerName,
     modelId: config.modelId,
     isDefault: config.isDefault,
+    supportsMultimodal: config.supportsMultimodal,
   };
 }
 
@@ -70,7 +74,7 @@ async function listRemoteConfigs(
   const { data, error } = await supabase
     .from(LLM_MODEL_CONFIGS_TABLE)
     .select(
-      "id, provider_code, provider_name, model_id, model_label, protocol, base_url, api_key, enabled, is_default, sort_order, created_at",
+      "id, provider_code, provider_name, model_id, model_label, protocol, base_url, api_key, enabled, is_default, supports_multimodal, sort_order, created_at",
     )
     .eq("enabled", true)
     .order("is_default", { ascending: false })

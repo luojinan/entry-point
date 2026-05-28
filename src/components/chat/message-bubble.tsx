@@ -112,11 +112,13 @@ function AttachmentCard({ attachment }: { attachment: ChatImageAttachment }) {
       <div className="space-y-1 text-xs">
         <div className="font-medium text-sm">{attachment.fileName}</div>
         <div className="text-muted-foreground">
-          {attachment.ocr?.status === "ready"
-            ? "OCR 已完成"
-            : attachment.ocr?.status === "error"
-              ? `OCR 失败: ${attachment.ocr.error || "未知错误"}`
-              : "OCR 未完成"}
+          {attachment.llmImageUrl
+            ? "已发送给多模态模型"
+            : attachment.ocr?.status === "ready"
+              ? "OCR 已完成"
+              : attachment.ocr?.status === "error"
+                ? `OCR 失败: ${attachment.ocr.error || "未知错误"}`
+                : "OCR 未完成"}
         </div>
         {attachment.ocr?.plainText ? (
           <details className="text-muted-foreground whitespace-pre-wrap">

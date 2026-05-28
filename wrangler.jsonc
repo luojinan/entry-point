@@ -17,6 +17,11 @@
     "SUPABASE_PROJECT_REF": "knclktpgdzpxdooyprdv",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_BeqxNaQ58YbUAI1LCtmWpA_cRAuKoAc",
     "SUPABASE_URL": "https://knclktpgdzpxdooyprdv.supabase.co",
+    "ALIYUN_OSS_BUCKET": "llm-resoure",
+    "ALIYUN_OSS_REGION": "cn-shenzhen",
+    "ALIYUN_OSS_UPLOAD_PREFIX": "chat-images",
+    "ALIYUN_OCR_REGION": "cn-hangzhou",
+    "ALIYUN_OCR_ENDPOINT": "ocr-api.cn-hangzhou.aliyuncs.com",
     "TG_CHANNELS": "Quark_Movies,ucquark,QuarkFree,yunpanquark,kuakedongman,shareAliyun,Aliyun_4K_Movies",
   },
 }

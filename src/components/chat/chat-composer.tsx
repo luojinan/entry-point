@@ -14,10 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { AIModelId, AIModelOption } from "@/lib/ai-models";
 import {
   ALLOWED_CHAT_IMAGE_TYPES,
   type ChatImageAttachment,
+  type ChatSignedObjectUrlResponse,
   type ChatOCRResponse,
   type ChatUploadPolicyRequest,
   type ChatUploadPolicyResponse,
@@ -34,6 +36,8 @@ interface ChatComposerProps {
   modelOptions: AIModelOption[];
   onModelChange: (id: AIModelId) => void;
   onSubmit: (text: string, attachments?: ChatImageAttachment[]) => boolean;
+  thinkingEnabled?: boolean;
+  onThinkingEnabledChange?: (enabled: boolean) => void;
   selectedSkillIds?: string[];
   onSelectedSkillIdsChange?: (skillIds: string[]) => void;
   disabled?: boolean;
@@ -113,6 +117,26 @@ async function requestOCR(
   return readJSON<ChatOCRResponse>(response);
 }
 
+async function requestSignedObjectUrl(
+  bucket: string,
+  region: string,
+  objectKey: string,
+): Promise<ChatSignedObjectUrlResponse> {
+  const response = await fetch("/api/chat-object-url", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      bucket,
+      region,
+      objectKey,
+    }),
+  });
+
+  return readJSON<ChatSignedObjectUrlResponse>(response);
+}
+
 function formatAttachmentStatus(attachment: ChatImageAttachment): string {
   switch (attachment.status) {
     case "uploading":
@@ -122,7 +146,11 @@ function formatAttachmentStatus(attachment: ChatImageAttachment): string {
     case "ocr-processing":
       return "OCR 识别中";
     case "ready":
-      return attachment.ocr?.plainText ? "可发送" : "已上传";
+      return attachment.llmImageUrl
+        ? "可发送给多模态模型"
+        : attachment.ocr?.plainText
+          ? "可发送"
+          : "已上传";
     case "ocr-error":
       return attachment.error || attachment.ocr?.error || "OCR 失败";
     case "upload-error":
@@ -144,6 +172,8 @@ export function ChatComposer({
   modelOptions,
   onModelChange,
   onSubmit,
+  thinkingEnabled = false,
+  onThinkingEnabledChange,
   selectedSkillIds = [],
   onSelectedSkillIdsChange,
   disabled = false,
@@ -170,6 +200,9 @@ export function ChatComposer({
     };
   }, []);
 
+  const selectedModel = modelOptions.find((model) => model.id === modelId);
+  const selectedModelSupportsMultimodal =
+    selectedModel?.supportsMultimodal ?? false;
   const hasPendingAttachments = attachments.some(
     (attachment) =>
       attachment.status === "uploading" ||
@@ -178,15 +211,16 @@ export function ChatComposer({
   const sendableAttachments = attachments.filter(
     (attachment) =>
       Boolean(attachment.bucket && attachment.region && attachment.objectKey) &&
-      attachment.status !== "upload-error",
+      attachment.status !== "upload-error" &&
+      (selectedModelSupportsMultimodal ||
+        attachment.ocr?.status === "ready" ||
+        attachment.ocr?.status === "error"),
   );
   const canSend =
     Boolean(modelId) &&
     !disabled &&
     !hasPendingAttachments &&
     (input.trim().length > 0 || sendableAttachments.length > 0);
-  const selectedModel = modelOptions.find((model) => model.id === modelId);
-
   const updateAttachment = (
     id: string,
     updater: (attachment: ChatImageAttachment) => ChatImageAttachment,
@@ -307,12 +341,35 @@ export function ChatComposer({
 
           updateAttachment(attachmentId, (attachment) => ({
             ...attachment,
-            status: "ocr-processing",
+            status: selectedModelSupportsMultimodal
+              ? "uploaded"
+              : "ocr-processing",
             bucket: policy.bucket,
             region: policy.region,
             objectKey: policy.objectKey,
             uploadedAt: Date.now(),
           }));
+
+          if (selectedModelSupportsMultimodal) {
+            const signedObjectUrl = await requestSignedObjectUrl(
+              policy.bucket,
+              policy.region,
+              policy.objectKey,
+            );
+
+            updateAttachment(attachmentId, (attachment) => ({
+              ...attachment,
+              status: "ready",
+              bucket: policy.bucket,
+              region: policy.region,
+              objectKey: policy.objectKey,
+              previewUrl: signedObjectUrl.url || attachment.previewUrl,
+              previewUrlExpiresAt: signedObjectUrl.expiresAt,
+              llmImageUrl: signedObjectUrl.url,
+              llmImageUrlExpiresAt: signedObjectUrl.expiresAt,
+            }));
+            return;
+          }
 
           const ocrResult = await requestOCR(
             policy.bucket,
@@ -391,6 +448,17 @@ export function ChatComposer({
           onSelectedSkillIdsChange={onSelectedSkillIdsChange}
         />
 
+        <label className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center gap-2 rounded-md border px-3 text-sm transition-colors">
+          <Switch
+            checked={thinkingEnabled}
+            disabled={disabled}
+            onCheckedChange={(checked) => {
+              onThinkingEnabledChange?.(checked);
+            }}
+          />
+          思考模式
+        </label>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -459,7 +527,9 @@ export function ChatComposer({
       {(composerError || hasPendingAttachments) && (
         <div className="text-muted-foreground text-xs">
           {composerError ||
-            "图片正在上传或识别中，完成后才可发送，以免丢失 OCR 上下文。"}
+            (selectedModelSupportsMultimodal
+              ? "图片正在上传中，完成后会以图片 URL 发送给当前多模态模型。"
+              : "图片正在上传或识别中，完成后才可发送，以免丢失 OCR 上下文。")}
         </div>
       )}
 
