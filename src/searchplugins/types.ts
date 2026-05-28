@@ -13,7 +13,6 @@ export type CloudType =
   | "ed2k"
   | "weiyun"
   | "lanzou"
-  | "jianguoyun"
   | "others";
 
 export interface Link {

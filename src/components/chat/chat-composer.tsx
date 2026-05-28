@@ -34,6 +34,8 @@ interface ChatComposerProps {
   modelOptions: AIModelOption[];
   onModelChange: (id: AIModelId) => void;
   onSubmit: (text: string, attachments?: ChatImageAttachment[]) => boolean;
+  selectedSkillIds?: string[];
+  onSelectedSkillIdsChange?: (skillIds: string[]) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -142,6 +144,8 @@ export function ChatComposer({
   modelOptions,
   onModelChange,
   onSubmit,
+  selectedSkillIds = [],
+  onSelectedSkillIdsChange,
   disabled = false,
   placeholder = "输入消息... (Enter 发送, Shift+Enter 换行)",
 }: ChatComposerProps) {
@@ -382,7 +386,10 @@ export function ChatComposer({
           </SelectContent>
         </Select>
 
-        <ChatSkillsViewer />
+        <ChatSkillsViewer
+          selectedSkillIds={selectedSkillIds}
+          onSelectedSkillIdsChange={onSelectedSkillIdsChange}
+        />
 
         <input
           ref={fileInputRef}

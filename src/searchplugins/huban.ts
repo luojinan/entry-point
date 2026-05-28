@@ -34,8 +34,6 @@ const MOBILE_LINK_REGEX = /https?:\/\/caiyun\.feixin\.10086\.cn\/[0-9a-zA-Z]+/;
 const WEIYUN_LINK_REGEX = /https?:\/\/share\.weiyun\.com\/[0-9a-zA-Z]+/;
 const LANZOU_LINK_REGEX =
   /https?:\/\/(www\.)?(lanzou[uixys]*|lan[zs]o[ux])\.(com|net|org)\/[0-9a-zA-Z]+/;
-const JIANGUOYUN_LINK_REGEX =
-  /https?:\/\/(www\.)?jianguoyun\.com\/p\/[0-9a-zA-Z]+/;
 const LINK_123_REGEX =
   /https?:\/\/(123pan\.com|www\.123912\.com|www\.123865\.com|www\.123684\.com)\/s\/[0-9a-zA-Z]+/;
 const PIKPAK_LINK_REGEX = /https?:\/\/mypikpak\.com\/s\/[0-9a-zA-Z]+/;
@@ -294,7 +292,6 @@ class HubanPlugin extends BasePlugin {
       MOBILE_LINK_REGEX.test(url) ||
       WEIYUN_LINK_REGEX.test(url) ||
       LANZOU_LINK_REGEX.test(url) ||
-      JIANGUOYUN_LINK_REGEX.test(url) ||
       LINK_123_REGEX.test(url) ||
       PIKPAK_LINK_REGEX.test(url) ||
       MAGNET_LINK_REGEX.test(url) ||
@@ -332,9 +329,6 @@ class HubanPlugin extends BasePlugin {
     }
     if (LANZOU_LINK_REGEX.test(url)) {
       return "lanzou";
-    }
-    if (JIANGUOYUN_LINK_REGEX.test(url)) {
-      return "jianguoyun";
     }
     if (LINK_123_REGEX.test(url)) {
       return "123";

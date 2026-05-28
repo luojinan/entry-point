@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  MAX_SELECTED_SKILLS,
   SKILL_ENTRY_FILE,
   type SkillDocumentView,
   type SkillSummary,
@@ -32,12 +33,8 @@ import { cn } from "@/lib/utils";
 
 interface ChatSkillsViewerProps {
   disabled?: boolean;
-}
-
-interface ApiEnvelope<T> {
-  code: number;
-  message: string;
-  data: T;
+  selectedSkillIds?: string[];
+  onSelectedSkillIdsChange?: (skillIds: string[]) => void;
 }
 
 interface SkillsLoadResult {
@@ -62,29 +59,19 @@ function getSkillDocumentQueryKey(skillId: string) {
   return ["skills", "viewer", "document", skillId] as const;
 }
 
-function decodeHeaderValue(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
 async function loadSkillOptions(
   signal?: AbortSignal,
 ): Promise<SkillsLoadResult> {
   const response = await fetch("/api/skills", { signal });
-  const payload = (await response.json()) as ApiEnvelope<SkillSummary[]>;
-
-  if (!response.ok || payload.code !== 0) {
-    throw new Error(payload.message || "加载 skills 失败");
-  }
-
-  const loadError = response.headers.get("X-Skills-Load-Error");
-  return {
-    skills: payload.data,
-    error: loadError ? decodeHeaderValue(loadError) : null,
+  const payload = (await response.json()) as {
+    code: number;
+    message: string;
+    data?: SkillsLoadResult;
   };
+  if (!response.ok || payload.code !== 0 || !payload.data) {
+    throw new Error(payload.message || "Failed to load skills");
+  }
+  return payload.data;
 }
 
 async function loadSkillDocument(
@@ -94,12 +81,14 @@ async function loadSkillDocument(
   const response = await fetch(`/api/skills/${encodeURIComponent(skillId)}`, {
     signal,
   });
-  const payload = (await response.json()) as ApiEnvelope<SkillDocumentView>;
-
-  if (!response.ok || payload.code !== 0) {
-    throw new Error(payload.message || "加载 skill 内容失败");
+  const payload = (await response.json()) as {
+    code: number;
+    message: string;
+    data?: SkillDocumentView;
+  };
+  if (!response.ok || payload.code !== 0 || !payload.data) {
+    throw new Error(payload.message || "Skill not found");
   }
-
   return payload.data;
 }
 
@@ -138,7 +127,11 @@ function updateBrowserCache(
   });
 }
 
-export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
+export function ChatSkillsViewer({
+  disabled = false,
+  selectedSkillIds = [],
+  onSelectedSkillIdsChange,
+}: ChatSkillsViewerProps) {
   const [open, setOpen] = useState(false);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "detail">("list");
@@ -171,6 +164,10 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
   });
 
   const skills = skillsData?.skills ?? cachedSkills;
+  const selectedSkillIdSet = useMemo(
+    () => new Set(selectedSkillIds),
+    [selectedSkillIds],
+  );
 
   const {
     data: selectedDocumentData,
@@ -182,11 +179,7 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
       ? getSkillDocumentQueryKey(selectedSkillId)
       : EMPTY_DOCUMENT_QUERY_KEY,
     queryFn: ({ signal }) => loadSkillDocument(selectedSkillId!, signal),
-    enabled:
-      open &&
-      view === "detail" &&
-      Boolean(selectedSkillId) &&
-      !cachedSelectedDocument,
+    enabled: false,
     initialData: cachedSelectedDocument ?? undefined,
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnMount: false,
@@ -261,7 +254,8 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
       skills.find((skill) => skill.id === selectedSkillId) ?? skills[0] ?? null,
     [selectedSkillId, skills],
   );
-  const selectedDocument = selectedDocumentData ?? cachedSelectedDocument;
+  const selectedDocument =
+    selectedDocumentData ?? cachedSelectedDocument ?? null;
 
   const skillsLoadErrorMessage = skillsData?.error ?? null;
   const skillsErrorMessage =
@@ -289,6 +283,23 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
     if (view === "detail" && selectedSkillId) {
       await refetchSelectedDocument();
     }
+  }
+
+  function toggleSkillSelection(skillId: string) {
+    if (!onSelectedSkillIdsChange) {
+      return;
+    }
+
+    if (selectedSkillIdSet.has(skillId)) {
+      onSelectedSkillIdsChange(selectedSkillIds.filter((id) => id !== skillId));
+      return;
+    }
+
+    if (selectedSkillIds.length >= MAX_SELECTED_SKILLS) {
+      return;
+    }
+
+    onSelectedSkillIdsChange([...selectedSkillIds, skillId]);
   }
 
   return (
@@ -326,7 +337,9 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
                 </AlertDialogDescription>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <Badge variant="outline">{skills.length} items</Badge>
+                <Badge variant="outline">
+                  {selectedSkillIds.length}/{MAX_SELECTED_SKILLS}
+                </Badge>
                 <Button
                   type="button"
                   variant="outline"
@@ -361,6 +374,7 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
                   <div className="min-h-0 overflow-y-auto p-2">
                     {skills.map((skill) => {
                       const selected = skill.id === selectedSkill?.id;
+                      const enabled = selectedSkillIdSet.has(skill.id);
                       return (
                         <button
                           key={skill.id}
@@ -385,11 +399,28 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
                                 {skill.description}
                               </div>
                             </div>
-                            <Badge variant="outline" className="shrink-0">
-                              {skill.runtime === "prompt-only"
-                                ? "Prompt"
-                                : "Edge"}
-                            </Badge>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <Button
+                                type="button"
+                                variant={enabled ? "default" : "outline"}
+                                size="xs"
+                                disabled={
+                                  !enabled &&
+                                  selectedSkillIds.length >= MAX_SELECTED_SKILLS
+                                }
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleSkillSelection(skill.id);
+                                }}
+                              >
+                                {enabled ? "已启用" : "启用"}
+                              </Button>
+                              <Badge variant="outline">
+                                {skill.runtime === "prompt-only"
+                                  ? "Prompt"
+                                  : "Edge"}
+                              </Badge>
+                            </div>
                           </div>
                         </button>
                       );
@@ -432,7 +463,7 @@ export function ChatSkillsViewer({ disabled = false }: ChatSkillsViewerProps) {
           <div className="bg-muted/25 border-t px-4 py-3 sm:px-5">
             <div className="flex items-center justify-between gap-3">
               <div className="text-muted-foreground text-xs leading-5">
-                Skills 元数据默认可见，详情会优先读取浏览器缓存。
+                已启用的 Skills 会在发送消息时按需加载进上下文。
               </div>
               <AlertDialogCancel size="sm">关闭</AlertDialogCancel>
             </div>

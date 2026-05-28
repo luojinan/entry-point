@@ -21,24 +21,28 @@ import {
   isImageAttachmentPart,
 } from "@/lib/chat-message";
 import {
-  jianguoyunDeleteSchema,
-  jianguoyunMkdirSchema,
-  jianguoyunMoveSchema,
-  jianguoyunQueryPathSchema,
-  jianguoyunWriteSchema,
-} from "@/lib/jianguoyun";
+  remoteFileDeleteSchema,
+  remoteFileMkdirSchema,
+  remoteFileMoveSchema,
+  remoteFileQueryPathSchema,
+  remoteFileWriteSchema,
+} from "@/lib/remote-files";
 import { getRequestEnv, getRuntimeEnvValue } from "@/lib/runtime-env";
 import {
-  createJianguoyunDirectory,
-  deleteJianguoyunPath,
-  listJianguoyunPath,
-  moveJianguoyunPath,
-  readJianguoyunText,
-  statJianguoyunPath,
-  writeJianguoyunText,
-} from "@/lib/server/jianguoyun";
-import { listSkillsSafely } from "@/lib/server/skill-loader";
-import { buildSkillsMetadataPrompt } from "@/lib/skills";
+  createRemoteDirectory,
+  deleteRemotePath,
+  listRemoteFiles,
+  moveRemotePath,
+  readRemoteText,
+  statRemotePath,
+  writeRemoteText,
+} from "@/lib/server/remote-files";
+import { getSkillsByIds, listSkillsSafely } from "@/lib/server/skill-loader";
+import {
+  buildSkillsMetadataPrompt,
+  buildSkillsPrompt,
+  skillSelectionSchema,
+} from "@/lib/skills";
 import { search } from "@/lib/tg-search/search";
 
 const SQL_WRITE_KEYWORDS = [
@@ -176,11 +180,11 @@ function createToolSetWithout(
 const chatRequestSchema = z.object({
   messages: z.array(z.custom<ChatMessage>()),
   model: z.string().optional(),
-  skillIds: z.array(z.string()).optional(),
+  skillIds: skillSelectionSchema.optional(),
 });
 
 const BASE_SYSTEM_PROMPT =
-  "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用远程共享文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程共享文件系统。远程共享文件系统工具对应的是共享的远端文件系统，不是本地磁盘。处理远程共享文件系统中的文件时，优先先用 statJianguoyunPath 或 listJianguoyunFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。当用户消息包含图片 OCR 内容时，请优先结合用户问题和 OCR 文本回答，并明确提醒 OCR 可能存在误差；如果 OCR 文本明显缺失、错乱或不完整，要建议用户重新上传更清晰的图片。对于其他一般问题，直接用自身知识回答即可。";
+  "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用 Supabase 远程文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程文件系统。远程文件系统对应的是共享的远端文件系统，不是本地磁盘。处理远程文件系统中的文件时，优先先用 statRemotePath 或 listRemoteFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。当用户消息包含图片 OCR 内容时，请优先结合用户问题和 OCR 文本回答，并明确提醒 OCR 可能存在误差；如果 OCR 文本明显缺失、错乱或不完整，要建议用户重新上传更清晰的图片。对于其他一般问题，直接用自身知识回答即可。";
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -196,12 +200,15 @@ export const Route = createFileRoute("/api/chat")({
           );
         }
 
-        const { messages, model: modelId } = parsedBody.data;
+        const { messages, model: modelId, skillIds = [] } = parsedBody.data;
         const env = getRequestEnv(context);
-        const { skills } = await listSkillsSafely(env);
+        const [{ skills: availableSkills }, selectedSkills] = await Promise.all(
+          [listSkillsSafely(env), getSkillsByIds(skillIds, env)],
+        );
         const systemPrompt = [
           BASE_SYSTEM_PROMPT,
-          buildSkillsMetadataPrompt(skills),
+          buildSkillsMetadataPrompt(availableSkills),
+          buildSkillsPrompt(selectedSkills),
         ]
           .filter(Boolean)
           .join("\n\n");
@@ -346,66 +353,66 @@ export const Route = createFileRoute("/api/chat")({
             return result;
           },
         });
-        allTools.listJianguoyunFiles = withApproval(
+        allTools.listRemoteFiles = withApproval(
           tool({
             description:
-              "浏览远程共享文件系统中的目录内容，返回指定路径下的文件和子目录。适用于用户明确提到目录、路径、文件位置时。",
-            inputSchema: jianguoyunQueryPathSchema,
-            execute: async ({ path }) => listJianguoyunPath(path, env),
+              "浏览 Supabase 远程文件系统中的目录内容，返回指定路径下的文件和子目录。适用于用户明确提到目录、路径、文件位置时。",
+            inputSchema: remoteFileQueryPathSchema,
+            execute: async ({ path }) => listRemoteFiles(path, env),
           }),
           false,
         );
-        allTools.statJianguoyunPath = withApproval(
+        allTools.statRemotePath = withApproval(
           tool({
             description:
-              "查看远程共享文件系统中某个路径的元数据，确认它是否存在、是文件还是目录，以及最近更新时间。",
-            inputSchema: jianguoyunQueryPathSchema,
-            execute: async ({ path }) => statJianguoyunPath(path, env),
+              "查看 Supabase 远程文件系统中某个路径的元数据，确认它是否存在、是文件还是目录，以及最近更新时间。",
+            inputSchema: remoteFileQueryPathSchema,
+            execute: async ({ path }) => statRemotePath(path, env),
           }),
           false,
         );
-        allTools.readJianguoyunFile = withApproval(
+        allTools.readRemoteFile = withApproval(
           tool({
             description:
-              "读取远程共享文件系统中的文本文件内容。适用于查看具体文档、说明文本或配置文件。",
-            inputSchema: jianguoyunQueryPathSchema,
-            execute: async ({ path }) => readJianguoyunText(path, env),
+              "读取 Supabase 远程文件系统中的文本文件内容。适用于查看具体文档、说明文本或配置文件。",
+            inputSchema: remoteFileQueryPathSchema,
+            execute: async ({ path }) => readRemoteText(path, env),
           }),
           false,
         );
-        allTools.writeJianguoyunFile = withApproval(
+        allTools.writeRemoteFile = withApproval(
           tool({
             description:
-              "在远程共享文件系统中创建或更新文本文件。适用于写入文档、说明、导出文本或配置文件。",
-            inputSchema: jianguoyunWriteSchema,
-            execute: async (input) => writeJianguoyunText(input, env),
+              "在 Supabase 远程文件系统中创建或更新文本文件。适用于写入文档、说明、导出文本或配置文件。",
+            inputSchema: remoteFileWriteSchema,
+            execute: async (input) => writeRemoteText(input, env),
           }),
           true,
         );
-        allTools.moveJianguoyunPath = withApproval(
+        allTools.moveRemotePath = withApproval(
           tool({
             description:
-              "在远程共享文件系统中移动或重命名文件、目录。适用于整理目录结构或调整文件名。",
-            inputSchema: jianguoyunMoveSchema,
-            execute: async (input) => moveJianguoyunPath(input, env),
+              "在 Supabase 远程文件系统中移动或重命名文件、目录。适用于整理目录结构或调整文件名。",
+            inputSchema: remoteFileMoveSchema,
+            execute: async (input) => moveRemotePath(input, env),
           }),
           true,
         );
-        allTools.deleteJianguoyunPath = withApproval(
+        allTools.deleteRemotePath = withApproval(
           tool({
             description:
-              "删除远程共享文件系统中的文件或目录。适用于明确的文件清理请求。删除目录时需要显式传 recursive=true。",
-            inputSchema: jianguoyunDeleteSchema,
-            execute: async (input) => deleteJianguoyunPath(input, env),
+              "删除 Supabase 远程文件系统中的文件或目录。适用于明确的文件清理请求。删除目录时需要显式传 recursive=true。",
+            inputSchema: remoteFileDeleteSchema,
+            execute: async (input) => deleteRemotePath(input, env),
           }),
           true,
         );
-        allTools.createJianguoyunDirectory = withApproval(
+        allTools.createRemoteDirectory = withApproval(
           tool({
             description:
-              "在远程共享文件系统中创建目录。适用于准备文档、导出文件或其他文本文件的存放路径。",
-            inputSchema: jianguoyunMkdirSchema,
-            execute: async (input) => createJianguoyunDirectory(input, env),
+              "在 Supabase 远程文件系统中创建目录。适用于准备文档、导出文件或其他文本文件的存放路径。",
+            inputSchema: remoteFileMkdirSchema,
+            execute: async (input) => createRemoteDirectory(input, env),
           }),
           true,
         );

@@ -11,6 +11,14 @@ import {
   type ChatMessage,
   createImageAttachmentPart,
 } from "@/lib/chat-message";
+type ToolApprovalHandler = (opts: {
+  id: string;
+  approved: boolean;
+  reason?: string;
+  toolName?: string;
+  toolCallId?: string;
+  input?: unknown;
+}) => void | PromiseLike<void>;
 
 interface UseChatSessionOptions {
   conversationId: string;
@@ -18,6 +26,7 @@ interface UseChatSessionOptions {
   saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
+  selectedSkillIds?: string[];
 }
 
 export function useChatSession({
@@ -26,10 +35,16 @@ export function useChatSession({
   saveMessages,
   updateTitle,
   modelId,
+  selectedSkillIds = [],
 }: UseChatSessionOptions) {
   const titleUpdatedRef = useRef(initialMessages.length > 0);
   const modelIdRef = useRef(modelId);
+  const selectedSkillIdsRef = useRef(selectedSkillIds);
+  const addToolApprovalResponseRef = useRef<
+    ((opts: { id: string; approved: boolean; reason?: string }) => void) | null
+  >(null);
   modelIdRef.current = modelId;
+  selectedSkillIdsRef.current = selectedSkillIds;
 
   const transport = useMemo(
     () =>
@@ -37,6 +52,7 @@ export function useChatSession({
         api: "/api/chat",
         body: () => ({
           model: modelIdRef.current,
+          skillIds: selectedSkillIdsRef.current,
         }),
       }),
     [],
@@ -47,9 +63,10 @@ export function useChatSession({
       id: conversationId,
       messages: initialMessages,
       transport,
-      sendAutomaticallyWhen:
-        lastAssistantMessageIsCompleteWithApprovalResponses,
+      sendAutomaticallyWhen: (options) =>
+        lastAssistantMessageIsCompleteWithApprovalResponses(options),
     });
+  addToolApprovalResponseRef.current = addToolApprovalResponse;
 
   const isStreaming = status === "streaming";
   const isLoading = status === "submitted";
@@ -99,11 +116,19 @@ export function useChatSession({
     [autoTitle, isLoading, isStreaming, sendMessage],
   );
 
+  const handleToolApproval = useCallback<ToolApprovalHandler>(async (opts) => {
+    addToolApprovalResponseRef.current?.({
+      id: opts.id,
+      approved: opts.approved,
+      reason: opts.reason,
+    });
+  }, []);
+
   return {
     messages,
     status,
     error,
-    addToolApprovalResponse,
+    addToolApprovalResponse: handleToolApproval,
     isStreaming,
     isLoading,
     submitText,

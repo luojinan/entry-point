@@ -24,7 +24,6 @@ const LINK_REGEXES: Record<string, RegExp> = {
   weiyun: /https?:\/\/share\.weiyun\.com\/[0-9a-zA-Z]+/,
   lanzou:
     /https?:\/\/(www\.)?(lanzou[uixys]*|lan[zs]o[ux])\.(com|net|org)\/[0-9a-zA-Z]+/,
-  jianguoyun: /https?:\/\/(www\.)?jianguoyun\.com\/p\/[0-9a-zA-Z]+/,
   "123": /https?:\/\/123pan\.com\/s\/[0-9a-zA-Z]+/,
   pikpak: /https?:\/\/mypikpak\.com\/s\/[0-9a-zA-Z]+/,
   magnet: /magnet:\?xt=urn:btih:[0-9a-fA-F]{40}/,

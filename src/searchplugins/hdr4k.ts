@@ -302,9 +302,6 @@ class Hdr4kPlugin extends BasePlugin {
     if (lower.includes("lanzou")) {
       return "lanzou";
     }
-    if (lower.includes("jianguoyun.com")) {
-      return "jianguoyun";
-    }
     if (lower.includes("123pan.com")) {
       return "123";
     }

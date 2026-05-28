@@ -7,7 +7,8 @@ import {
 } from "@/lib/api-utils";
 import { getRequestEnv } from "@/lib/runtime-env";
 import { getSkillById } from "@/lib/server/skill-loader";
-import { buildSkillDocumentView, skillIdSchema } from "@/lib/skills";
+import { buildSkillDocumentView } from "@/lib/skills";
+import { skillIdSchema } from "@/lib/skills";
 
 export const Route = createFileRoute("/api/skills/$skillId")({
   server: {
@@ -23,22 +24,15 @@ export const Route = createFileRoute("/api/skills/$skillId")({
           );
         }
 
-        try {
-          const skill = await getSkillById(
-            parsedSkillId.data,
-            getRequestEnv(context),
-          );
-          if (!skill?.enabled) {
-            return errorResponse("Skill not found", 404);
-          }
-          return jsonResponse(buildSkillDocumentView(skill));
-        } catch (error) {
-          console.error(`Error in /api/skills/${parsedSkillId.data}:`, error);
-          return errorResponse(
-            error instanceof Error ? error.message : "Failed to load skill",
-            500,
-          );
+        const skill = await getSkillById(
+          parsedSkillId.data,
+          getRequestEnv(context),
+        );
+        if (!skill?.enabled) {
+          return errorResponse("Skill not found", 404);
         }
+
+        return jsonResponse(buildSkillDocumentView(skill));
       },
     },
   },

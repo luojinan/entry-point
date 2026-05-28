@@ -35,10 +35,6 @@ const LINK_REGEXES: LinkRegex[] = [
     reg: /https?:\/\/(www\.)?(lanzou[uixys]*|lan[zs]o[ux])\.(com|net|org)\/[0-9a-zA-Z]+/,
     type: "others",
   },
-  {
-    reg: /https?:\/\/(www\.)?jianguoyun\.com\/p\/[0-9a-zA-Z]+/,
-    type: "others",
-  },
   { reg: /https?:\/\/123pan\.com\/s\/[0-9a-zA-Z]+/, type: "123" },
   { reg: /https?:\/\/mypikpak\.com\/s\/[0-9a-zA-Z]+/, type: "pikpak" },
   { reg: /magnet:\?xt=urn:btih:[0-9a-fA-F]{40}/, type: "others" },

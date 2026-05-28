@@ -94,7 +94,9 @@ function ChatPage() {
           key={store.activeId}
           conversationId={store.activeId}
           loadMessages={store.loadMessages}
+          loadSelectedSkillIds={store.loadSelectedSkillIds}
           saveMessages={store.saveMessages}
+          saveSelectedSkillIds={store.saveSelectedSkillIds}
           updateTitle={store.updateTitle}
           modelId={modelId}
           modelOptions={modelOptions}
@@ -115,7 +117,9 @@ function ChatPage() {
 function ChatSession({
   conversationId,
   loadMessages,
+  loadSelectedSkillIds,
   saveMessages,
+  saveSelectedSkillIds,
   updateTitle,
   modelId,
   modelOptions,
@@ -124,7 +128,9 @@ function ChatSession({
 }: {
   conversationId: string;
   loadMessages: (id: string) => ChatMessage[];
+  loadSelectedSkillIds: (id: string) => string[];
   saveMessages: (id: string, messages: ChatMessage[]) => void;
+  saveSelectedSkillIds: (id: string, selectedSkillIds: string[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
   modelOptions: AIModelOption[];
@@ -134,11 +140,21 @@ function ChatSession({
   const [initialMessages] = useState<ChatMessage[]>(() =>
     loadMessages(conversationId),
   );
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>(() =>
+    loadSelectedSkillIds(conversationId),
+  );
+
+  function handleSelectedSkillIdsChange(nextSkillIds: string[]) {
+    setSelectedSkillIds(nextSkillIds);
+    saveSelectedSkillIds(conversationId, nextSkillIds);
+  }
 
   return (
     <ChatSessionInner
       conversationId={conversationId}
       initialMessages={initialMessages}
+      selectedSkillIds={selectedSkillIds}
+      onSelectedSkillIdsChange={handleSelectedSkillIdsChange}
       saveMessages={saveMessages}
       updateTitle={updateTitle}
       modelId={modelId}
@@ -152,6 +168,8 @@ function ChatSession({
 function ChatSessionInner({
   conversationId,
   initialMessages,
+  selectedSkillIds,
+  onSelectedSkillIdsChange,
   saveMessages,
   updateTitle,
   modelId,
@@ -161,6 +179,8 @@ function ChatSessionInner({
 }: {
   conversationId: string;
   initialMessages: ChatMessage[];
+  selectedSkillIds: string[];
+  onSelectedSkillIdsChange: (skillIds: string[]) => void;
   saveMessages: (id: string, messages: ChatMessage[]) => void;
   updateTitle: (id: string, title: string) => void;
   modelId: AIModelId;
@@ -182,6 +202,7 @@ function ChatSessionInner({
     saveMessages,
     updateTitle,
     modelId,
+    selectedSkillIds,
   });
 
   const lastMessage = messages[messages.length - 1];
@@ -255,6 +276,8 @@ function ChatSessionInner({
           modelOptions={modelOptions}
           onModelChange={onModelChange}
           onSubmit={submitText}
+          selectedSkillIds={selectedSkillIds}
+          onSelectedSkillIdsChange={onSelectedSkillIdsChange}
           disabled={isStreaming || isLoading}
         />
       </div>

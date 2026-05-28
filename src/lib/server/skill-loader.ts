@@ -2,10 +2,10 @@ import { posix as pathPosix } from "node:path";
 
 import type { RuntimeEnv } from "@/lib/runtime-env";
 import {
-  JianguoyunError,
-  listJianguoyunPath,
-  readJianguoyunText,
-} from "@/lib/server/jianguoyun";
+  isRemoteFileError,
+  listRemoteFiles,
+  readRemoteText,
+} from "@/lib/server/remote-files";
 import {
   buildSkillSummary,
   parseSkillDocument,
@@ -41,11 +41,9 @@ export async function listSkills(env?: RuntimeEnv): Promise<SkillSummary[]> {
     return cached.value;
   }
 
-  let directoryEntries: Awaited<
-    ReturnType<typeof listJianguoyunPath>
-  >["entries"];
+  let directoryEntries: Awaited<ReturnType<typeof listRemoteFiles>>["entries"];
   try {
-    const result = await listJianguoyunPath(SKILLS_ROOT_PATH, env);
+    const result = await listRemoteFiles(SKILLS_ROOT_PATH, env);
     directoryEntries = result.entries;
   } catch (error) {
     if (isMissingPath(error)) {
@@ -156,7 +154,7 @@ export async function getSkillById(
   const skillPath = buildSkillPath(parsedId.data);
 
   try {
-    const result = await readJianguoyunText(skillPath, env);
+    const result = await readRemoteText(skillPath, env);
     const skill = parseSkillDocument(
       parsedId.data,
       result.content,
@@ -188,5 +186,5 @@ function buildSkillPath(skillId: string): string {
 }
 
 function isMissingPath(error: unknown): boolean {
-  return error instanceof JianguoyunError && error.code === "NOT_FOUND";
+  return isRemoteFileError(error) && error.code === "NOT_FOUND";
 }
