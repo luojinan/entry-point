@@ -4,6 +4,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -31,6 +32,14 @@ import {
 } from "@/lib/chat-message";
 import { cn } from "@/lib/utils";
 
+import {
+  AskUserQuestionForm,
+  type AskUserQuestionAnswers,
+  createInitialAskUserQuestionAnswers,
+  formatAskUserQuestionAnswersForReason,
+  getUnansweredRequiredAskUserQuestions,
+  normalizeAskUserQuestionInput,
+} from "./ask-user-question-card";
 import { ChatSkillsViewer } from "./chat-skills-viewer";
 
 interface ChatComposerProps {
@@ -39,6 +48,15 @@ interface ChatComposerProps {
   modelOptions: AIModelOption[];
   onModelChange: (id: AIModelId) => void;
   onSubmit: (text: string, attachments?: ChatImageAttachment[]) => boolean;
+  pendingAskUserQuestion?: {
+    approvalId: string;
+    input: unknown;
+  } | null;
+  onAskUserQuestionSubmit?: (opts: {
+    id: string;
+    approved: boolean;
+    reason?: string;
+  }) => void | PromiseLike<void>;
   thinkingEnabled?: boolean;
   onThinkingEnabledChange?: (enabled: boolean) => void;
   selectedSkillIds?: string[];
@@ -177,6 +195,8 @@ export function ChatComposer({
   modelOptions,
   onModelChange,
   onSubmit,
+  pendingAskUserQuestion = null,
+  onAskUserQuestionSubmit,
   thinkingEnabled = false,
   onThinkingEnabledChange,
   selectedSkillIds = [],
@@ -186,6 +206,8 @@ export function ChatComposer({
 }: ChatComposerProps) {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<ChatImageAttachment[]>([]);
+  const [askUserQuestionAnswers, setAskUserQuestionAnswers] =
+    useState<AskUserQuestionAnswers>({});
   const [composerError, setComposerError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -205,6 +227,25 @@ export function ChatComposer({
     };
   }, []);
 
+  const normalizedAskUserQuestion = useMemo(
+    () =>
+      pendingAskUserQuestion
+        ? normalizeAskUserQuestionInput(pendingAskUserQuestion.input)
+        : null,
+    [pendingAskUserQuestion?.approvalId, pendingAskUserQuestion?.input],
+  );
+
+  useEffect(() => {
+    if (!normalizedAskUserQuestion) {
+      setAskUserQuestionAnswers({});
+      return;
+    }
+
+    setAskUserQuestionAnswers(
+      createInitialAskUserQuestionAnswers(normalizedAskUserQuestion.questions),
+    );
+  }, [normalizedAskUserQuestion, pendingAskUserQuestion?.approvalId]);
+
   const selectedModel = modelOptions.find((model) => model.id === modelId);
   const selectedModelSupportsMultimodal =
     selectedModel?.supportsMultimodal ?? false;
@@ -221,11 +262,25 @@ export function ChatComposer({
         attachment.ocr?.status === "ready" ||
         attachment.ocr?.status === "error"),
   );
-  const canSend =
-    Boolean(modelId) &&
+  const unansweredAskUserQuestions = normalizedAskUserQuestion
+    ? getUnansweredRequiredAskUserQuestions({
+        input: normalizedAskUserQuestion,
+        answers: askUserQuestionAnswers,
+      })
+    : [];
+  const canSubmitAskUserQuestion =
+    !!pendingAskUserQuestion &&
+    !!normalizedAskUserQuestion &&
+    !!onAskUserQuestionSubmit &&
     !disabled &&
     !hasPendingAttachments &&
-    (input.trim().length > 0 || sendableAttachments.length > 0);
+    unansweredAskUserQuestions.length === 0;
+  const canSend =
+    canSubmitAskUserQuestion ||
+    (Boolean(modelId) &&
+      !disabled &&
+      !hasPendingAttachments &&
+      (input.trim().length > 0 || sendableAttachments.length > 0));
   const updateAttachment = (
     id: string,
     updater: (attachment: ChatImageAttachment) => ChatImageAttachment,
@@ -248,10 +303,38 @@ export function ChatComposer({
 
   const handleSubmit = () => {
     if (!canSend) {
+      if (pendingAskUserQuestion && unansweredAskUserQuestions.length > 0) {
+        setComposerError(
+          `还有 ${unansweredAskUserQuestions.length} 个必填问题未选择。`,
+        );
+      }
       return;
     }
 
     setComposerError(null);
+    if (
+      pendingAskUserQuestion &&
+      normalizedAskUserQuestion &&
+      onAskUserQuestionSubmit
+    ) {
+      void onAskUserQuestionSubmit({
+        id: pendingAskUserQuestion.approvalId,
+        approved: true,
+        reason: formatAskUserQuestionAnswersForReason({
+          input: normalizedAskUserQuestion,
+          answers: askUserQuestionAnswers,
+          note: input,
+        }),
+      });
+      setInput("");
+      setAskUserQuestionAnswers(
+        createInitialAskUserQuestionAnswers(
+          normalizedAskUserQuestion.questions,
+        ),
+      );
+      return;
+    }
+
     const submitted = onSubmit(input.trim(), sendableAttachments);
     if (!submitted) {
       return;
@@ -418,6 +501,18 @@ export function ChatComposer({
 
   return (
     <div className="space-y-2">
+      {pendingAskUserQuestion && (
+        <AskUserQuestionForm
+          input={pendingAskUserQuestion.input}
+          answers={askUserQuestionAnswers}
+          onAnswersChange={(answers) => {
+            setAskUserQuestionAnswers(answers);
+            setComposerError(null);
+          }}
+          className="rounded-2xl"
+        />
+      )}
+
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {attachments.map((attachment) => (

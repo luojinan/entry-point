@@ -1,6 +1,7 @@
 import { ArrowDown02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute } from "@tanstack/react-router";
+import type { DynamicToolUIPart } from "ai";
 import { useEffect, useRef, useState } from "react";
 
 import { ChatComposer } from "@/components/chat/chat-composer";
@@ -19,6 +20,11 @@ interface ApiEnvelope<T> {
 }
 
 const CHAT_SCROLL_BOTTOM_THRESHOLD = 80;
+
+interface PendingAskUserQuestion {
+  approvalId: string;
+  input: unknown;
+}
 
 async function loadModelOptions(): Promise<AIModelOption[]> {
   const response = await fetch("/api/ai-models");
@@ -220,6 +226,7 @@ function ChatSessionInner({
   });
 
   const lastMessage = messages[messages.length - 1];
+  const pendingAskUserQuestion = findPendingAskUserQuestion(messages);
   const lastMessagePartsLength = lastMessage?.parts.length ?? 0;
   const showStreamingPlaceholder =
     isStreaming &&
@@ -337,6 +344,8 @@ function ChatSessionInner({
           modelOptions={modelOptions}
           onModelChange={onModelChange}
           onSubmit={submitText}
+          pendingAskUserQuestion={pendingAskUserQuestion}
+          onAskUserQuestionSubmit={addToolApprovalResponse}
           thinkingEnabled={thinkingEnabled}
           onThinkingEnabledChange={onThinkingEnabledChange}
           selectedSkillIds={selectedSkillIds}
@@ -346,4 +355,49 @@ function ChatSessionInner({
       </div>
     </div>
   );
+}
+
+function findPendingAskUserQuestion(
+  messages: ChatMessage[],
+): PendingAskUserQuestion | null {
+  for (
+    let messageIndex = messages.length - 1;
+    messageIndex >= 0;
+    messageIndex--
+  ) {
+    const message = messages[messageIndex];
+    if (message.role !== "assistant") {
+      continue;
+    }
+
+    for (
+      let partIndex = message.parts.length - 1;
+      partIndex >= 0;
+      partIndex--
+    ) {
+      const part = message.parts[partIndex] as Partial<DynamicToolUIPart> & {
+        type?: string;
+        approval?: { id?: string };
+      };
+      const toolName =
+        part.type === "dynamic-tool"
+          ? part.toolName
+          : part.type === "tool-AskUserQuestion"
+            ? "AskUserQuestion"
+            : null;
+
+      if (
+        toolName === "AskUserQuestion" &&
+        part.state === "approval-requested" &&
+        part.approval?.id
+      ) {
+        return {
+          approvalId: part.approval.id,
+          input: part.input,
+        };
+      }
+    }
+  }
+
+  return null;
 }

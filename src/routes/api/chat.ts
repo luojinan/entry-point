@@ -87,6 +87,65 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function getMessageContentParts(message: unknown): unknown[] {
+  if (!isObjectRecord(message) || !Array.isArray(message.content)) {
+    return [];
+  }
+
+  return message.content;
+}
+
+function extractToolApprovalReason(
+  messages: unknown,
+  toolCallId: string,
+): unknown {
+  if (!Array.isArray(messages)) {
+    return null;
+  }
+
+  const approvalIds = new Set<string>();
+  for (const message of messages) {
+    for (const part of getMessageContentParts(message)) {
+      if (!isObjectRecord(part) || part.type !== "tool-approval-request") {
+        continue;
+      }
+      if (
+        part.toolCallId === toolCallId &&
+        typeof part.approvalId === "string"
+      ) {
+        approvalIds.add(part.approvalId);
+      }
+    }
+  }
+
+  if (approvalIds.size === 0) {
+    return null;
+  }
+
+  for (const message of messages) {
+    for (const part of getMessageContentParts(message)) {
+      if (!isObjectRecord(part) || part.type !== "tool-approval-response") {
+        continue;
+      }
+      if (
+        typeof part.approvalId !== "string" ||
+        !approvalIds.has(part.approvalId) ||
+        typeof part.reason !== "string"
+      ) {
+        continue;
+      }
+
+      try {
+        return JSON.parse(part.reason);
+      } catch {
+        return part.reason;
+      }
+    }
+  }
+
+  return null;
+}
+
 function getReadOnlyHint(annotations: unknown): boolean | undefined {
   if (!isObjectRecord(annotations)) {
     return undefined;
@@ -219,8 +278,61 @@ const chatRequestSchema = z.object({
   thinkingEnabled: z.boolean().optional(),
 });
 
+const askUserQuestionSchema = z.object({
+  title: z
+    .string()
+    .describe("这组问题的简短标题，例如“确认偏好”或“补充需求”。"),
+  description: z
+    .string()
+    .optional()
+    .describe("可选说明，帮助用户理解为什么需要确认这些问题。"),
+  questions: z
+    .array(
+      z.object({
+        id: z
+          .string()
+          .describe("问题的稳定 ID，使用小写字母、数字、短横线或下划线。"),
+        question: z.string().describe("需要用户回答的问题。"),
+        description: z.string().optional().describe("可选的问题补充说明。"),
+        selectionMode: z
+          .enum(["single", "multiple"])
+          .default("single")
+          .describe("single 表示单选，multiple 表示可多选。"),
+        required: z
+          .boolean()
+          .default(true)
+          .describe("是否必须选择至少一个选项后才能发送。"),
+        options: z
+          .array(
+            z.object({
+              id: z
+                .string()
+                .describe(
+                  "选项的稳定 ID，使用小写字母、数字、短横线或下划线。",
+                ),
+              label: z.string().describe("展示给用户的选项文案。"),
+              description: z
+                .string()
+                .optional()
+                .describe("可选的选项补充说明。"),
+              recommended: z
+                .boolean()
+                .default(false)
+                .describe(
+                  "该选项是否为 LLM 推荐选项。每个问题应至少标记一个推荐项；前端会在选项名旁展示“(推荐)”并默认勾选。",
+                ),
+            }),
+          )
+          .min(2)
+          .describe("该问题可供勾选的选项，至少两个。"),
+      }),
+    )
+    .min(1)
+    .describe("需要用户确认的问题列表。"),
+});
+
 const BASE_SYSTEM_PROMPT =
-  "你是一个有用的 AI 助手，擅长回答各类问题、提供建议和帮助用户完成任务。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用 Supabase 远程文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程文件系统。远程文件系统对应的是共享的远端文件系统，不是本地磁盘。处理远程文件系统中的文件时，优先先用 statRemotePath 或 listRemoteFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。当用户消息包含图片 OCR 内容时，请优先结合用户问题和 OCR 文本回答，并明确提醒 OCR 可能存在误差；如果 OCR 文本明显缺失、错乱或不完整，要建议用户重新上传更清晰的图片。对于其他一般问题，直接用自身知识回答即可。";
+  "你是一个有用的 AI 助手。当你需要向用户一次性确认多个有明确选项的问题时，优先使用 AskUserQuestion 工具，而不是在普通文本里列出多个问题让用户手动回复。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用 Supabase 远程文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程文件系统。远程文件系统对应的是共享的远端文件系统，不是本地磁盘。处理远程文件系统中的文件时，优先先用 statRemotePath 或 listRemoteFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。";
 
 function buildCurrentTimePrompt(now = new Date()) {
   const beijingTime = new Intl.DateTimeFormat("zh-CN", {
@@ -230,7 +342,7 @@ function buildCurrentTimePrompt(now = new Date()) {
     hour12: false,
   }).format(now);
 
-  return `当前时间：${beijingTime}（Asia/Shanghai）；UTC：${now.toISOString()}。回答涉及“今天、昨天、最近、当前、最新”等相对时间时，请以此时间为准。`;
+  return `当前时间：${beijingTime}（Asia/Shanghai）；UTC：${now.toISOString()}。`;
 }
 
 export const Route = createFileRoute("/api/chat")({
@@ -449,6 +561,22 @@ export const Route = createFileRoute("/api/chat")({
             },
           }),
           false,
+        );
+
+        allTools.AskUserQuestion = withApproval(
+          tool({
+            description:
+              "当需要向用户一次性确认多个有明确选项的问题时使用。前端会用可交互 tabs 和 checkbox 展示每个问题，用户可勾选答案并补充说明后发送。每个问题都要提供推荐答案。用户提交的结构化答案会写入工具审批响应的 reason JSON。",
+            inputSchema: askUserQuestionSchema,
+            execute: async (_input, options) => ({
+              status: "submitted",
+              response: extractToolApprovalReason(
+                options.messages,
+                options.toolCallId,
+              ),
+            }),
+          }),
+          true,
         );
 
         allTools.searchTG = tool({

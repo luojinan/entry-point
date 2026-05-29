@@ -34,6 +34,10 @@ function getInputStringValue(input: unknown, key: string): string | null {
 }
 
 function getToolDisplayLabel(part: DynamicToolUIPart): string {
+  if (part.toolName === "AskUserQuestion") {
+    return "向用户确认";
+  }
+
   if (part.toolName === "loadSkill") {
     const skillName = getInputStringValue(part.input, "name");
     return skillName ? `skill · 查看 ${skillName}` : "skill · 查看";
@@ -84,11 +88,23 @@ export function DynamicToolCard({
 }) {
   const label = getToolDisplayLabel(part);
 
-  if (
-    part.state === "input-streaming" ||
-    part.state === "input-available" ||
-    part.state === "call-streaming"
-  ) {
+  if (part.toolName === "AskUserQuestion") {
+    if (part.state === "approval-requested") {
+      return <ToolStatusLine label="等待用户回答" state="approval" />;
+    }
+
+    if (part.state === "output-denied") {
+      return <ToolStatusLine label={label} state="denied" />;
+    }
+
+    if (part.state === "output-error") {
+      return <ToolStatusLine label={label} state="error" />;
+    }
+
+    return <ToolStatusLine label="已提交回答" state="success" />;
+  }
+
+  if (part.state === "input-streaming" || part.state === "input-available") {
     return <ToolStatusLine label={label} state="running" />;
   }
 
