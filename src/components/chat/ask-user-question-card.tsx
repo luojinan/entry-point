@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,6 +37,8 @@ export interface AskUserQuestionInput {
 }
 
 export type AskUserQuestionAnswers = Record<string, string[]>;
+
+const SINGLE_CHOICE_ADVANCE_DELAY_MS = 220;
 
 function readString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -208,11 +210,13 @@ export function AskUserQuestionForm({
   answers,
   onAnswersChange,
   className,
+  headerAction,
 }: {
   input: unknown;
   answers: AskUserQuestionAnswers;
   onAnswersChange: (answers: AskUserQuestionAnswers) => void;
   className?: string;
+  headerAction?: ReactNode;
 }) {
   const normalizedInput = useMemo(
     () => normalizeAskUserQuestionInput(input),
@@ -221,6 +225,16 @@ export function AskUserQuestionForm({
   const [activeQuestionId, setActiveQuestionId] = useState(
     normalizedInput?.questions[0]?.id ?? "",
   );
+  const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearAdvanceTimeout() {
+    if (advanceTimeoutRef.current) {
+      clearTimeout(advanceTimeoutRef.current);
+      advanceTimeoutRef.current = null;
+    }
+  }
+
+  useEffect(() => clearAdvanceTimeout, []);
 
   if (!normalizedInput) {
     return (
@@ -233,18 +247,15 @@ export function AskUserQuestionForm({
     );
   }
 
-  const unansweredRequiredQuestions = getUnansweredRequiredAskUserQuestions({
-    input: normalizedInput,
-    answers,
-  });
-  const canSubmit = unansweredRequiredQuestions.length === 0;
-
   function toggleAnswer(question: AskUserQuestionItem, optionId: string) {
+    clearAdvanceTimeout();
+
+    const currentValue = answers[question.id] ?? [];
+    const isSelected = currentValue.includes(optionId);
+
     onAnswersChange(
       (() => {
         const current = answers;
-        const currentValue = current[question.id] ?? [];
-        const isSelected = currentValue.includes(optionId);
         const nextValue =
           question.selectionMode === "single"
             ? isSelected
@@ -260,17 +271,38 @@ export function AskUserQuestionForm({
         };
       })(),
     );
+
+    const questionIndex = normalizedInput.questions.findIndex(
+      (item) => item.id === question.id,
+    );
+    const nextQuestion = normalizedInput.questions[questionIndex + 1];
+
+    if (question.selectionMode !== "single" || isSelected || !nextQuestion) {
+      return;
+    }
+
+    advanceTimeoutRef.current = setTimeout(() => {
+      setActiveQuestionId(nextQuestion.id);
+      advanceTimeoutRef.current = null;
+    }, SINGLE_CHOICE_ADVANCE_DELAY_MS);
   }
 
   return (
     <div
       className={cn(
-        "w-full rounded-xl border bg-background p-3 text-sm shadow-sm",
+        "w-full rounded-xl border bg-background p-3 text-sm",
         className,
       )}
     >
       <div className="flex flex-col gap-1">
-        <div className="font-medium">{normalizedInput.title}</div>
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1 font-medium">
+            {normalizedInput.title}
+          </div>
+          {headerAction ? (
+            <div className="-mt-1 -mr-1 shrink-0">{headerAction}</div>
+          ) : null}
+        </div>
         {normalizedInput.description ? (
           <div className="text-muted-foreground text-xs leading-relaxed">
             {normalizedInput.description}
@@ -281,7 +313,10 @@ export function AskUserQuestionForm({
       <Tabs
         className="mt-3"
         value={activeQuestionId}
-        onValueChange={(value) => setActiveQuestionId(String(value))}
+        onValueChange={(value) => {
+          clearAdvanceTimeout();
+          setActiveQuestionId(String(value));
+        }}
       >
         <TabsList className="max-w-full flex-wrap justify-start">
           {normalizedInput.questions.map((question, index) => {
@@ -305,17 +340,13 @@ export function AskUserQuestionForm({
           })}
         </TabsList>
 
-        {normalizedInput.questions.map((question) => (
-          <TabsContent
-            key={question.id}
-            value={question.id}
-            className="mt-3 rounded-lg border bg-muted/20 p-3"
-          >
+        {normalizedInput.questions.map((question, index) => (
+          <TabsContent key={question.id} value={question.id} className="mt-3">
             <FieldSet>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <FieldLegend className="text-sm">
-                    {question.question}
+                    {index + 1}. {question.question}
                   </FieldLegend>
                   {question.description ? (
                     <FieldDescription>{question.description}</FieldDescription>
@@ -374,14 +405,6 @@ export function AskUserQuestionForm({
           </TabsContent>
         ))}
       </Tabs>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-muted-foreground text-xs">
-          {canSubmit
-            ? "已完成必填问题，可用下方发送按钮提交。"
-            : `还有 ${unansweredRequiredQuestions.length} 个必填问题未选择。`}
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,4 +1,9 @@
-import { Add01Icon, ArrowUp02Icon } from "@hugeicons/core-free-icons";
+import {
+  Add01Icon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  ArrowUp02Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type ChangeEvent,
@@ -208,6 +213,8 @@ export function ChatComposer({
   const [attachments, setAttachments] = useState<ChatImageAttachment[]>([]);
   const [askUserQuestionAnswers, setAskUserQuestionAnswers] =
     useState<AskUserQuestionAnswers>({});
+  const [askUserQuestionCollapsed, setAskUserQuestionCollapsed] =
+    useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -238,9 +245,11 @@ export function ChatComposer({
   useEffect(() => {
     if (!normalizedAskUserQuestion) {
       setAskUserQuestionAnswers({});
+      setAskUserQuestionCollapsed(false);
       return;
     }
 
+    setAskUserQuestionCollapsed(false);
     setAskUserQuestionAnswers(
       createInitialAskUserQuestionAnswers(normalizedAskUserQuestion.questions),
     );
@@ -501,18 +510,6 @@ export function ChatComposer({
 
   return (
     <div className="space-y-2">
-      {pendingAskUserQuestion && (
-        <AskUserQuestionForm
-          input={pendingAskUserQuestion.input}
-          answers={askUserQuestionAnswers}
-          onAnswersChange={(answers) => {
-            setAskUserQuestionAnswers(answers);
-            setComposerError(null);
-          }}
-          className="rounded-2xl"
-        />
-      )}
-
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {attachments.map((attachment) => (
@@ -567,7 +564,59 @@ export function ChatComposer({
         </div>
       )}
 
-      <div className="border-input bg-background shadow-xs rounded-2xl border px-4 pt-4 pb-3">
+      <div className="border-input bg-background shadow-xs relative rounded-2xl border px-4 pt-4 pb-3">
+        {pendingAskUserQuestion && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-full z-10 flex translate-y-px justify-center px-3 sm:px-8">
+            {askUserQuestionCollapsed && (
+              <button
+                type="button"
+                className="border-input/80 bg-background pointer-events-auto flex h-10 w-[94%] items-center gap-2 rounded-t-xl rounded-b-none border px-3 text-left text-sm transition-colors hover:bg-muted/40"
+                onClick={() => setAskUserQuestionCollapsed(false)}
+                aria-expanded={false}
+                title="展开问题面板"
+              >
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {normalizedAskUserQuestion?.title ?? "需要用户确认"}
+                </span>
+                <HugeiconsIcon
+                  icon={ArrowUp01Icon}
+                  strokeWidth={2}
+                  className="size-4 shrink-0"
+                />
+              </button>
+            )}
+            <div
+              className={cn(
+                "pointer-events-auto relative w-[94%]",
+                askUserQuestionCollapsed && "hidden",
+              )}
+            >
+              <AskUserQuestionForm
+                input={pendingAskUserQuestion.input}
+                answers={askUserQuestionAnswers}
+                onAnswersChange={(answers) => {
+                  setAskUserQuestionAnswers(answers);
+                  setComposerError(null);
+                }}
+                className="w-full rounded-t-2xl rounded-b-none border-input/80 bg-background"
+                headerAction={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="rounded-full bg-background hover:bg-muted"
+                    onClick={() => setAskUserQuestionCollapsed(true)}
+                    aria-expanded={true}
+                    aria-label="收起问题面板"
+                    title="收起问题面板"
+                  >
+                    <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2} />
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+        )}
         <textarea
           ref={inputRef}
           value={input}
@@ -580,7 +629,7 @@ export function ChatComposer({
           rows={1}
           className={cn(
             "placeholder:text-muted-foreground w-full resize-none overflow-y-auto bg-transparent px-0 text-[1.05rem] leading-6 outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-            "[field-sizing:content] min-h-9 max-h-48",
+            "[field-sizing:content] min-h-4 max-h-48",
           )}
         />
         <div className="flex min-h-10 items-center">
