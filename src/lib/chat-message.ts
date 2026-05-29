@@ -2,6 +2,8 @@ import type { DataUIPart, UIMessage } from "ai";
 
 export const MAX_CHAT_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
+export const CHAT_IMAGE_PREVIEW_PROCESS = "image/format,webp";
+
 export const ALLOWED_CHAT_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -96,6 +98,7 @@ export interface ChatSignedObjectUrlRequest {
   bucket: string;
   region: string;
   objectKey: string;
+  imageProcess?: string;
 }
 
 export interface ChatSignedObjectUrlResponse {

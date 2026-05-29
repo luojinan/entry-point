@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import type { AIModelId, AIModelOption } from "@/lib/ai-models";
 import {
   ALLOWED_CHAT_IMAGE_TYPES,
+  CHAT_IMAGE_PREVIEW_PROCESS,
   type ChatImageAttachment,
   type ChatSignedObjectUrlResponse,
   type ChatOCRResponse,
@@ -123,6 +124,7 @@ async function requestSignedObjectUrl(
   bucket: string,
   region: string,
   objectKey: string,
+  imageProcess?: string,
 ): Promise<ChatSignedObjectUrlResponse> {
   const response = await fetch("/api/chat-object-url", {
     method: "POST",
@@ -133,6 +135,7 @@ async function requestSignedObjectUrl(
       bucket,
       region,
       objectKey,
+      imageProcess,
     }),
   });
 
@@ -357,6 +360,7 @@ export function ChatComposer({
               policy.bucket,
               policy.region,
               policy.objectKey,
+              CHAT_IMAGE_PREVIEW_PROCESS,
             );
 
             updateAttachment(attachmentId, (attachment) => ({
@@ -413,7 +417,7 @@ export function ChatComposer({
   };
 
   return (
-    <div className="mt-3 space-y-2">
+    <div className="space-y-2">
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {attachments.map((attachment) => (
@@ -484,7 +488,7 @@ export function ChatComposer({
             "[field-sizing:content] min-h-9 max-h-48",
           )}
         />
-        <div className="flex min-h-10 items-center gap-2">
+        <div className="flex min-h-10 items-center">
           <input
             ref={fileInputRef}
             type="file"

@@ -5,6 +5,7 @@ import { ChatMarkdown } from "@/components/chat/chat-markdown";
 import { DynamicToolCard } from "@/components/chat/dynamic-tool-card";
 import { ReasoningBlock } from "@/components/chat/reasoning-block";
 import {
+  CHAT_IMAGE_PREVIEW_PROCESS,
   type ChatImageAttachment,
   type ChatMessage,
   type ChatSignedObjectUrlResponse,
@@ -28,6 +29,7 @@ async function fetchSignedObjectUrl(
   bucket: string,
   region: string,
   objectKey: string,
+  imageProcess?: string,
 ): Promise<ChatSignedObjectUrlResponse> {
   const response = await fetch("/api/chat-object-url", {
     method: "POST",
@@ -38,6 +40,7 @@ async function fetchSignedObjectUrl(
       bucket,
       region,
       objectKey,
+      imageProcess,
     }),
   });
 
@@ -78,6 +81,7 @@ function AttachmentCard({ attachment }: { attachment: ChatImageAttachment }) {
       attachment.bucket,
       attachment.region,
       attachment.objectKey,
+      CHAT_IMAGE_PREVIEW_PROCESS,
     )
       .then((result) => {
         if (!cancelled) {
@@ -268,11 +272,9 @@ export function MessageBubble({
               }
 
               return (
-                <ChatMarkdown
-                  key={key}
-                  content={part.text}
-                  isStreaming={isStreaming}
-                />
+                <div key={key} className="my-2 first:mt-0">
+                  <ChatMarkdown content={part.text} isStreaming={isStreaming} />
+                </div>
               );
             }
             if (isImageAttachmentPart(part)) {

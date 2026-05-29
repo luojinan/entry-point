@@ -1,3 +1,5 @@
+import { ArrowDown02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
@@ -15,6 +17,8 @@ interface ApiEnvelope<T> {
   message: string;
   data: T;
 }
+
+const CHAT_SCROLL_BOTTOM_THRESHOLD = 80;
 
 async function loadModelOptions(): Promise<AIModelOption[]> {
   const response = await fetch("/api/ai-models");
@@ -196,6 +200,8 @@ function ChatSessionInner({
   onModelChange: (id: AIModelId) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const {
     messages,
     error,
@@ -221,10 +227,40 @@ function ChatSessionInner({
       lastMessage.role !== "assistant" ||
       !lastMessage.parts.some((part) => part.type !== "step-start"));
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  const updateScrollToBottomState = () => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) {
+      return;
     }
+
+    const distanceToBottom =
+      scrollEl.scrollHeight - scrollEl.clientHeight - scrollEl.scrollTop;
+    const isAtBottom = distanceToBottom <= CHAT_SCROLL_BOTTOM_THRESHOLD;
+    isAtBottomRef.current = isAtBottom;
+    setShowScrollToBottom(!isAtBottom && messages.length > 0);
+  };
+
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) {
+      return;
+    }
+
+    scrollEl.scrollTo({
+      top: scrollEl.scrollHeight,
+      behavior,
+    });
+    isAtBottomRef.current = true;
+    setShowScrollToBottom(false);
+  };
+
+  useEffect(() => {
+    if (isAtBottomRef.current) {
+      scrollToBottom("auto");
+      return;
+    }
+
+    updateScrollToBottomState();
   }, [messages.length, lastMessagePartsLength]);
 
   return (
@@ -232,6 +268,7 @@ function ChatSessionInner({
       <div
         ref={scrollRef}
         className="flex-1 min-h-0 space-y-4 overflow-y-auto py-4"
+        onScroll={updateScrollToBottomState}
       >
         {messages.length === 0 && (
           <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
@@ -278,6 +315,22 @@ function ChatSessionInner({
       </div>
 
       <div className="sticky bottom-0 z-10 -mx-2 bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:-mx-6 sm:px-6">
+        {showScrollToBottom && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-full mb-1 flex justify-center">
+            <Button
+              variant="outline"
+              size="icon-lg"
+              className="pointer-events-auto rounded-full bg-background shadow-md"
+              onClick={() => {
+                scrollToBottom();
+              }}
+              aria-label="滚动到底部"
+              title="滚动到底部"
+            >
+              <HugeiconsIcon icon={ArrowDown02Icon} strokeWidth={2.2} />
+            </Button>
+          </div>
+        )}
         <ChatComposer
           conversationId={conversationId}
           modelId={modelId}

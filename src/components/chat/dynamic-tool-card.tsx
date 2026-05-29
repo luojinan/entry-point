@@ -14,27 +14,63 @@ type ToolApprovalHandler = (opts: {
 const TOOL_DENIED_REASON =
   "The user explicitly denied this tool execution request. 用户明确拒绝执行该工具调用。Treat this as a user refusal, not a tool error. Do not retry unless the user later clearly approves it.";
 
+type ToolStateTone = "running" | "approval" | "denied" | "error" | "success";
+
+const TOOL_STATE_META = {
+  running: "调用中",
+  approval: "需要确认执行",
+  denied: "已拒绝执行",
+  error: "工具调用失败",
+  success: "工具调用完成",
+} satisfies Record<ToolStateTone, string>;
+
+function getInputStringValue(input: unknown, key: string): string | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const value = (input as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function getToolDisplayLabel(part: DynamicToolUIPart): string {
+  if (part.toolName === "loadSkill") {
+    const skillName = getInputStringValue(part.input, "name");
+    return skillName ? `skill · 查看 ${skillName}` : "skill · 查看";
+  }
+
+  return `工具 · ${part.toolName}`;
+}
+
 function ToolStatusLine({
-  toolName,
-  status,
+  label,
+  state,
   children,
 }: {
-  toolName: string;
-  status: string;
+  label: string;
+  state: ToolStateTone;
   children?: ReactNode;
 }) {
+  const status = TOOL_STATE_META[state];
+  const visibleText = state === "success" ? label : `${status} · ${label}`;
+
   return (
-    <div className="flex min-w-0 items-center gap-2 text-muted-foreground text-sm">
-      <HugeiconsIcon
-        icon={AiSettingIcon}
-        size={16}
-        strokeWidth={2}
-        className="shrink-0"
-      />
-      <span className="min-w-0 truncate">
-        {status} · {toolName}
-      </span>
-      {children}
+    <div
+      className="min-w-0 space-y-2 text-muted-foreground text-sm"
+      aria-label={`${status}: ${label}`}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <HugeiconsIcon
+          icon={AiSettingIcon}
+          size={16}
+          strokeWidth={2}
+          className="shrink-0"
+        />
+        <span className="min-w-0 truncate">{visibleText}</span>
+      </div>
+      {children ? (
+        <div className="flex flex-wrap items-center gap-2 pl-6">{children}</div>
+      ) : null}
     </div>
   );
 }
@@ -46,51 +82,51 @@ export function DynamicToolCard({
   part: DynamicToolUIPart;
   onApproval: ToolApprovalHandler;
 }) {
+  const label = getToolDisplayLabel(part);
+
   if (
     part.state === "input-streaming" ||
     part.state === "input-available" ||
     part.state === "call-streaming"
   ) {
-    return <ToolStatusLine toolName={part.toolName} status="调用中" />;
+    return <ToolStatusLine label={label} state="running" />;
   }
 
   if (part.state === "approval-requested") {
     return (
-      <ToolStatusLine toolName={part.toolName} status="需要确认执行">
-        <div className="ml-auto flex shrink-0 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              onApproval({
-                id: part.approval.id,
-                approved: false,
-                reason: TOOL_DENIED_REASON,
-              });
-            }}
-          >
-            拒绝
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              onApproval({ id: part.approval.id, approved: true });
-            }}
-          >
-            同意执行
-          </Button>
-        </div>
+      <ToolStatusLine label={label} state="approval">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            onApproval({
+              id: part.approval.id,
+              approved: false,
+              reason: TOOL_DENIED_REASON,
+            });
+          }}
+        >
+          拒绝
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => {
+            onApproval({ id: part.approval.id, approved: true });
+          }}
+        >
+          同意执行
+        </Button>
       </ToolStatusLine>
     );
   }
 
   if (part.state === "output-denied") {
-    return <ToolStatusLine toolName={part.toolName} status="已拒绝执行" />;
+    return <ToolStatusLine label={label} state="denied" />;
   }
 
   if (part.state === "output-error") {
-    return <ToolStatusLine toolName={part.toolName} status="工具调用失败" />;
+    return <ToolStatusLine label={label} state="error" />;
   }
 
-  return <ToolStatusLine toolName={part.toolName} status="工具调用完成" />;
+  return <ToolStatusLine label={label} state="success" />;
 }

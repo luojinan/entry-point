@@ -8,6 +8,7 @@ import type OCRClientInstance from "@alicloud/ocr-api20210707/dist/client.js";
 import { $OpenApiUtil } from "@alicloud/openapi-core";
 
 import {
+  CHAT_IMAGE_PREVIEW_PROCESS,
   type ChatAttachmentOCRResult,
   type ChatOCRResponse,
   type ChatSignedObjectUrlResponse,
@@ -70,6 +71,7 @@ interface SignObjectUrlOptions {
   region: string;
   objectKey: string;
   expiresInSeconds?: number;
+  imageProcess?: string;
 }
 
 function getRequiredEnv(name: string | string[], env?: RuntimeEnv): string {
@@ -116,6 +118,15 @@ function encodeObjectKeyForUrl(objectKey: string): string {
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/");
+}
+
+function formatCanonicalizedResource(
+  bucket: string,
+  objectKey: string,
+  imageProcess?: string,
+): string {
+  const resource = `/${bucket}/${objectKey}`;
+  return imageProcess ? `${resource}?x-oss-process=${imageProcess}` : resource;
 }
 
 function assertAllowedImageUpload(contentType: string, size: number) {
@@ -311,29 +322,42 @@ export function signChatObjectUrl(
     region,
     objectKey,
     expiresInSeconds = DEFAULT_SIGNED_URL_TTL_SECONDS,
+    imageProcess,
   }: SignObjectUrlOptions,
   env?: RuntimeEnv,
 ): ChatSignedObjectUrlResponse {
   assertObjectKeyAllowed(objectKey, env);
+  if (imageProcess && imageProcess !== CHAT_IMAGE_PREVIEW_PROCESS) {
+    throw new Error("Unsupported image process");
+  }
 
   const accessKeyId = getAliyunAccessKeyId(env);
   const accessKeySecret = getAliyunAccessKeySecret(env);
   const expiresAt = Math.floor(Date.now() / 1000) + expiresInSeconds;
-  const canonicalizedResource = `/${bucket}/${objectKey}`;
+  const canonicalizedResource = formatCanonicalizedResource(
+    bucket,
+    objectKey,
+    imageProcess,
+  );
   const stringToSign = `GET\n\n\n${expiresAt}\n${canonicalizedResource}`;
   const signature = createHmac("sha1", accessKeySecret)
     .update(stringToSign)
     .digest("base64");
 
-  const url = new URL(
-    `${formatOssHost(bucket, region)}/${encodeObjectKeyForUrl(objectKey)}`,
-  );
-  url.searchParams.set("OSSAccessKeyId", accessKeyId);
-  url.searchParams.set("Expires", String(expiresAt));
-  url.searchParams.set("Signature", signature);
+  const url = `${formatOssHost(bucket, region)}/${encodeObjectKeyForUrl(
+    objectKey,
+  )}`;
+  const authParams = new URLSearchParams({
+    OSSAccessKeyId: accessKeyId,
+    Expires: String(expiresAt),
+    Signature: signature,
+  });
+  const query = imageProcess
+    ? `x-oss-process=${imageProcess}&${authParams.toString()}`
+    : authParams.toString();
 
   return {
-    url: url.toString(),
+    url: `${url}?${query}`,
     expiresAt: expiresAt * 1000,
   };
 }
@@ -344,8 +368,17 @@ export async function recognizeChatImage(
   objectKey: string,
   env?: RuntimeEnv,
 ): Promise<ChatOCRResponse> {
-  const preview = signChatObjectUrl({ bucket, region, objectKey }, env);
-  const result = await recognizeWithAllText(preview.url, env);
+  const ocrImage = signChatObjectUrl({ bucket, region, objectKey }, env);
+  const preview = signChatObjectUrl(
+    {
+      bucket,
+      region,
+      objectKey,
+      imageProcess: CHAT_IMAGE_PREVIEW_PROCESS,
+    },
+    env,
+  );
+  const result = await recognizeWithAllText(ocrImage.url, env);
   const code = result.code;
   if (code && code !== "200") {
     return {

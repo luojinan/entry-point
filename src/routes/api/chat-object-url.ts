@@ -35,6 +35,7 @@ export const Route = createFileRoute("/api/chat-object-url")({
                 bucket: body.bucket,
                 region: body.region,
                 objectKey: body.objectKey,
+                imageProcess: body.imageProcess,
               },
               env,
             ),
