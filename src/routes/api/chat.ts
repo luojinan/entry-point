@@ -2,6 +2,7 @@ import { createMCPClient } from "@ai-sdk/mcp";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   convertToModelMessages,
+  hasToolCall,
   stepCountIs,
   streamText,
   type ToolSet,
@@ -332,7 +333,7 @@ const askUserQuestionSchema = z.object({
 });
 
 const BASE_SYSTEM_PROMPT =
-  "你是一个有用的 AI 助手。当你需要向用户一次性确认多个有明确选项的问题时，优先使用 AskUserQuestion 工具，而不是在普通文本里列出多个问题让用户手动回复。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用 Supabase 远程文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程文件系统。远程文件系统对应的是共享的远端文件系统，不是本地磁盘。处理远程文件系统中的文件时，优先先用 statRemotePath 或 listRemoteFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。";
+  "你是一个有用的 AI 助手。当你需要向用户一次性确认多个有明确选项的问题时，优先使用 AskUserQuestion 工具，而不是在普通文本里列出多个问题让用户手动回复。当用户需要搜索影视、动漫、小说等资源时，请使用 searchTG 工具搜索 Telegram 频道。搜索结果会按网盘类型（quark/aliyun/baidu 等）分组返回，请以清晰易读的格式展示给用户，优先展示夸克网盘链接。工具路由规则如下：结构化业务数据默认使用 Supabase；查询记录、购汇记录、订单、配置、状态、报表、名单、统计等读取场景优先使用 querySupabaseData，行级新增/修改/删除优先使用 changeSupabaseData，只有数据库结构变更才使用 migrateSupabaseSchema。文件、目录、路径、文档内容等文件系统场景使用 Supabase 远程文件系统工具；除非用户明确要看文件，或数据库里没有所需信息需要补充读取文件，否则不要先查远程文件系统。远程文件系统对应的是共享的远端文件系统，不是本地磁盘。处理远程文件系统中的文件时，优先先用 statRemotePath 或 listRemoteFiles 确认路径和类型，再决定是否 read/write/move/delete；除非用户明确要求，否则不要覆盖已有文件、不要删除内容、不要扫描过大的目录。当工具执行审批被拒绝时，这表示用户明确拒绝了本次工具调用，不是工具报错，也不是工具不可用。遇到这种情况时，不要把它描述成调用失败，不要在同一轮再次尝试同一个工具，除非用户后续明确改变决定；你应该改为说明用户未授权该操作，并在现有信息范围内继续回答。多步工具任务完成并已准备好给用户最终答复时，调用 finalAnswer 工具结束工具循环。";
 
 function buildCurrentTimePrompt(now = new Date()) {
   const beijingTime = new Intl.DateTimeFormat("zh-CN", {
@@ -597,6 +598,15 @@ export const Route = createFileRoute("/api/chat")({
             return result;
           },
         });
+        allTools.finalAnswer = withApproval(
+          tool({
+            description:
+              "当已经完成必要工具调用，并准备向用户输出最终答复时调用。调用后停止继续执行工具循环。",
+            inputSchema: z.object({}),
+            execute: async () => ({ status: "ready" }),
+          }),
+          false,
+        );
         allTools.listRemoteFiles = withApproval(
           tool({
             description:
@@ -686,7 +696,7 @@ export const Route = createFileRoute("/api/chat")({
                   thinking: { type: "disabled" },
                 },
               },
-          stopWhen: stepCountIs(5),
+          stopWhen: [stepCountIs(15), hasToolCall("finalAnswer")],
           onFinish: async () => {
             if (mcpClient) {
               await mcpClient.close();
