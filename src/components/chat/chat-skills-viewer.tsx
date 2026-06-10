@@ -67,6 +67,7 @@ async function loadSkillOptions(
   const response = await fetch(
     refresh ? "/api/skills?refresh=1" : "/api/skills",
     {
+      cache: "no-store",
       signal,
     },
   );
@@ -89,6 +90,7 @@ async function loadSkillDocument(
   const response = await fetch(
     `/api/skills/${encodeURIComponent(skillId)}${refresh ? "?refresh=1" : ""}`,
     {
+      cache: "no-store",
       signal,
     },
   );
@@ -111,6 +113,19 @@ function formatUpdatedAt(updatedAt?: string): string | null {
   const value = new Date(updatedAt);
   if (Number.isNaN(value.getTime())) {
     return updatedAt;
+  }
+
+  return dateFormatter.format(value);
+}
+
+function formatCachedAt(cachedAt?: string): string | null {
+  if (!cachedAt) {
+    return null;
+  }
+
+  const value = new Date(cachedAt);
+  if (Number.isNaN(value.getTime())) {
+    return cachedAt;
   }
 
   return dateFormatter.format(value);
@@ -161,6 +176,13 @@ export function ChatSkillsViewer({
   const cachedSelectedDocument = selectedSkillId
     ? (browserCache.documents[selectedSkillId] ?? null)
     : null;
+  const selectedDocumentCachedAt = selectedSkillId
+    ? browserCache.documentCachedAt[selectedSkillId]
+    : undefined;
+  const skillsCacheTimeLabel = formatCachedAt(browserCache.skillsCachedAt);
+  const selectedDocumentCacheTimeLabel = formatCachedAt(
+    selectedDocumentCachedAt,
+  );
 
   const {
     data: skillsData,
@@ -194,7 +216,8 @@ export function ChatSkillsViewer({
       ? getSkillDocumentQueryKey(selectedSkillId)
       : EMPTY_DOCUMENT_QUERY_KEY,
     queryFn: ({ signal }) => loadSkillDocument(selectedSkillId!, signal),
-    enabled: false,
+    enabled:
+      open && view === "detail" && !!selectedSkillId && !cachedSelectedDocument,
     initialData: cachedSelectedDocument ?? undefined,
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnMount: false,
@@ -215,6 +238,7 @@ export function ChatSkillsViewer({
       return {
         ...current,
         skills: skillsData.skills,
+        skillsCachedAt: new Date().toISOString(),
       };
     });
   }, [skillsData]);
@@ -239,6 +263,10 @@ export function ChatSkillsViewer({
         documents: {
           ...current.documents,
           [selectedDocumentData.id]: selectedDocumentData,
+        },
+        documentCachedAt: {
+          ...current.documentCachedAt,
+          [selectedDocumentData.id]: new Date().toISOString(),
         },
       };
     });
@@ -291,7 +319,9 @@ export function ChatSkillsViewer({
         : "正在加载 Skills 元数据"
       : hasCachedSkills
         ? skills.length > 0
-          ? `已缓存 ${skills.length} 个 Skills 元数据`
+          ? skillsCacheTimeLabel
+            ? `列表缓存于 ${skillsCacheTimeLabel}`
+            : `已缓存 ${skills.length} 个 Skills 元数据`
           : "暂无可用 Skills"
         : "首次打开后会自动加载 Skills 元数据";
 
@@ -302,6 +332,11 @@ export function ChatSkillsViewer({
     try {
       const refreshedSkills = await loadSkillOptions(undefined, true);
       queryClient.setQueryData(SKILLS_QUERY_KEY, refreshedSkills);
+      updateBrowserCache(setBrowserCache, (current) => ({
+        ...current,
+        skills: refreshedSkills.skills,
+        skillsCachedAt: new Date().toISOString(),
+      }));
 
       if (view === "detail" && selectedSkillId) {
         const refreshedDocument = await loadSkillDocument(
@@ -313,6 +348,17 @@ export function ChatSkillsViewer({
           getSkillDocumentQueryKey(selectedSkillId),
           refreshedDocument,
         );
+        updateBrowserCache(setBrowserCache, (current) => ({
+          ...current,
+          documents: {
+            ...current.documents,
+            [refreshedDocument.id]: refreshedDocument,
+          },
+          documentCachedAt: {
+            ...current.documentCachedAt,
+            [refreshedDocument.id]: new Date().toISOString(),
+          },
+        }));
       }
     } catch (error) {
       setManualRefreshError(getErrorMessage(error) ?? "刷新 Skills 失败");
@@ -375,13 +421,19 @@ export function ChatSkillsViewer({
                   Skills 查看器
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-left text-sm">
-                  首次无缓存时会自动加载一次，后续请手动刷新。
+                  打开列表或详情时优先读取缓存，无缓存会自动加载；刷新会获取最新数据。
                 </AlertDialogDescription>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <Badge variant="outline">
-                  {selectedSkillIds.length}/{MAX_SELECTED_SKILLS}
-                </Badge>
+                {view === "detail" && selectedDocumentCacheTimeLabel ? (
+                  <Badge variant="outline">
+                    详情缓存 {selectedDocumentCacheTimeLabel}
+                  </Badge>
+                ) : skillsCacheTimeLabel ? (
+                  <Badge variant="outline">
+                    列表缓存 {skillsCacheTimeLabel}
+                  </Badge>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
@@ -495,6 +547,7 @@ export function ChatSkillsViewer({
                         isFetchingDocument
                       }
                       error={documentErrorMessage}
+                      cacheTimeLabel={selectedDocumentCacheTimeLabel}
                     />
                   </div>
                 </>
@@ -521,11 +574,13 @@ function SkillDetail({
   document,
   isLoading,
   error,
+  cacheTimeLabel,
 }: {
   skill: SkillSummary;
   document: SkillDocumentView | null;
   isLoading: boolean;
   error: string | null;
+  cacheTimeLabel: string | null;
 }) {
   const updatedAtLabel = formatUpdatedAt(
     document?.updatedAt ?? skill.updatedAt,
@@ -540,6 +595,11 @@ function SkillDetail({
         {updatedAtLabel ? (
           <div className="text-muted-foreground text-xs">
             更新时间 {updatedAtLabel}
+          </div>
+        ) : null}
+        {cacheTimeLabel ? (
+          <div className="text-muted-foreground text-xs">
+            缓存时间 {cacheTimeLabel}
           </div>
         ) : null}
       </div>

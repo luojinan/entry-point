@@ -10,6 +10,10 @@ import { getSkillById } from "@/lib/server/skill-loader";
 import { buildSkillDocumentView } from "@/lib/skills";
 import { skillIdSchema } from "@/lib/skills";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, max-age=0",
+} as const;
+
 export const Route = createFileRoute("/api/skills/$skillId")({
   server: {
     handlers: {
@@ -21,6 +25,8 @@ export const Route = createFileRoute("/api/skills/$skillId")({
           return errorResponse(
             parsedSkillId.error.issues[0]?.message || "Invalid skillId",
             400,
+            undefined,
+            NO_STORE_HEADERS,
           );
         }
 
@@ -35,10 +41,19 @@ export const Route = createFileRoute("/api/skills/$skillId")({
           },
         );
         if (!skill?.enabled) {
-          return errorResponse("Skill not found", 404);
+          return errorResponse(
+            "Skill not found",
+            404,
+            undefined,
+            NO_STORE_HEADERS,
+          );
         }
 
-        return jsonResponse(buildSkillDocumentView(skill));
+        return jsonResponse(
+          buildSkillDocumentView(skill),
+          200,
+          NO_STORE_HEADERS,
+        );
       },
     },
   },

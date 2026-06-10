@@ -233,6 +233,22 @@ function asToolPart(part: { type: string }): DynamicToolUIPart | null {
   return null;
 }
 
+function getStringRecordValue(value: unknown, key: string): string | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const item = (value as Record<string, unknown>)[key];
+  return typeof item === "string" && item.trim() ? item : null;
+}
+
+function getFinalAnswerText(part: DynamicToolUIPart): string | null {
+  return (
+    getStringRecordValue(part.output, "answer") ??
+    getStringRecordValue(part.input, "answer")
+  );
+}
+
 export function MessageBubble({
   message,
   isStreaming = false,
@@ -317,6 +333,19 @@ export function MessageBubble({
             }
             const toolPart = asToolPart(part);
             if (toolPart) {
+              if (toolPart.toolName === "finalAnswer") {
+                const answer = getFinalAnswerText(toolPart);
+                if (!answer) {
+                  return null;
+                }
+
+                return (
+                  <div key={key} className="my-2 first:mt-0">
+                    <ChatMarkdown content={answer} isStreaming={isStreaming} />
+                  </div>
+                );
+              }
+
               return (
                 <div key={key} className="my-2 first:mt-0">
                   <DynamicToolCard

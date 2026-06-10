@@ -4,6 +4,10 @@ import { handleCorsPreflightRequest, jsonResponse } from "@/lib/api-utils";
 import { getRequestEnv } from "@/lib/runtime-env";
 import { listSkillsSafely } from "@/lib/server/skill-loader";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, max-age=0",
+} as const;
+
 export const Route = createFileRoute("/api/skills")({
   server: {
     handlers: {
@@ -19,6 +23,8 @@ export const Route = createFileRoute("/api/skills")({
             preferFresh: refresh,
             allowStaleOnError: refresh,
           }),
+          200,
+          NO_STORE_HEADERS,
         );
       },
     },

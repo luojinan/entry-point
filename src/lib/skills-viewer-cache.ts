@@ -1,10 +1,12 @@
 import type { SkillDocumentView, SkillSummary } from "@/lib/skills";
 
-const SKILLS_VIEWER_CACHE_KEY = "chat-skills-viewer-cache-v1";
+const SKILLS_VIEWER_CACHE_KEY = "chat-skills-viewer-cache-v2";
 
 export interface SkillsViewerCache {
   skills: SkillSummary[] | null;
+  skillsCachedAt?: string;
   documents: Record<string, SkillDocumentView>;
+  documentCachedAt: Record<string, string>;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
@@ -64,6 +66,7 @@ export function readSkillsViewerCache(): SkillsViewerCache {
     return {
       skills: null,
       documents: {},
+      documentCachedAt: {},
     };
   }
 
@@ -72,6 +75,7 @@ export function readSkillsViewerCache(): SkillsViewerCache {
     return {
       skills: null,
       documents: {},
+      documentCachedAt: {},
     };
   }
 
@@ -81,6 +85,7 @@ export function readSkillsViewerCache(): SkillsViewerCache {
       return {
         skills: null,
         documents: {},
+        documentCachedAt: {},
       };
     }
 
@@ -99,15 +104,29 @@ export function readSkillsViewerCache(): SkillsViewerCache {
           ),
         )
       : {};
+    const documentCachedAt = isObjectRecord(parsedValue.documentCachedAt)
+      ? Object.fromEntries(
+          Object.entries(parsedValue.documentCachedAt).filter(
+            ([skillId, value]) =>
+              typeof skillId === "string" && typeof value === "string",
+          ),
+        )
+      : {};
 
     return {
       skills,
+      skillsCachedAt:
+        typeof parsedValue.skillsCachedAt === "string"
+          ? parsedValue.skillsCachedAt
+          : undefined,
       documents,
+      documentCachedAt,
     };
   } catch {
     return {
       skills: null,
       documents: {},
+      documentCachedAt: {},
     };
   }
 }
