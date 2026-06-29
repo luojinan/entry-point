@@ -1,9 +1,16 @@
+import {
+  Cancel01Icon,
+  PencilEdit02Icon,
+  Sent02Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { DynamicToolUIPart } from "ai";
-import { useEffect, useState } from "react";
+import { type KeyboardEvent, useEffect, useState } from "react";
 
 import { ChatMarkdown } from "@/components/chat/chat-markdown";
 import { DynamicToolCard } from "@/components/chat/dynamic-tool-card";
 import { ReasoningBlock } from "@/components/chat/reasoning-block";
+import { Button } from "@/components/ui/button";
 import {
   CHAT_IMAGE_PREVIEW_PROCESS,
   type ChatImageAttachment,
@@ -18,6 +25,8 @@ type ToolApprovalHandler = (opts: {
   approved: boolean;
   reason?: string;
 }) => void | PromiseLike<void>;
+
+type EditUserMessageHandler = (messageId: string, text: string) => boolean;
 
 interface ApiEnvelope<T> {
   code: number;
@@ -249,22 +258,66 @@ function getFinalAnswerText(part: DynamicToolUIPart): string | null {
   );
 }
 
+function getUserMessageText(message: ChatMessage): string {
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n\n");
+}
+
 export function MessageBubble({
   message,
   isStreaming = false,
   onToolApproval,
+  onEdit,
+  editDisabled = false,
 }: {
   message: ChatMessage;
   isStreaming?: boolean;
   onToolApproval: ToolApprovalHandler;
+  onEdit?: EditUserMessageHandler;
+  editDisabled?: boolean;
 }) {
   const isUser = message.role === "user";
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingText, setEditingText] = useState("");
+  const canEdit = isUser && !!onEdit && !editDisabled;
+
+  function startEditing() {
+    setEditingText(getUserMessageText(message));
+    setIsEditing(true);
+  }
+
+  function cancelEditing() {
+    setEditingText("");
+    setIsEditing(false);
+  }
+
+  function submitEditing() {
+    if (!onEdit?.(message.id, editingText)) {
+      return;
+    }
+    cancelEditing();
+  }
+
+  function handleEditKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancelEditing();
+      return;
+    }
+
+    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      submitEditing();
+    }
+  }
 
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+    <div className={cn("group flex", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[90%] space-y-2",
+          "max-w-[92%] space-y-2 sm:max-w-[90%]",
           isUser ? "items-end" : "items-start",
         )}
       >
@@ -276,88 +329,149 @@ export function MessageBubble({
               : "text-foreground pl-2",
           )}
         >
-          {message.parts.map((part, i) => {
-            const key = `${message.id}-${i}`;
-            if (part.type === "text") {
-              if (isUser) {
-                return (
-                  <div key={key} className="whitespace-pre-wrap">
-                    {part.text}
-                  </div>
-                );
-              }
-
-              return (
-                <div key={key} className="my-2 first:mt-0">
-                  <ChatMarkdown content={part.text} isStreaming={isStreaming} />
-                </div>
-              );
-            }
-            if (isImageAttachmentPart(part)) {
-              return <AttachmentCard key={key} attachment={part.data} />;
-            }
-            if (part.type === "reasoning") {
-              return <ReasoningBlock key={key} part={part} />;
-            }
-            if (part.type === "step-start") {
-              return null;
-            }
-            if (part.type === "source-url") {
-              return (
-                <div key={key} className="mt-2 first:mt-0">
-                  <SourceUrlCard title={part.title} url={part.url} />
-                </div>
-              );
-            }
-            if (part.type === "source-document") {
-              return (
-                <div key={key} className="mt-2 first:mt-0">
-                  <SourceDocumentCard
-                    title={part.title}
-                    filename={part.filename}
-                    mediaType={part.mediaType}
-                  />
-                </div>
-              );
-            }
-            if (part.type === "file") {
-              return (
-                <div key={key} className="mt-2 first:mt-0">
-                  <FileCard
-                    filename={part.filename}
-                    mediaType={part.mediaType}
-                    url={part.url}
-                  />
-                </div>
-              );
-            }
-            const toolPart = asToolPart(part);
-            if (toolPart) {
-              if (toolPart.toolName === "finalAnswer") {
-                const answer = getFinalAnswerText(toolPart);
-                if (!answer) {
-                  return null;
+          {isEditing ? (
+            <textarea
+              value={editingText}
+              onChange={(event) => setEditingText(event.target.value)}
+              onKeyDown={handleEditKeyDown}
+              rows={3}
+              autoFocus
+              className="min-h-28 w-[calc(100vw-4rem)] max-w-full resize-y bg-transparent text-base leading-6 outline-none placeholder:text-primary-foreground/70 sm:min-h-24 sm:w-80 sm:text-sm"
+            />
+          ) : (
+            message.parts.map((part, i) => {
+              const key = `${message.id}-${i}`;
+              if (part.type === "text") {
+                if (isUser) {
+                  return (
+                    <div key={key} className="whitespace-pre-wrap">
+                      {part.text}
+                    </div>
+                  );
                 }
 
                 return (
                   <div key={key} className="my-2 first:mt-0">
-                    <ChatMarkdown content={answer} isStreaming={isStreaming} />
+                    <ChatMarkdown
+                      content={part.text}
+                      isStreaming={isStreaming}
+                    />
                   </div>
                 );
               }
+              if (isImageAttachmentPart(part)) {
+                return <AttachmentCard key={key} attachment={part.data} />;
+              }
+              if (part.type === "reasoning") {
+                return <ReasoningBlock key={key} part={part} />;
+              }
+              if (part.type === "step-start") {
+                return null;
+              }
+              if (part.type === "source-url") {
+                return (
+                  <div key={key} className="mt-2 first:mt-0">
+                    <SourceUrlCard title={part.title} url={part.url} />
+                  </div>
+                );
+              }
+              if (part.type === "source-document") {
+                return (
+                  <div key={key} className="mt-2 first:mt-0">
+                    <SourceDocumentCard
+                      title={part.title}
+                      filename={part.filename}
+                      mediaType={part.mediaType}
+                    />
+                  </div>
+                );
+              }
+              if (part.type === "file") {
+                return (
+                  <div key={key} className="mt-2 first:mt-0">
+                    <FileCard
+                      filename={part.filename}
+                      mediaType={part.mediaType}
+                      url={part.url}
+                    />
+                  </div>
+                );
+              }
+              const toolPart = asToolPart(part);
+              if (toolPart) {
+                if (toolPart.toolName === "finalAnswer") {
+                  const answer = getFinalAnswerText(toolPart);
+                  if (!answer) {
+                    return null;
+                  }
 
-              return (
-                <div key={key} className="my-2 first:mt-0">
-                  <DynamicToolCard
-                    part={toolPart}
-                    onApproval={onToolApproval}
-                  />
-                </div>
-              );
-            }
-            return null;
-          })}
+                  return (
+                    <div key={key} className="my-2 first:mt-0">
+                      <ChatMarkdown
+                        content={answer}
+                        isStreaming={isStreaming}
+                      />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={key} className="my-2 first:mt-0">
+                    <DynamicToolCard
+                      part={toolPart}
+                      onApproval={onToolApproval}
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })
+          )}
         </div>
+
+        {isUser && (
+          <div className="flex min-h-9 justify-end gap-1 sm:min-h-7">
+            {isEditing ? (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-lg"
+                  className="rounded-full sm:size-7"
+                  onClick={cancelEditing}
+                  aria-label="取消编辑"
+                  title="取消编辑"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-lg"
+                  className="rounded-full sm:size-7"
+                  onClick={submitEditing}
+                  disabled={!editingText.trim() || editDisabled}
+                  aria-label="提交修改"
+                  title="提交修改"
+                >
+                  <HugeiconsIcon icon={Sent02Icon} strokeWidth={2} />
+                </Button>
+              </>
+            ) : canEdit ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="rounded-full opacity-100 transition-opacity sm:size-7 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                onClick={startEditing}
+                aria-label="编辑消息"
+                title="编辑消息"
+              >
+                <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );

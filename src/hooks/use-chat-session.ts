@@ -121,6 +121,47 @@ export function useChatSession({
     [autoTitle, isLoading, isStreaming, sendMessage],
   );
 
+  const editUserMessage = useCallback(
+    (messageId: string, rawText: string) => {
+      const text = rawText.trim();
+      if (!text || isStreaming || isLoading) {
+        return false;
+      }
+
+      const message = messages.find((item) => item.id === messageId);
+      if (!message || message.role !== "user") {
+        return false;
+      }
+
+      let textPartUpdated = false;
+      const parts = message.parts
+        .map((part) => {
+          if (part.type !== "text") {
+            return part;
+          }
+
+          if (textPartUpdated) {
+            return null;
+          }
+
+          textPartUpdated = true;
+          return { ...part, text };
+        })
+        .filter((part) => part !== null);
+
+      if (!textPartUpdated) {
+        parts.push({ type: "text", text });
+      }
+
+      void sendMessage({
+        messageId,
+        parts,
+      });
+      return true;
+    },
+    [isLoading, isStreaming, messages, sendMessage],
+  );
+
   const handleToolApproval = useCallback<ToolApprovalHandler>(async (opts) => {
     addToolApprovalResponseRef.current?.({
       id: opts.id,
@@ -137,5 +178,6 @@ export function useChatSession({
     isStreaming,
     isLoading,
     submitText,
+    editUserMessage,
   };
 }

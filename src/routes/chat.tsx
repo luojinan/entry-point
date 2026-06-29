@@ -215,6 +215,7 @@ function ChatSessionInner({
     isStreaming,
     isLoading,
     submitText,
+    editUserMessage,
   } = useChatSession({
     conversationId,
     initialMessages,
@@ -293,6 +294,8 @@ function ChatSessionInner({
               message.role === "assistant"
             }
             onToolApproval={addToolApprovalResponse}
+            onEdit={editUserMessage}
+            editDisabled={isStreaming || isLoading}
           />
         ))}
 
