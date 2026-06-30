@@ -41,6 +41,9 @@ importers:
       '@hugeicons/react':
         specifier: ^1.1.2
         version: 1.1.5(react@19.2.4)
+      '@shadcn/react':
+        specifier: ^0.1.0
+        version: 0.1.0(@types/react@19.2.14)(react@19.2.4)
       '@supabase/supabase-js':
         specifier: ^2.95.3
         version: 2.97.0
@@ -1821,6 +1824,17 @@ packages:
 
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
+
+  '@shadcn/react@0.1.0':
+    resolution: {integrity: sha512-6i67TEnqValsZY7e4exJ4rkHo2OdHXmDH152YulwSpuEUnTQYumHkXzFsaje7HB7GbMTWuI9x1Jn6sSduCYdeA==, tarball: https://registry.npmmirror.com/@shadcn/react/-/react-0.1.0.tgz}
+    peerDependencies:
+      '@types/react': '>=19'
+      react: '>=19'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      react:
+        optional: true
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -6912,6 +6926,11 @@ snapshots:
     optional: true
 
   '@sec-ant/readable-stream@0.4.1': {}
+
+  '@shadcn/react@0.1.0(@types/react@19.2.14)(react@19.2.4)':
+    optionalDependencies:
+      '@types/react': 19.2.14
+      react: 19.2.4
 
   '@sindresorhus/is@7.2.0': {}
 

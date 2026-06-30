@@ -14,7 +14,20 @@ import {
   useState,
 } from "react";
 
+import {
+  Attachment,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentMedia,
+  AttachmentTitle,
+} from "@/components/ui/attachment";
 import { Button } from "@/components/ui/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -513,11 +526,21 @@ export function ChatComposer({
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {attachments.map((attachment) => (
-            <div
+            <Attachment
               key={attachment.id}
-              className="bg-muted/40 flex w-full items-start gap-3 rounded-lg border p-2 sm:w-[calc(50%-0.25rem)]"
+              state={
+                attachment.status === "upload-error" ||
+                attachment.status === "ocr-error"
+                  ? "error"
+                  : attachment.status === "uploading"
+                    ? "uploading"
+                    : attachment.status === "ocr-processing"
+                      ? "processing"
+                      : "done"
+              }
+              className="w-full sm:w-[calc(50%-0.25rem)]"
             >
-              <div className="bg-muted h-16 w-16 shrink-0 overflow-hidden rounded-md">
+              <AttachmentMedia variant="image" className="size-16">
                 {attachment.previewUrl ? (
                   <img
                     src={attachment.previewUrl}
@@ -525,20 +548,18 @@ export function ChatComposer({
                     className="h-full w-full object-cover"
                   />
                 ) : null}
-              </div>
-              <div className="min-w-0 flex-1 space-y-1 text-sm">
-                <div className="truncate font-medium">
-                  {attachment.fileName}
-                </div>
-                <div className="text-muted-foreground text-xs">
+              </AttachmentMedia>
+              <AttachmentContent className="text-sm">
+                <AttachmentTitle>{attachment.fileName}</AttachmentTitle>
+                <AttachmentDescription>
                   {formatAttachmentStatus(attachment)}
-                </div>
+                </AttachmentDescription>
                 {attachment.ocr?.plainText && (
-                  <div className="text-muted-foreground line-clamp-3 text-xs whitespace-pre-wrap">
+                  <AttachmentDescription className="line-clamp-3 whitespace-pre-wrap">
                     {attachment.ocr.plainText}
-                  </div>
+                  </AttachmentDescription>
                 )}
-              </div>
+              </AttachmentContent>
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -550,7 +571,7 @@ export function ChatComposer({
               >
                 ×
               </Button>
-            </div>
+            </Attachment>
           ))}
         </div>
       )}
@@ -564,7 +585,7 @@ export function ChatComposer({
         </div>
       )}
 
-      <div className="border-input bg-background shadow-xs relative rounded-2xl border px-4 pt-4 pb-3">
+      <InputGroup className="shadow-xs relative min-h-28 rounded-2xl px-4 pt-4 pb-3 has-[>textarea]:flex-col has-[>textarea]:items-stretch">
         {pendingAskUserQuestion && (
           <div className="pointer-events-none absolute inset-x-0 bottom-full z-10 flex translate-y-px justify-center px-3 sm:px-8">
             {askUserQuestionCollapsed && (
@@ -617,7 +638,7 @@ export function ChatComposer({
             </div>
           </div>
         )}
-        <textarea
+        <InputGroupTextarea
           ref={inputRef}
           value={input}
           onChange={(e) => {
@@ -628,11 +649,11 @@ export function ChatComposer({
           disabled={disabled}
           rows={1}
           className={cn(
-            "placeholder:text-muted-foreground w-full resize-none overflow-y-auto bg-transparent px-0 text-[1.05rem] leading-6 outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            "placeholder:text-muted-foreground w-full resize-none overflow-y-auto px-0 pt-0 pb-2 text-[1.05rem] leading-6 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             "[field-sizing:content] min-h-4 max-h-48",
           )}
         />
-        <div className="flex min-h-10 items-center">
+        <InputGroupAddon align="block-end" className="min-h-10 px-0 pb-0">
           <input
             ref={fileInputRef}
             type="file"
@@ -641,7 +662,7 @@ export function ChatComposer({
             className="hidden"
             onChange={handleFilesSelected}
           />
-          <Button
+          <InputGroupButton
             variant="ghost"
             size="icon-lg"
             disabled={disabled}
@@ -653,7 +674,7 @@ export function ChatComposer({
             title="上传图片"
           >
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
-          </Button>
+          </InputGroupButton>
 
           <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
             <Select
@@ -709,7 +730,7 @@ export function ChatComposer({
             </label>
           </div>
 
-          <Button
+          <InputGroupButton
             onClick={handleSubmit}
             disabled={!canSend}
             size="icon-lg"
@@ -718,9 +739,9 @@ export function ChatComposer({
             title="发送"
           >
             <HugeiconsIcon icon={ArrowUp02Icon} strokeWidth={2.4} />
-          </Button>
-        </div>
-      </div>
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   );
 }

@@ -10,7 +10,20 @@ import { type KeyboardEvent, useEffect, useState } from "react";
 import { ChatMarkdown } from "@/components/chat/chat-markdown";
 import { DynamicToolCard } from "@/components/chat/dynamic-tool-card";
 import { ReasoningBlock } from "@/components/chat/reasoning-block";
+import {
+  Attachment,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentTitle,
+} from "@/components/ui/attachment";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
+import { Marker, MarkerContent } from "@/components/ui/marker";
+import {
+  Message,
+  MessageContent,
+  MessageFooter,
+} from "@/components/ui/message";
 import {
   CHAT_IMAGE_PREVIEW_PROCESS,
   type ChatImageAttachment,
@@ -113,7 +126,7 @@ function AttachmentCard({ attachment }: { attachment: ChatImageAttachment }) {
   ]);
 
   return (
-    <div className="bg-background/70 space-y-2 rounded-lg border px-3 py-2 text-foreground">
+    <Attachment className="block space-y-2 text-foreground">
       {previewUrl ? (
         <img
           src={previewUrl}
@@ -122,9 +135,11 @@ function AttachmentCard({ attachment }: { attachment: ChatImageAttachment }) {
         />
       ) : null}
 
-      <div className="space-y-1 text-xs">
-        <div className="font-medium text-sm">{attachment.fileName}</div>
-        <div className="text-muted-foreground">
+      <AttachmentContent className="text-xs">
+        <AttachmentTitle className="text-sm">
+          {attachment.fileName}
+        </AttachmentTitle>
+        <AttachmentDescription>
           {attachment.llmImageUrl
             ? "已发送给多模态模型"
             : attachment.ocr?.status === "ready"
@@ -132,7 +147,7 @@ function AttachmentCard({ attachment }: { attachment: ChatImageAttachment }) {
               : attachment.ocr?.status === "error"
                 ? `OCR 失败: ${attachment.ocr.error || "未知错误"}`
                 : "OCR 未完成"}
-        </div>
+        </AttachmentDescription>
         {attachment.ocr?.plainText ? (
           <details className="text-muted-foreground whitespace-pre-wrap">
             <summary className="cursor-pointer select-none text-foreground">
@@ -143,24 +158,26 @@ function AttachmentCard({ attachment }: { attachment: ChatImageAttachment }) {
             </div>
           </details>
         ) : null}
-      </div>
-    </div>
+      </AttachmentContent>
+    </Attachment>
   );
 }
 
 function SourceUrlCard({ title, url }: { title?: string; url: string }) {
   return (
-    <div className="bg-background/70 rounded-lg border px-3 py-2 text-xs">
-      <div className="text-muted-foreground">来源链接</div>
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        className="text-primary break-all underline underline-offset-4"
-      >
-        {title || url}
-      </a>
-    </div>
+    <Marker variant="border" className="bg-background/70 rounded-lg px-3 py-2">
+      <MarkerContent className="space-y-1 text-xs">
+        <div className="text-muted-foreground">来源链接</div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary break-all underline underline-offset-4"
+        >
+          {title || url}
+        </a>
+      </MarkerContent>
+    </Marker>
   );
 }
 
@@ -174,13 +191,15 @@ function SourceDocumentCard({
   mediaType: string;
 }) {
   return (
-    <div className="bg-background/70 rounded-lg border px-3 py-2 text-xs">
-      <div className="text-muted-foreground">来源文档</div>
-      <div className="font-medium">{title}</div>
-      <div className="text-muted-foreground break-all">
-        {filename || mediaType}
-      </div>
-    </div>
+    <Marker variant="border" className="bg-background/70 rounded-lg px-3 py-2">
+      <MarkerContent className="space-y-1 text-xs">
+        <div className="text-muted-foreground">来源文档</div>
+        <div className="font-medium">{title}</div>
+        <div className="text-muted-foreground break-all">
+          {filename || mediaType}
+        </div>
+      </MarkerContent>
+    </Marker>
   );
 }
 
@@ -197,7 +216,7 @@ function FileCard({
 
   if (isImage) {
     return (
-      <div className="bg-background/70 space-y-2 rounded-lg border px-3 py-2 text-xs">
+      <Attachment className="block space-y-2 text-xs">
         <img
           src={url}
           alt={filename || mediaType}
@@ -206,23 +225,27 @@ function FileCard({
         <div className="text-muted-foreground break-all">
           {filename || mediaType}
         </div>
-      </div>
+      </Attachment>
     );
   }
 
   return (
-    <div className="bg-background/70 rounded-lg border px-3 py-2 text-xs">
-      <div className="text-muted-foreground">文件</div>
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        className="text-primary break-all underline underline-offset-4"
-      >
-        {filename || url}
-      </a>
-      <div className="text-muted-foreground break-all">{mediaType}</div>
-    </div>
+    <Attachment className="block text-xs">
+      <AttachmentContent>
+        <AttachmentDescription>文件</AttachmentDescription>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary break-all underline underline-offset-4"
+        >
+          {filename || url}
+        </a>
+        <AttachmentDescription className="break-all">
+          {mediaType}
+        </AttachmentDescription>
+      </AttachmentContent>
+    </Attachment>
   );
 }
 
@@ -314,123 +337,131 @@ export function MessageBubble({
   }
 
   return (
-    <div className={cn("group flex", isUser ? "justify-end" : "justify-start")}>
-      <div
-        className={cn(
-          "max-w-[92%] space-y-2 sm:max-w-[90%]",
-          isUser ? "items-end" : "items-start",
-        )}
-      >
-        <div
-          className={cn(
-            "rounded-lg py-2 text-sm",
-            isUser
-              ? "bg-primary text-primary-foreground px-3"
-              : "text-foreground pl-2",
-          )}
+    <Message align={isUser ? "end" : "start"}>
+      <MessageContent>
+        <Bubble
+          align={isUser ? "end" : "start"}
+          variant={isUser ? "default" : "ghost"}
+          className={cn(isUser ? "max-w-[92%] sm:max-w-[90%]" : "max-w-full")}
         >
-          {isEditing ? (
-            <textarea
-              value={editingText}
-              onChange={(event) => setEditingText(event.target.value)}
-              onKeyDown={handleEditKeyDown}
-              rows={3}
-              autoFocus
-              className="min-h-28 w-[calc(100vw-4rem)] max-w-full resize-y bg-transparent text-base leading-6 outline-none placeholder:text-primary-foreground/70 sm:min-h-24 sm:w-80 sm:text-sm"
-            />
-          ) : (
-            message.parts.map((part, i) => {
-              const key = `${message.id}-${i}`;
-              if (part.type === "text") {
-                if (isUser) {
-                  return (
-                    <div key={key} className="whitespace-pre-wrap">
-                      {part.text}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={key} className="my-2 first:mt-0">
-                    <ChatMarkdown
-                      content={part.text}
-                      isStreaming={isStreaming}
-                    />
-                  </div>
-                );
-              }
-              if (isImageAttachmentPart(part)) {
-                return <AttachmentCard key={key} attachment={part.data} />;
-              }
-              if (part.type === "reasoning") {
-                return <ReasoningBlock key={key} part={part} />;
-              }
-              if (part.type === "step-start") {
-                return null;
-              }
-              if (part.type === "source-url") {
-                return (
-                  <div key={key} className="mt-2 first:mt-0">
-                    <SourceUrlCard title={part.title} url={part.url} />
-                  </div>
-                );
-              }
-              if (part.type === "source-document") {
-                return (
-                  <div key={key} className="mt-2 first:mt-0">
-                    <SourceDocumentCard
-                      title={part.title}
-                      filename={part.filename}
-                      mediaType={part.mediaType}
-                    />
-                  </div>
-                );
-              }
-              if (part.type === "file") {
-                return (
-                  <div key={key} className="mt-2 first:mt-0">
-                    <FileCard
-                      filename={part.filename}
-                      mediaType={part.mediaType}
-                      url={part.url}
-                    />
-                  </div>
-                );
-              }
-              const toolPart = asToolPart(part);
-              if (toolPart) {
-                if (toolPart.toolName === "finalAnswer") {
-                  const answer = getFinalAnswerText(toolPart);
-                  if (!answer) {
-                    return null;
+          <BubbleContent className={cn(!isUser && "pl-2")}>
+            {isEditing ? (
+              <textarea
+                value={editingText}
+                onChange={(event) => setEditingText(event.target.value)}
+                onKeyDown={handleEditKeyDown}
+                rows={3}
+                autoFocus
+                className="min-h-28 w-[calc(100vw-4rem)] max-w-full resize-y bg-transparent text-base leading-6 outline-none placeholder:text-primary-foreground/70 sm:min-h-24 sm:w-80 sm:text-sm"
+              />
+            ) : message.parts.every(
+                (part) => part.type === "text" && part.text.length === 0,
+              ) ? (
+              <span className="bg-muted inline-flex rounded-lg px-3 py-2">
+                <span className="inline-flex gap-1">
+                  <span className="animate-bounce">·</span>
+                  <span className="animate-bounce [animation-delay:0.1s]">
+                    ·
+                  </span>
+                  <span className="animate-bounce [animation-delay:0.2s]">
+                    ·
+                  </span>
+                </span>
+              </span>
+            ) : (
+              message.parts.map((part, i) => {
+                const key = `${message.id}-${i}`;
+                if (part.type === "text") {
+                  if (isUser) {
+                    return (
+                      <div key={key} className="whitespace-pre-wrap">
+                        {part.text}
+                      </div>
+                    );
                   }
 
                   return (
                     <div key={key} className="my-2 first:mt-0">
                       <ChatMarkdown
-                        content={answer}
+                        content={part.text}
                         isStreaming={isStreaming}
                       />
                     </div>
                   );
                 }
+                if (isImageAttachmentPart(part)) {
+                  return <AttachmentCard key={key} attachment={part.data} />;
+                }
+                if (part.type === "reasoning") {
+                  return <ReasoningBlock key={key} part={part} />;
+                }
+                if (part.type === "step-start") {
+                  return null;
+                }
+                if (part.type === "source-url") {
+                  return (
+                    <div key={key} className="mt-2 first:mt-0">
+                      <SourceUrlCard title={part.title} url={part.url} />
+                    </div>
+                  );
+                }
+                if (part.type === "source-document") {
+                  return (
+                    <div key={key} className="mt-2 first:mt-0">
+                      <SourceDocumentCard
+                        title={part.title}
+                        filename={part.filename}
+                        mediaType={part.mediaType}
+                      />
+                    </div>
+                  );
+                }
+                if (part.type === "file") {
+                  return (
+                    <div key={key} className="mt-2 first:mt-0">
+                      <FileCard
+                        filename={part.filename}
+                        mediaType={part.mediaType}
+                        url={part.url}
+                      />
+                    </div>
+                  );
+                }
+                const toolPart = asToolPart(part);
+                if (toolPart) {
+                  if (toolPart.toolName === "finalAnswer") {
+                    const answer = getFinalAnswerText(toolPart);
+                    if (!answer) {
+                      return null;
+                    }
 
-                return (
-                  <div key={key} className="my-2 first:mt-0">
-                    <DynamicToolCard
-                      part={toolPart}
-                      onApproval={onToolApproval}
-                    />
-                  </div>
-                );
-              }
-              return null;
-            })
-          )}
-        </div>
+                    return (
+                      <div key={key} className="my-2 first:mt-0">
+                        <ChatMarkdown
+                          content={answer}
+                          isStreaming={isStreaming}
+                        />
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={key} className="my-2 first:mt-0">
+                      <DynamicToolCard
+                        part={toolPart}
+                        onApproval={onToolApproval}
+                      />
+                    </div>
+                  );
+                }
+                return null;
+              })
+            )}
+          </BubbleContent>
+        </Bubble>
 
         {isUser && (
-          <div className="flex min-h-9 justify-end gap-1 sm:min-h-7">
+          <MessageFooter className="min-h-9 justify-end gap-1 sm:min-h-7">
             {isEditing ? (
               <>
                 <Button
@@ -470,9 +501,9 @@ export function MessageBubble({
                 <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
               </Button>
             ) : null}
-          </div>
+          </MessageFooter>
         )}
-      </div>
-    </div>
+      </MessageContent>
+    </Message>
   );
 }
